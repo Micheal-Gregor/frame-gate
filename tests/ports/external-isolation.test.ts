@@ -59,6 +59,29 @@ describe("REF-02 - external isolation", () => {
     expect(violations[0]!.specifier).toBe("node:crypto");
   });
 
+  it("test_import_resolving_outside_src_is_a_violation", () => {
+    // Kills the mutation that removes the resolves-outside-src arm. An installed
+    // package RESOLVES - unlike a builtin - so the unresolved-builtin arm alone
+    // would let every node_modules dependency through.
+    const violations = findExternalIsolationViolations(fixture("package"));
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.specifier).toBe("typescript");
+    expect(violations[0]!.reason).toBe("resolves-outside-src");
+  });
+
+  it("test_reexport_and_dynamic_import_are_scanned", () => {
+    // Kills the mutation that scans only static import declarations.
+    // `export { x } from "external"` and `await import("external")` are both
+    // ways to name an external, and a detector that sees neither is a detector
+    // with two doors left open.
+    const violations = findExternalIsolationViolations(fixture("reexport"));
+    expect(violations).toHaveLength(2);
+    const files = violations.map((v) => v.file).sort();
+    expect(files[0]!.endsWith("src/facts/dynamic.ts")).toBe(true);
+    expect(files[1]!.endsWith("src/facts/index.ts")).toBe(true);
+    expect(violations.every((v) => v.specifier === "node:crypto")).toBe(true);
+  });
+
   it("test_the_real_src_tree_has_no_external_isolation_violation", () => {
     expect(
       findExternalIsolationViolations({

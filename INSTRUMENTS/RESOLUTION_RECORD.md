@@ -1,4 +1,4 @@
-# R — Resolution Run Record · <CONCEPT>
+# R — Resolution Run Record · The Frame Gate
 
 Live human gate, per-abstraction. RC-3 order: resolution RECORDED first, body filled second.
 

@@ -1,4 +1,4 @@
-# Axioms & Base Cases — <CONCEPT> build
+# Axioms & Base Cases — The Frame Gate build
 
 Axioms restate the carried rules this build must uphold, each citing its S3/S2 source.
 Base cases are pre-solved scenarios (input → expected observable outcome); every one becomes

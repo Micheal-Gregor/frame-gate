@@ -1,20 +1,35 @@
 {
-  "_comment": "Lives at .metaframework/project.json. Written once at C4 anchor. Every {placeholder} is substituted by the caller. Declared, never inferred: the framework is language-agnostic, so no discovery heuristic is safe.",
+  "_comment": "The Frame Gate. Written once at C4 anchor per ADR-001 (TypeScript + Node + Vitest). Declared, never inferred.",
 
-  "test_command": "npx vitest run",
+  "concept": "The Frame Gate",
+
+  "test_command": "npx tsc --noEmit && npx vitest run",
   "test_module":  "npx vitest run tests/{module}",
-  "test_select":  "npx vitest run -t {test_name}",
+  "test_select":  "npx vitest run -t \"{test_name}\"",
 
-  "_test_notes": "test_command is the gate: full suite, every run, no scoping. test_module is the inner loop while building one rung. test_select runs one named test and is what CC-6's mutation battery invokes with the Test name from S3 §5.",
+  "_test_notes": "tsc --noEmit sits INSIDE test_command by ADR-001 action 6. Six of nineteen refusals (REF-01, REF-02, REF-06, REF-09, REF-12, REF-17) demand rejection at parse rather than at runtime, so a transpile-only run would bypass a third of the guard set. test_command is the gate: full suite, unscoped. test_module is the inner loop and is never a gate. test_select runs one named test and is what the mutation battery invokes with the Test name column from S3 section 5.",
 
-  "rederive_command": "node tools/rederive.js {vector_id}",
-  "rederive_all":     "node tools/rederive.js --all",
+  "rederive_invoke": "npx tsx {entry} {input_file}",
+  "rederive_all":    "npx tsx tools/rederive-impl.ts --all",
 
   "source_glob": "src/**/*.ts",
 
-  "scaffold_exempt": null,
+  "s2_document": "governance/S3/CLAUDE_FrameGate_Phase2.md",
+  "s3_document": "governance/S3/CLAUDE_FrameGate_Phase3.md",
 
-  "scaffold_markers": null,
+  "reviewer_command": "claude -p --agent-file {agent_file} --output-format json",
 
-  "_scaffold_notes": "null on either key uses the built-in set — the defaults live in tools/phase4-checks.py so there is one place to change them. Setting an array here REPLACES the default rather than adding to it, so if you override scaffold_exempt, carry over .metaframework/, tools/, and governance/S2-S3-emission-contract.md. The scanning tool must sit in an exempt directory or it matches its own patterns, and the emission contract is exempt because documenting a filename template is not leakage. governance/S3/ is deliberately not exempt: an unsubstituted placeholder in a frozen spec is a real defect."
+  "scaffold_exempt": [
+    ".metaframework/",
+    "tools/",
+    "governance/S2-S3-emission-contract.md",
+    "governance/Phase4_Conformance_Build_Roster.md",
+    "governance/Phase5_Utilization_Roster.md",
+    "IMPLEMENTATION_GUIDE.md",
+    "HARNESS.md"
+  ],
+
+  "_scaffold_notes": "Carries the built-in defaults (.metaframework/, tools/, the emission contract, IMPLEMENTATION_GUIDE, HARNESS) because an array REPLACES rather than extends. SETUP.md is dropped from the list: it is deleted, not exempted. The two Phase rosters are ADDED because they are digest-pinned in roster-manifest.json — editing them to substitute a placeholder would fail the rosters check, and their placeholder is content (they document the filename template CLAUDE_<Concept>_Phase3.md) rather than leakage, which is the same reason the emission contract is exempt by default. governance/S3/ stays NON-exempt: an unsubstituted placeholder in a frozen spec is a real defect.",
+
+  "scaffold_markers": null
 }

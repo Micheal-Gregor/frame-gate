@@ -1,4 +1,4 @@
-# F Backflow — Supersession Proposals to Phase 3 · <CONCEPT>
+# F Backflow — Supersession Proposals to Phase 3 · The Frame Gate
 
 Each proposal supersedes upstream via the Phase 3 chat project — S3 is never patched in place.
 

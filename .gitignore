@@ -6,3 +6,7 @@ __pycache__/
 # STATE.json IS tracked: next_action and blocked_on are the handoff between
 # sessions and belong in history. k7-run excludes it from its cleanliness check
 # so the SessionStart hook rewriting it cannot block a review.
+
+# Node toolchain (ADR-001). Lockfile IS tracked: a pinned toolchain is what
+# makes "same inputs, same output" a claim rather than a hope.
+node_modules/

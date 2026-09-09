@@ -8,7 +8,7 @@ checks against the tree, in both directions.
 
 | Module | File | Traces to | Responsibility | Status |
 |---|---|---|---|---|
-| MOD-02 ports | src/ports/index.ts | OBJ-35..OBJ-39 | The only module that may name an external: record, renderer, dispatch, author enum, digest | NOT_STARTED |
+| MOD-02 ports | src/ports/index.ts | OBJ-35..OBJ-39 | The only module that may name an external: record, renderer, dispatch, author enum, digest | BUILT |
 | MOD-01 kernel | src/kernel/index.ts | OBJ-01, OBJ-02, OBJ-03, OBJ-04, OBJ-10 | The three abstract bases, the closed five-member Unknown family, RecordHeight. Exports NO Projection membership predicate | NOT_STARTED |
 | MOD-03 catalog | src/catalog/index.ts | OBJ-05, OBJ-06, OBJ-13 | Currency order (configuration, read-only), Unit, Declaration as an appended act with declaration_at only | NOT_STARTED |
 | MOD-05 facts | src/facts/index.ts | OBJ-11, OBJ-12, OBJ-16, OBJ-31 | Candidate, Commitment (effective() is a fold), DrawContext, CommitGate | NOT_STARTED |

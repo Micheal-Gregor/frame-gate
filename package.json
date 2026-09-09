@@ -1,0 +1,17 @@
+{
+  "name": "frame-gate",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Frame Gate - a spend-ordering decision kernel. Phase 4 conformance build.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsc --noEmit && vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

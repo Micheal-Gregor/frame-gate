@@ -9,7 +9,7 @@ every deferred vector computed from the real implementation and independently re
 
 | Module | CT-1 | CT-2 | CT-3 | CT-4 | CT-5 | CT-6 | PC enum | Status |
 |---|---|---|---|---|---|---|---|---|
-| MOD-02 ports | | | | REF-02 | n/a | n/a | PC-02 | NOT_STARTED |
+| MOD-02 ports | pass | pass | pass | REF-02 pass | n/a-by-absence | n/a-by-absence | PC-02 enumerated | BUILT |
 | MOD-01 kernel | | | | n/a | n/a | n/a | PC-04 | NOT_STARTED |
 | MOD-03 catalog | | | | REF-01 | n/a | HOOK-07 | PC-02 | NOT_STARTED |
 | MOD-05 facts | | | | REF-05, REF-06 | n/a | n/a | PC-01, PC-03 | NOT_STARTED |

@@ -1,0 +1,20 @@
+{
+  "resident": [
+    "**/CLAUDE.md"
+  ],
+  "step": [
+    "**/steps/**/*.md"
+  ],
+  "ledger": [
+    "**/INSTRUMENTS/*.md"
+  ],
+  "frozen": [
+    "**/governance/**/*.md",
+    "**/facets/**/*.md",
+    "**/README.md",
+    "HARNESS.md",
+    "SETUP.md",
+    "IMPLEMENTATION_GUIDE.md",
+    "STATE.md"
+  ]
+}

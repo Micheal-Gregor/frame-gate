@@ -1,0 +1,20 @@
+{
+  "_comment": "Lives at .metaframework/project.json. Written once at C4 anchor. Every {placeholder} is substituted by the caller. Declared, never inferred: the framework is language-agnostic, so no discovery heuristic is safe.",
+
+  "test_command": "npx vitest run",
+  "test_module":  "npx vitest run tests/{module}",
+  "test_select":  "npx vitest run -t {test_name}",
+
+  "_test_notes": "test_command is the gate: full suite, every run, no scoping. test_module is the inner loop while building one rung. test_select runs one named test and is what CC-6's mutation battery invokes with the Test name from S3 §5.",
+
+  "rederive_command": "node tools/rederive.js {vector_id}",
+  "rederive_all":     "node tools/rederive.js --all",
+
+  "source_glob": "src/**/*.ts",
+
+  "scaffold_exempt": null,
+
+  "scaffold_markers": null,
+
+  "_scaffold_notes": "null on either key uses the built-in set — the defaults live in tools/phase4-checks.py so there is one place to change them. Setting an array here REPLACES the default rather than adding to it, so if you override scaffold_exempt, carry over .metaframework/, tools/, and governance/S2-S3-emission-contract.md. The scanning tool must sit in an exempt directory or it matches its own patterns, and the emission contract is exempt because documenting a filename template is not leakage. governance/S3/ is deliberately not exempt: an unsubstituted placeholder in a frozen spec is a real defect."
+}

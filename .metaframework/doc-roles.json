@@ -15,6 +15,7 @@
     "HARNESS.md",
     "SETUP.md",
     "IMPLEMENTATION_GUIDE.md",
-    "STATE.md"
+    "STATE.md",
+    "**/.claude/agents/*.md"
   ]
 }

@@ -9,7 +9,7 @@ every deferred vector computed from the real implementation and independently re
 
 | Module | CT-1 | CT-2 | CT-3 | CT-4 | CT-5 | CT-6 | PC enum | Status |
 |---|---|---|---|---|---|---|---|---|
-| MOD-02 ports | pass | pass | pass | REF-02 pass | n/a-by-absence | n/a-by-absence | PC-02 enumerated | BUILT |
+| MOD-02 ports | pass | pass | pass | REF-02 pass (7 tests) | n/a-by-absence | n/a-by-absence | PC-02 enumerated | **BUILT** - not COMPLETE: K7 unrun |
 | MOD-01 kernel | | | | n/a | n/a | n/a | PC-04 | NOT_STARTED |
 | MOD-03 catalog | | | | REF-01 | n/a | HOOK-07 | PC-02 | NOT_STARTED |
 | MOD-05 facts | | | | REF-05, REF-06 | n/a | n/a | PC-01, PC-03 | NOT_STARTED |
@@ -37,3 +37,19 @@ every deferred vector computed from the real implementation and independently re
 
 **None defers to Phase 5.** Every row above discharges inside this build except VEC-02 row 4, whose
 condition is an upstream ambiguity (AE-5) and not a target-environment fact.
+
+## MOD-02 status - BUILT, blocked on K7
+
+Every builder-side obligation is discharged: base case written first and watched failing (4/4 red
+against a typed stub), guard implemented, 7 tests green, typecheck clean, mutation battery of six run
+on a committed tree with all restores verified against HEAD and all six killed by test.
+
+**BUILT is not COMPLETE.** The distinct conformance gate has not run, so no drift score exists and no
+`k7-pass-1` tag may be created - `gate.py` refuses a tag whose verdict is absent, and that refusal was
+**exercised rather than assumed**: the tag was attempted, denied, and deleted. The builder does not
+score its own conformance, so this row stays open.
+
+**Blocked on:** the `claude` CLI inside the build sandbox is not logged in, so `tools/k7-run.py`
+cannot spawn the reviewer process. This is an environment binding, not a build defect - the reviewer
+command, the agent file and the preflight are all wired and the dry run passes. Discharged by running
+`python3 tools/k7-run.py` from a logged-in Claude Code session in this repo.

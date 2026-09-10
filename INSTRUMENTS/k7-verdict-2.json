@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 2,
+  "reviewed": {
+    "tree_sha": "350a2b5b5f8802437c8728e3efc4fdd445d4ee53",
+    "commit_sha": "538c8929e57bca00484be24bbba61f1cd2215a2f",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "(all)"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-09-10T06:27:03+00:00",
+    "completed_at": "2026-09-10T06:33:47+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 1,
+    "prior_tree_sha": "dc9b6d8fb79e8e4df5c2b8118b0fb8dcf3c43db6",
+    "prior_failing_checks": [
+      "CC-3",
+      "CC-4"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Reasoned from reading (script execution blocked in reviewer env). src/ports/index.ts exports exactly the five MOD-02 surfaces and only those: OBJ-35 RecordPort (line 41), OBJ-36 RendererPort (60), OBJ-37 DispatchPort (83) with DISPATCH_SEMANTICS (81), OBJ-38 AuthorEnum via AUTHORS/Author/mayDecide (100-104), OBJ-39 DigestPort (119). INSTRUMENTS/object-model-and-parameters.md:11 traces MOD-02->OBJ-35..OBJ-39->src/ports/index.ts and S3 s2:59 / s3:89-93 admit exactly these. Round-1's orphan export mayOnlyPropose was removed (DR-03/IR-14) and is absent from the file. No orphan code; every MOD-02 S3 node has a destination. All other modules are NOT_STARTED with no source files, so no orphan code elsewhere."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Read code paths, not test names. Append-only (SEAM-06/SEAM-20) honored by absence: RecordPort exposes only append/readAsOf with no mutator (index.ts:41-44), so update/delete has nothing to call. DG-F3/SEAM-24 dispatch semantics cited verbatim, never restated: DISPATCH_SEMANTICS='A scope is spent by dispatch, not by return.' (index.ts:81) is character-identical to S3 DG-F3 / SEAM-24. SEAM-25 author-propose-only: mayDecide is a type predicate narrowing to 'HUMAN' (index.ts:104). External isolation (SEAM-20/ER-5) enforced by resolve+containment in tools/checks/external-isolation.ts, not a name scan. This is a declarative interface module with no exception/error code paths, so the untraced-halt / dropped-link class is N/A-by-absence, stated."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Round-1 FAIL closed. The unregistered resolution of the S3 s5-vs-facet-F1 REF-02 test-name conflict is now registered: drift-ledger IR-12 records the governing rule ('where S3 s5 and a facet slice disagree, s5 governs') and the class is filed for backflow as SP-1 in F-supersession-proposals.md (no longer the template). No unregistered mechanism remains that the tests depend on: mayOnlyPropose was removed rather than left as an untraced surface (IR-14). No behavior beyond registered interpretations was found in src/ports/index.ts. Note carried openly: the DISPATCH_SEMANTICS citation is S3's transcription of an external rule not yet bound in-repo (F1 OI-1), which the code marks as such (index.ts:76-79) rather than paraphrasing."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Could not execute the declared full suite: in this reviewer environment npx, node-run-script, tsc and vitest are all denied ('requires approval'); only '--version' probes pass (node --version -> v24.16.0). So `npx tsc --noEmit && npx vitest run` and `npx vitest run -t \"...\"` did not run and the committed 'baseline 7 green' (mutation-battery.md:59) is a builder claim I could not reproduce. Reasoned from reading: round-1's real defect is closed. The REF-02 s5 Test name 'test_external_import_outside_ports_is_malformed' (S3:165) now matches the case at external-isolation.test.ts:25; among the seven test titles in that file none other contains that string, so the declared vitest -t substring selector resolves to exactly one case (round-1's zero-case defect gone). The case uses a genuine forbidden input (a src/facts module importing node:crypto -> exactly one violation, reason unresolved-builtin, lines 25-32), not a guard that refuses everything. Transparency per charter: the property this closure satisfies was prescribed by K7 round 1; the reconciliation DIRECTION (rename code to s5 rather than supersede s5) was the builder's own design (IR-12), so I certify a builder-designed closure against a gate-named property, not a closure I authored. The suite's actual green state remains unverified by me for want of an executable environment."
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": false,
+      "rationale": "MOD-02 pins no golden vector (S3 s6:201 lists MOD-02 under 'pin no value - N/A-by-absence'), so there is nothing in scope to re-derive; no impl_sha obligation exists. Round-1's DR-04 is closed by reading: .metaframework/project.json:9 rederive_all now reads 'python3 tools/rederive.py --all' (IR-13), matching the only re-derive tool in the tree (tools/rederive.py); the prior placeholder tools/rederive-impl.ts is gone. I could not execute the command (python3-run-script is denied in this env; only python3 --version passed -> 3.13.15), but no MOD-02 vector obligation depends on it. The corrected command first binds at MOD-04/VEC-01, the first vector-bearing module."
+    },
+    "CC-6": {
+      "status": "not_applicable",
+      "mechanical": false,
+      "rationale": "MOD-02 registers no hook (S3 s7:208-217 lists none), so the two mandatory hook experiments (divergence-injection, mutation) are N/A-by-absence. The load-bearing artifact in this rung is the REF-02 detector; by reading it RESOLVES specifiers (ts.resolveModuleName, external-isolation.ts:74-83) and tests CONTAINMENT on normalised absolute paths with a separator suffix (contains(), lines 49-53), not a text scan, and the suite covers sibling spellings, the src/portsmith lookalike, resolves-outside-src (package fixture), and reexport/dynamic-import. I could NOT independently reproduce the documented six-mutation battery (/tmp copy execution is blocked in this env), so those kills remain builder claims. Disclosed and material (mutation-battery.md:77-95): under the DECLARED single-test selector for REF-02 only 1 of 6 mutations dies; the other five are killed only by supporting tests s5 does not name. That is a spec-binding weakness (the full test_command suite kills all six) correctly routed to backflow as SP-1's secondary observation, not a MOD-02 code defect. No resolution-conditional trace citations exist in MOD-02, so that sub-check is N/A."
+    },
+    "CC-7": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Scored four dimensions. Object-model fidelity 9: five OBJ faithfully typed, append-only by absence, verbatim dispatch citation, round-1's stray mayOnlyPropose removed. Base-case support 8: BC-02-1 written first and watched failing 4/4 against a typed stub, then strengthened with the portsmith lookalike, package, and reexport fixtures (axioms-and-base-cases.md). Extensibility 8: ports parameterised over kernel types (IR-09) so MOD-02 compiles first per S3 s10; no external named outside ports/. Verification strength 7 (worst): the actual full suite is strong (committed battery kills all six mutations), but (a) I could not execute the declared suite/selector in this environment so 'green' is unconfirmed by me, and (b) the declared per-row selector binds only 1 of 6 of the detector's guarded properties (SP-1 secondary, spec-level, routed to backflow). MIN = 7. No tautological or vacuous assertions found in the REF-02 suite; the real-tree self-check runs over a populated src/."
+    }
+  },
+  "drift_score": {
+    "value": 7,
+    "basis": [
+      {
+        "check_id": "CC-6",
+        "finding": "Worst dimension: verification strength. The declared single-test selector for REF-02 (S3 s5 Test name) kills only 1 of 6 detector mutations (mutation-battery.md:77-95); the other five guarded properties are covered only by tests s5 does not name. A spec-binding weakness routed to backflow as SP-1's secondary observation, not a MOD-02 code defect since the full test_command suite kills all six.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-4",
+        "finding": "Verification strength: the reviewer could not execute the declared full suite or single-test command in this environment (npx / node-run-script / tsc / vitest / python3-run-script all denied; only --version passes), so the module's 'green' state rests on reading plus the committed mutation-battery record rather than an independent run by the gate.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "PASS",
+  "blocking": [],
+  "next_action": "Create the k7-pass-2 tag for MOD-02 and open the MOD-01 kernel rung, carrying SP-1's nine unresolved s5 test-name rows and the single-selector coverage gap into the Phase-3 backflow before any vector-bearing module reaches this gate."
+}

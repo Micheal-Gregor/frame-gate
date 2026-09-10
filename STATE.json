@@ -3,14 +3,14 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "d9d7800ea6a6a6af5340105350864a2b9a1e3dbf",
-  "tree": "730a78b8aac2fd74946f423a64a31381daed2399",
-  "dirty": false,
+  "head": "3ab29229b83e11fed0c4e90e41b660816f009755",
+  "tree": "e7b92964aae8211f6448b9c2964741b780dbfa13",
+  "dirty": true,
   "current_module": "MOD-02",
   "k7_round": 0,
   "last_gate_tag": "",
   "next_action": "Run K7 round 1 on the MOD-02 rung. On PASS: transcribe the verdict into the drift ledger, tag k7-pass-1, then build MOD-01 kernel/ - the three abstract bases, the closed five-member Unknown family, RecordHeight, and NO Projection membership predicate.",
   "blocked_on": "K7 cannot spawn: the claude CLI in the build sandbox is not logged in. Run 'python3 tools/k7-run.py' from a logged-in session in this repo to obtain verdict round 1.",
-  "updated_at": "2026-09-09T23:19:57+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-09-10T03:34:31+00:00",
+  "updated_by": "session-start:startup"
 }

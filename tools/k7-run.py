@@ -109,7 +109,9 @@ Return ONE JSON object and nothing else, with exactly these keys:
                "rationale": str when it is false}}
   drift_score  {{"value": 1-10, "basis": [{{"check_id", "finding", "deduction"}}]}}
                A bare number is rejected. Every deduction names a check and a
-               specific finding.
+               specific finding. deduction is a POSITIVE MAGNITUDE, integer 0-9 -
+               the number of points removed, not a signed adjustment. Write 1,
+               never -1.
   verdict      "PASS" | "RETURN" | "HALT"
   blocking     array of {{"check_id", "module", "required_change"}}; required
                non-empty unless verdict is PASS
@@ -274,9 +276,10 @@ def main() -> int:
     try:
         jsonschema.validate(verdict, schema)
     except jsonschema.ValidationError as e:
-        path = "/".join(str(p) for p in e.absolute_path) or "(root)"
+        raw_out = inst / f"k7-raw-{rnd}.json"; raw_out.write_text(m.group(0), encoding="utf-8")
         return die(f"verdict failed schema at {path}: {e.message}\n"
-                   f"No verdict written. The reviewer's output was non-conforming.")
+                   f"No verdict written. The reviewer's output was non-conforming.\n"
+                   f"Raw output preserved at {raw_out}.")
 
     out = inst / f"k7-verdict-{rnd}.json"
     with tempfile.NamedTemporaryFile("w", dir=str(inst), delete=False,

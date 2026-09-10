@@ -6,11 +6,11 @@
   "head": "3ab29229b83e11fed0c4e90e41b660816f009755",
   "tree": "e7b92964aae8211f6448b9c2964741b780dbfa13",
   "dirty": true,
-  "current_module": "MOD-02",
+  "current_module": "MOD-01",
   "k7_round": 0,
   "last_gate_tag": "",
-  "next_action": "Run K7 round 2 on MOD-02: python tools/k7-run.py. Round 1 returned drift 6; all four drift entries are closed and the tree is clean. Nine section-5 test-name rows remain broken by design (SP-1, a Phase 3 defect) - do not fix them in code.",
+  "next_action": "Run K7 round 3 on MOD-01 kernel (python tools/k7-run.py). R-01 is in force, so the reviewer should now be able to execute the declared commands - if it still reports denials, that is the --allowedTools syntax and needs checking before the verdict is trusted. On PASS: tag k7-pass-3 AT THE REVIEWED COMMIT, then build MOD-03 catalog (unblocked by s3-anchor-v1.1).",
   "blocked_on": null,
-  "updated_at": "2026-09-10T05:57:30+00:00",
+  "updated_at": "2026-09-10T07:29:12+00:00",
   "updated_by": "manual"
 }

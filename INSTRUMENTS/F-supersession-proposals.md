@@ -77,6 +77,23 @@ conformance battery compares the two, so K6 passed a document with ten broken jo
    that consolidates it, and verbatim carriage removes the opportunity for divergence rather than
    detecting it afterward.
 
+### Secondary observation — one `Test name` per guard is a floor, not coverage
+
+Fixing REF-02's name made CC-6's mutation rule runnable for the first time, and running it exposed
+a second, smaller thing. Six mutations of the REF-02 detector all die against the **full suite**;
+against **the declared selector alone**, only one dies. The other five are killed by supporting
+tests §5 does not name.
+
+The suite is stronger than the specification. But a reviewer or CI step doing what the emission
+contract describes — invoke `test_select` with the `Test name` from each §5 row — would watch five
+of six mutations survive and record the guard as covered.
+
+Proposed alongside the reconciliation: either CC-6 runs the **full declared suite** when
+mutation-testing rather than the per-row selector, or §5 admits more than one `Test name` per guard
+so the binding reflects what actually guards the invariant. This is a smaller defect than the ten
+broken joins and is in the same family: the specification's link to executable evidence is thinner
+than it appears.
+
 ### Status
 
 - **REF-02 is resolved in the build** at commit `32f1335` — the code now carries §5's name and the

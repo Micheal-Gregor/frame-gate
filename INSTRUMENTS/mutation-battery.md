@@ -97,3 +97,47 @@ mutations survive and read the guard as covered.
 Recorded here and raised in `F-supersession-proposals.md` as a secondary observation on SP-1: a
 single `Test name` per guard is a floor, not a coverage claim, and CC-6 should either run the full
 suite or §5 should bind more than one case per guard.
+
+---
+
+## Round 3 — MOD-01 `kernel/`
+
+Run on the committed tree at `3f5a30f`. Baseline `tsc=0 vitest=0`, 16 tests passing.
+All restores verified against HEAD; tree matched HEAD after the run.
+
+| # | Mutation | tsc | vitest | Verdict |
+|---|---|---|---|---|
+| K1 | A sixth `Unknown` member added | 0 | 1 | **killed by test** |
+| K2 | An `Unknown` member renamed | 2 | 1 | **killed by test** (build also red) |
+| K3 | `AppendedFact` fields made mutable | 0 | 1 | **killed by test** |
+| K4 | `Gate.onFail` made optional | 0 | 1 | **killed by test** |
+| K5 | An exported `isProjection` type predicate added | 0 | 1 | **killed by test** |
+| K6 | `DifficultyAdvisory` added to the member list | 0 | 1 | **killed by test** |
+| K7 | `succeeds()` made true for equal heights | 0 | 1 | **killed by test** |
+| K8 | Height arithmetic (`distance`) exported | 0 | 1 | **killed by test** |
+
+**Eight of eight die by test.** K2 was additionally caught at build; because the *test* also kills
+it, no compiler-evading variant was required — the rule about build-only kills does not bite here.
+
+### K5 and K6 are the ones that matter
+
+They are the mutation form of this build's self-reliance point. Both are the sort of change that
+looks like a small convenience:
+
+- **K5** adds an `isProjection(v): v is Projection<unknown>` — five lines, obviously useful, and it
+  lets any caller ask "is this a Projection?" and get an answer computed **from shape**. OBJ-34 is
+  stateless, pure and height-taking, so shape says yes.
+- **K6** adds `DifficultyAdvisory` to the member list — one line, and it reads like completing an
+  enumeration someone forgot.
+
+Either one readmits difficulty to the family, making δ consumable wherever a Projection is consumed,
+and **defeats owner ruling DG-F1 without editing a line that mentions difficulty**. Nothing about
+the rest of the suite would change colour. These two mutations are the only thing standing between
+that ruling and a plausible-looking edit.
+
+### Two checks that also had to be killed
+
+The absence properties — `..._exports_no_projection_membership_predicate` and
+`..._exposes_no_height_arithmetic` — were **green throughout the red phase**, because absence is
+honestly true of a stub. They are pinned here instead: K5 and K8 add exactly what they forbid, and
+both die. An absence property that no mutation attacks is a property nobody has tested.

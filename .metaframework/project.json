@@ -10,7 +10,7 @@
   "source_glob": "src/**/*.ts",
   "s2_document": "governance/S3/CLAUDE_FrameGate_Phase2.md",
   "s3_document": "governance/S3/CLAUDE_FrameGate_Phase3.md",
-  "reviewer_command": "claude -p --agent k7-reviewer --output-format text --permission-mode acceptEdits",
+  "reviewer_command": "claude -p --agent k7-reviewer --output-format text --allowedTools \"Bash(npx tsc:*)\" \"Bash(npx vitest:*)\" \"Bash(python3 tools/rederive.py:*)\"",
   "scaffold_exempt": [
     ".metaframework/",
     "tools/",
@@ -23,6 +23,6 @@
   "_scaffold_notes": "Carries the built-in defaults (.metaframework/, tools/, the emission contract, IMPLEMENTATION_GUIDE, HARNESS) because an array REPLACES rather than extends. SETUP.md is dropped from the list: it is deleted, not exempted. The two Phase rosters are ADDED because they are digest-pinned in roster-manifest.json \u2014 editing them to substitute a placeholder would fail the rosters check, and their placeholder is content (they document the filename template CLAUDE_<Concept>_Phase3.md) rather than leakage, which is the same reason the emission contract is exempt by default. governance/S3/ stays NON-exempt: an unsubstituted placeholder in a frozen spec is a real defect.",
   "scaffold_markers": null,
   "reviewer_agent": ".claude/agents/k7-reviewer.md",
-  "_reviewer_notes": "The template default assumes --agent-file, which this Claude Code install (2.1.260) does not offer; HARNESS.md says to verify the flags against the install before the first real run. This install discovers agents from .claude/agents/ and selects one with --agent, so the agent file is INSTALLED there (it ships in the plugin, not in the repo template) and selected by name. Output format is text because k7-run greps the first JSON object out of stdout; --output-format json would wrap the verdict in a transcript envelope and the greedy match would capture the envelope instead of the verdict.",
+  "_reviewer_notes": "R-01, accepted 2026-09-10. The previous invocation used --permission-mode acceptEdits, which auto-approves EDITS - the one thing K7 must never do - and leaves Bash requiring an approval that, under -p, no human is present to give. So every command was denied, across two rounds, while the charter orders execution in CC-4, CC-5 and CC-6. acceptEdits is dropped (a reviewer that can edit can quietly become a builder) and replaced with an allowlist of exactly the declared commands. This does not widen the tool grant - Bash is already in the agent's charter - it stops silently denying what the charter assigned. VERIFY the --allowedTools syntax against the installed CLI with tools/k7-run.py --dry-run before relying on it: an unrecognised flag would fail open into the same silent denial it replaces.",
   "_rederive_notes": "rederive_all drives the harness' own vector runner, which is tools/rederive.py - the only rederive tool in the tree. It previously named tools/rederive-impl.ts, which has never existed: a placeholder written at C4 that no check caught because MOD-02 pins no vector, so nothing invoked it. K7 round 1 (CC-5) found it by reading rather than running. It would have failed at MOD-04, the first vector-bearing module. rederive_invoke is separate and correct: it is how rederive.py drives THIS implementation, and its {entry}/{input_file} placeholders are filled per vector."
 }

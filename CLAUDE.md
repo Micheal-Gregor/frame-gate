@@ -111,6 +111,9 @@ while every module stays conformant.
 
 ## Phase 4 process contract (applies to every session in this repo)
 
+- **On a fresh clone, first:** `git config core.hooksPath .githooks` — activates the tag guard
+  (R-02). It cannot self-install; `.git/` is not versioned. Without it a `k7-pass` tag can be set on
+  a tree K7 never reviewed, which has already happened once.
 - **Governance:** `governance/Phase4_Conformance_Build_Roster.md` governs the build;
   `governance/Phase5_Utilization_Roster.md` governs environment binding. Read both before work.
 - **C4 first.** The first session runs the C4 anchor: verify the handoff's pinned semantics are

@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# R-02 - tag-guard reachability. Accepted 2026-09-10.
+#
+# tools/gate.py enforces the same rule, but only as a Claude Code PreToolUse
+# hook - so it fires for commands the AGENT runs and is invisible to a human at
+# a terminal, which is where the workflow actually assigns tagging. This hook is
+# git's own, so it fires for whoever drives.
+#
+# Activate per clone (it cannot self-install; .git/ is not versioned):
+#
+#     git config core.hooksPath .githooks
+#
+# Rule: a k7-pass-N tag requires INSTRUMENTS/k7-verdict-N.json, PASSed, whose
+# reviewed.tree_sha equals the tree being tagged. Tags are evidence, not
+# assertion.
+#
+# Note: a reviewed commit can never contain its own verdict, because committing
+# the verdict changes the tree. Tag the REVIEWED commit; the verdict lands in a
+# later one.
+#
+# FAILS CLOSED, following gate.py's doctrine that UNKNOWN halts rather than
+# proceeds. No python, unreadable verdict, unresolvable tree -> denied.
+
+[ "$1" = "prepared" ] || exit 0
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 1
+
+while read -r old new ref; do
+  case "$ref" in
+    refs/tags/k7-pass-*) ;;
+    *) continue ;;
+  esac
+
+  # A deletion (all-zero target) is left alone: `git tag -f` is a normal update,
+  # not a delete, and blocking real deletions would stop cleanup without
+  # stopping any assertion. The CREATE half is what carries the claim.
+  case "$new" in
+    0000000000000000000000000000000000000000) continue ;;
+  esac
+
+  n=${ref##*k7-pass-}
+  v="$root/INSTRUMENTS/k7-verdict-$n.json"
+
+  if [ ! -f "$v" ]; then
+    echo "gate: $ref requires INSTRUMENTS/k7-verdict-$n.json; it is absent." >&2
+    echo "      Run tools/k7-run.py. A tag without a verdict is an assertion." >&2
+    exit 1
+  fi
+
+  # python3 on Linux/macOS, python under Git Bash on Windows.
+  PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null) || PY=""
+  if [ -z "$PY" ]; then
+    echo "gate: no python on PATH; cannot read the verdict. Failing closed." >&2
+    exit 1
+  fi
+
+  want=$("$PY" -c "import json,sys
+d=json.load(open(sys.argv[1]))
+if d.get('verdict') != 'PASS': sys.exit(3)
+print(d['reviewed']['tree_sha'])" "$v" 2>/dev/null)
+  st=$?
+  if [ $st -eq 3 ]; then
+    echo "gate: $ref refused - verdict $n is not a PASS." >&2
+    exit 1
+  fi
+  if [ $st -ne 0 ] || [ -z "$want" ]; then
+    echo "gate: $ref refused - verdict $n is unreadable or malformed." >&2
+    exit 1
+  fi
+
+  got=$(git rev-parse "$new^{tree}" 2>/dev/null)
+  if [ -z "$got" ]; then
+    echo "gate: $ref refused - cannot resolve the target to a tree." >&2
+    exit 1
+  fi
+
+  if [ "$want" != "$got" ]; then
+    echo "gate: $ref refused." >&2
+    echo "      tagging tree   $got" >&2
+    echo "      verdict $n reviewed $want" >&2
+    echo "      Tag the commit K7 actually reviewed. A reviewed commit never" >&2
+    echo "      contains its own verdict - committing it changes the tree." >&2
+    exit 1
+  fi
+done
+
+exit 0

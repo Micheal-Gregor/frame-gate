@@ -4,12 +4,12 @@ Live human gate, per-abstraction. RC-3 order: resolution RECORDED first, body fi
 
 **No mid-round instruction changes.** Any change to gate rules, review scope, or K7's charter —
 even one proposed in chat — takes effect only after it appears here with the owner's disposition.
-Both entries below are **PROPOSED** and are not in force.
+Both entries below were **ACCEPTED by the owner on 2026-09-10** and are in force.
 
 | Gate | Disposition (human decision, dated) | Operationalized as |
 |---|---|---|
-| R-01 reviewer execution permissions | **PROPOSED — awaiting owner** | `reviewer_command` in `.metaframework/project.json` |
-| R-02 tag-guard reachability | **PROPOSED — awaiting owner** | `.githooks/reference-transaction` + `core.hooksPath` |
+| R-01 reviewer execution permissions | **ACCEPTED 2026-09-10** | `reviewer_command` in `.metaframework/project.json` — allowlist of the three declared commands; `acceptEdits` dropped |
+| R-02 tag-guard reachability | **ACCEPTED 2026-09-10** | `.githooks/reference-transaction`, activated per clone with `git config core.hooksPath .githooks` |
 
 ---
 
@@ -111,3 +111,33 @@ unreviewed tree and should be moved to `538c892`:
 
 This is a correction to a mis-set tag, not a rule change, and does not itself require a resolution —
 but it is recorded here because it is the evidence that motivated R-02.
+
+
+---
+
+## Implementation record — 2026-09-10
+
+**R-01** applied to `.metaframework/project.json`. **One obligation remains and is the owner's:**
+confirm `--allowedTools` is recognised by the installed CLI (`tools/k7-run.py --dry-run`). An
+unrecognised flag fails open into the same silent denial it was written to remove, and that failure
+would look exactly like success.
+
+**R-02** applied as `.githooks/reference-transaction`, exercised against this repository's real
+state before commit:
+
+| Case | Result |
+|---|---|
+| ordinary tag | allowed |
+| `k7-pass-9`, no verdict | **blocked** — names the missing file |
+| `k7-pass-2` on HEAD (tree K7 did not review) | **blocked** — names both trees |
+| `k7-pass-2` on `538c892` (the reviewed commit) | allowed |
+
+`k7-pass-2` was moved from `5316158` to `538c892`, so it now points at tree `350a2b5` — the tree
+verdict 2 records reviewing. The tag is evidence again rather than assertion.
+
+**Activation is per clone and cannot self-install**, because `.git/` is not versioned:
+
+    git config core.hooksPath .githooks
+
+Recorded in `CLAUDE.md`. If someone skips it the guard is silently absent — which is exactly today's
+situation, so the change cannot make matters worse, only better wherever it is applied.

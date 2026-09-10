@@ -9,7 +9,7 @@ every deferred vector computed from the real implementation and independently re
 
 | Module | CT-1 | CT-2 | CT-3 | CT-4 | CT-5 | CT-6 | PC enum | Status |
 |---|---|---|---|---|---|---|---|---|
-| MOD-02 ports | pass | pass | pass | REF-02 pass (7 tests) | n/a-by-absence | n/a-by-absence | PC-02 enumerated | **BUILT** - not COMPLETE: K7 unrun |
+| MOD-02 ports | pass | pass | pass | REF-02 pass (7 tests) | n/a-by-absence | n/a-by-absence | PC-02 enumerated | **BUILT** — K7 round 1 RETURN remediated, round 2 pending |
 | MOD-01 kernel | | | | n/a | n/a | n/a | PC-04 | NOT_STARTED |
 | MOD-03 catalog | | | | REF-01 | n/a | HOOK-07 | PC-02 | NOT_STARTED |
 | MOD-05 facts | | | | REF-05, REF-06 | n/a | n/a | PC-01, PC-03 | NOT_STARTED |
@@ -53,3 +53,14 @@ score its own conformance, so this row stays open.
 cannot spawn the reviewer process. This is an environment binding, not a build defect - the reviewer
 command, the agent file and the preflight are all wired and the dry run passes. Discharged by running
 `python3 tools/k7-run.py` from a logged-in Claude Code session in this repo.
+
+## MOD-02 after K7 round 1 (RETURN, drift 6)
+
+All four drift entries closed; see the drift ledger. The rung is resubmitted, not cleared: **only
+K7 raises a drift score, and the builder does not score its own conformance.** Status stays BUILT
+until round 2 returns a verdict, and `gate.py` will refuse a `k7-pass` tag until one exists.
+
+One item is deliberately left open rather than fixed: **nine further §5 `Test name` rows are broken
+the same way REF-02 was.** They are a Phase 3 defect, filed as SP-1, and fixing them in code against
+a specification that may be corrected in the other direction would be work done twice and recorded
+wrong. They will surface one rung at a time until the backflow runs.

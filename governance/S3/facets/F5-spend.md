@@ -224,11 +224,11 @@ Carried from S2 §6 (CT-6, CT-7, CT-8, CT-17, CT-19), operationalized. **Nothing
 
 | ID | MOD | Invariant / carried rule | Forbidden input | Expected rejection | Test name |
 |---|---|---|---|---|---|
-| REF-15 | MOD-11 | CT-6 — a stop condition is a location judgment and exists only where the threshold does (AE-05) | a Scope authorized **with** a stop condition while the threshold is `⊥` | `Refuse(no-bar)` — refused, not defaulted, not dropped | `test_stop_condition_refused_when_threshold_is_bottom` |
-| REF-16 | MOD-11 | CT-7 / `INV-SCOPE` — the ceiling bounds the draw | drawing the **(N+1)th** candidate under a Scope of ceiling N | `Refuse(scope-exceeded)` — no candidate, no cost | `test_draw_beyond_scope_ceiling_refused` |
-| REF-17 | MOD-11 | CT-8 / OBJ-01 prohibited forms — a Scope is spent, never edited | any edit to an appended Scope | **no such path exists** — the absence is verified structurally (no mutating signature, no `update`/`delete` reachable), not by catching a runtime error | `test_no_edit_path_exists_on_appended_scope` |
-| REF-18 | MOD-11 | CT-17 / ER-6 — the ratio is a vector in every representation | the ratio rendered, returned, stored or logged as a quotient (or summed, or averaged) | **malformed** — rejected at definition, not at runtime | `test_ratio_rendered_as_quotient_is_malformed` |
-| REF-19 | MOD-11 | CT-19 / `H-RATIO` (owner ruling DG-F4) | an AuthorizationForm for a currency **above the least** that omits the per-unit draw vector | **refused** — the form is rejected; the spend is untouched | `test_authorization_form_without_draw_vector_refused` |
+| REF-15 | MOD-11 | CT-6 — a stop condition is a location judgment and exists only where the threshold does (AE-05) | a Scope authorized **with** a stop condition while the threshold is `⊥` | `Refuse(no-bar)` — refused, not defaulted, not dropped | `test_stop_condition_without_bar_is_refused` |
+| REF-16 | MOD-11 | CT-7 / `INV-SCOPE` — the ceiling bounds the draw | drawing the **(N+1)th** candidate under a Scope of ceiling N | `Refuse(scope-exceeded)` — no candidate, no cost | `test_draw_beyond_scope_ceiling_is_refused` |
+| REF-17 | MOD-11 | CT-8 / OBJ-01 prohibited forms — a Scope is spent, never edited | any edit to an appended Scope | **no such path exists** — the absence is verified structurally (no mutating signature, no `update`/`delete` reachable), not by catching a runtime error | `test_no_mutating_signature_on_scope` |
+| REF-18 | MOD-11 | CT-17 / ER-6 — the ratio is a vector in every representation | the ratio rendered, returned, stored or logged as a quotient (or summed, or averaged) | **malformed** — rejected at definition, not at runtime | `test_ratio_as_quotient_is_malformed` |
+| REF-19 | MOD-11 | CT-19 / `H-RATIO` (owner ruling DG-F4) | an AuthorizationForm for a currency **above the least** that omits the per-unit draw vector | **refused** — the form is rejected; the spend is untouched | `test_authorization_without_ratio_is_refused` |
 
 **Positive cases — each refusal test states what is admitted, so the guard cannot pass by refusing everything.**
 

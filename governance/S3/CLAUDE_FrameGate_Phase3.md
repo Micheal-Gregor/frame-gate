@@ -44,6 +44,13 @@ the wrong one. Five of five facet agents reported this independently.
 | S1 MOD-17 ExternalRegistry | externals | MOD-02 `ports/` |
 | S1 MOD-18 DifficultyAdvisory | difficulty | MOD-13 `advisory/` |
 
+**Supersession — `s3-anchor-v1.1`, 2026-09-10.** This document's §5 is unchanged. What changed is
+the **facet slices**: ten of nineteen carried a `Test name` that disagreed with §5, so the
+authoritative row named a test that did not exist. Reconciled to §5 in all ten, per build ruling
+IR-12 (where §5 and a facet disagree, §5 governs — it is the artifact Phase 4 parses; a facet
+records how the specification was produced). `s3-anchor-v1.0` remains retrievable at its tag: this
+is a supersession, not an edit. Discharges SP-1.
+
 **Owner rulings incorporated.** DG-F1 — difficulty is advisory, read by nothing. DG-F4 — the ratio is
 surfaced at the authorization, hook `HOOK-09`, blocking the form and never the spend.
 
@@ -180,6 +187,14 @@ switch on it, so the `kind`-switch collapse is unwritable rather than merely dis
 | REF-17 | MOD-11 | scope immutability | any edit to an appended scope | no such path exists | test_no_mutating_signature_on_scope |
 | REF-18 | MOD-11 | ratio vectorial | the ratio rendered as a quotient | malformed | test_ratio_as_quotient_is_malformed |
 | REF-19 | MOD-11 | HOOK-09 | an authorization form above the least currency omitting the draw vector | refused | test_authorization_without_ratio_is_refused |
+
+**The `Test name` column is a join, and the join is checked.** `tools/checks/spec-name-join.py`
+verifies two properties separately, because they fail separately: **(A)** every row here matches the
+row in the facet slice that specified it — the check that catches the defect at emission, before any
+code exists; and **(B)** every name selects exactly one case in the suite — the check that catches it
+at build. Rows whose module is unbuilt are reported **pending**, never passing. This exists because
+ten rows were broken and nothing noticed: a row whose name resolves to nothing does not read oddly,
+it silently disables the guard it describes, and makes the mutation rule vacuous for that guard.
 
 **Positive counterparts are specified for all nineteen in the facet slices.** A guard that refuses
 everything passes no test here. Six rejections are parse-level (REF-01, REF-02, REF-06, REF-09,

@@ -343,10 +343,10 @@ is a refinement of Q-7, not a departure from it.
 
 | ID | MOD | Invariant | Forbidden input | Expected rejection | Test name |
 |---|---|---|---|---|---|
-| REF-01 | MOD-03 | INV-PROV | A derivation whose result type is `Declaration` (OBJ-13) — i.e. any definition that computes a classification and returns it as a declared one | **Malformed at parse.** The definition does not compile; no runtime path is reached and no fact is appended | `test_derivation_producing_declaration_is_malformed_at_parse` |
+| REF-01 | MOD-03 | INV-PROV | A derivation whose result type is `Declaration` (OBJ-13) — i.e. any definition that computes a classification and returns it as a declared one | **Malformed at parse.** The definition does not compile; no runtime path is reached and no fact is appended | `test_declaration_from_derivation_is_malformed` |
 | REF-01a | MOD-03 / MOD-13 | INV-PROV (second direction) | Any write path from OBJ-34 difficulty into a Declaration or into a gate `condition` | **No path exists.** The absence is structural (S-17 is one-directional; `ASSERT_ABSENT δ` holds over every gate condition), so the test asserts non-existence of a route, not a runtime refusal | `test_no_write_path_from_difficulty_to_declaration_or_gate_condition` |
 | REF-01+ | MOD-03 | INV-PROV (positive) | A declaration appended by `author = HUMAN` with no derivation in the call chain | **Succeeds.** The Declaration is appended and `declaration_at` returns it at every height at or above the append | `test_human_authored_declaration_append_succeeds` |
-| REF-02 | MOD-02 | ER-5 external isolation | Any module other than MOD-02 importing a renderer client, a hash library, or a record driver | **Malformed at parse.** The import is rejected; the violation is caught at build, not at runtime | `test_external_import_outside_ports_module_is_malformed_at_parse` |
+| REF-02 | MOD-02 | ER-5 external isolation | Any module other than MOD-02 importing a renderer client, a hash library, or a record driver | **Malformed at parse.** The import is rejected; the violation is caught at build, not at runtime | `test_external_import_outside_ports_is_malformed` |
 | REF-02+ | MOD-02 | ER-5 (positive) | The same external reached through the corresponding MOD-02 port | **Succeeds.** The call completes and the port is the only named site of the external | `test_external_reached_through_ports_module_succeeds` |
 
 REF-01a is not a new refusal test and mints no new id — it is the second clause of carried test CT-11

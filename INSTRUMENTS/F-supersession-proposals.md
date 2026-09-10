@@ -3,6 +3,8 @@
 Each proposal supersedes upstream via the Phase 3 chat project — S3 is never patched in place.
 
 ## SP-1 · Ten §5 `Test name` rows disagree with the facet slice that specified them
+
+**STATUS: DISCHARGED at `s3-anchor-v1.1`, 2026-09-10.** See the disposition at the foot of this proposal.
 *(from K7 round 1, CC-4 / CC-3 — class: handoff defect, not a build defect)*
 
 ### What K7 found, and what following it found
@@ -103,3 +105,44 @@ than it appears.
   direction.
 - Recommended handling: run this as a Phase 3 revision producing `s3-anchor-v1.1`, then re-anchor
   the build against it.
+
+
+---
+
+## SP-1 disposition — discharged at `s3-anchor-v1.1`, 2026-09-10
+
+**What was done.**
+
+1. **All ten rows reconciled**, facet → §5, per build ruling IR-12. §5 is unchanged; the facet
+   slices moved. REF-01 (F1), REF-02 (F1), REF-08/09/10 (F3), REF-15..19 (F5). Verified: no
+   pre-reconciliation name survives anywhere under `governance/`.
+2. **The join is now checked**, not assumed — `tools/checks/spec-name-join.py`. Property A
+   (§5 agrees with its facet) catches the defect at emission, before code exists, and would have
+   caught all ten. Property B (each name selects exactly one case) catches it at build. Rows for
+   unbuilt modules report **pending**, never passing — the distinction that stops an unbuilt module
+   from looking verified.
+3. **Proven against the defect**, not merely written: re-breaking a reconciled row makes the check
+   fail and name both sides; restoring it makes the check pass.
+
+**What was deliberately not done.**
+
+The **secondary observation** — that a single `Test name` per guard binds only one of six mutations
+— is **not resolved here, and must not be.** Both available fixes change a concept-agnostic asset:
+
+- *CC-6 runs the full declared suite when mutation-testing* changes **K7's charter**, which reads
+  "named tests MUST fail, invoked by the declared single-test command."
+- *§5 admits more than one `Test name` per guard* changes the **emission contract's** column set,
+  which `emission-check` pins.
+
+Neither belongs to this concept. A concept driving a change to a concept-agnostic asset is exactly
+the violation BX-14 exists to catch, and the framework's own remedy is to **raise a gate against the
+asset and halt**, the way an insufficient Appendix A is handled — never to extend it inline.
+
+**Carried forward as ODG-FG-08** (see the S3's open gates, and below): a decision gate against the
+Phase 4 roster and the K7 charter, owned upstream, not by this build. The observed fact stands on
+its own and is reproducible: `INSTRUMENTS/mutation-battery.md` round 2 records six mutations, all
+killed by the full suite, one killed by the declared selector.
+
+**What this does not fix.** Property B can only be checked where tests exist. Eighteen of nineteen
+rows are `pending` today. Each becomes checkable as its module is built, and a row that never
+resolves is a defect the check will name at that point rather than at emission.

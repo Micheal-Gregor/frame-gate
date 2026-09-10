@@ -160,11 +160,11 @@ Where a sample's scores sit **relative to a threshold**, as of a height. Locatio
 
 | ID | MOD | Invariant | Forbidden input | Expected rejection | Test name |
 |---|---|---|---|---|---|
-| REF-08 | MOD-08 | dispersion floor (CT-2) | a sample of **exactly 2** scored members, dispersion requested | `Undetermined(AE-3)` returned, carrying its cause; **no numeric result anywhere in the return**, and no interval, bound, estimate or "provisional" value | `dispersion_of_two_returns_undetermined_with_no_number` |
+| REF-08 | MOD-08 | dispersion floor (CT-2) | a sample of **exactly 2** scored members, dispersion requested | `Undetermined(AE-3)` returned, carrying its cause; **no numeric result anywhere in the return**, and no interval, bound, estimate or "provisional" value | `test_dispersion_below_floor_returns_undetermined` |
 | REF-08+ | MOD-08 | positive case | a sample of **3** scored members | a value of the chosen spread statistic's codomain is returned | `dispersion_of_three_yields_a_value` |
-| REF-09 | MOD-07 | INV-ABSENT (CT-5) | a definition whose expression combines a component value with a possibly-**ABSENT** sibling | **malformed at parse** — the definition is rejected, not the run. Not a runtime exception, not a guarded branch, not a filtered operand | `arithmetic_with_absent_sibling_is_malformed_at_parse` |
+| REF-09 | MOD-07 | INV-ABSENT (CT-5) | a definition whose expression combines a component value with a possibly-**ABSENT** sibling | **malformed at parse** — the definition is rejected, not the run. Not a runtime exception, not a guarded branch, not a filtered operand | `test_arithmetic_on_absent_component_is_malformed` |
 | REF-09+ | MOD-07 | positive case | an observation vector in which **every** component is ABSENT | accepted and stored; `is_all_absent` is true; no component is coerced to a number | `all_absent_vector_is_accepted_and_stored` |
-| REF-10 | MOD-06 | INV-SAMPLE (CT-10) | draws made under **different** ConditionIdentities, queried as one sample | **empty intersection, never a union** — the query yields the empty set; the two condition-partitions are not merged, not concatenated and not pooled | `cross_condition_sample_query_intersects_to_empty` |
+| REF-10 | MOD-06 | INV-SAMPLE (CT-10) | draws made under **different** ConditionIdentities, queried as one sample | **empty intersection, never a union** — the query yields the empty set; the two condition-partitions are not merged, not concatenated and not pooled | `test_cross_condition_sample_query_is_empty` |
 | REF-10+ | MOD-06 | positive case | draws made under the **same** ConditionIdentity | one sample containing exactly those members, with its cardinality and its closure | `same_condition_draws_form_one_sample` |
 
 The three positive cases are stated as named companions so that a refusal cannot be satisfied by a function that refuses everything.

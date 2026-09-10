@@ -105,10 +105,6 @@ export function mayDecide(author: Author): author is "HUMAN" {
   return author === "HUMAN";
 }
 
-export function mayOnlyPropose(author: Author): boolean {
-  return !mayDecide(author);
-}
-
 /**
  * OBJ-39 DigestPort - the digest used by the signature binding a derived candidate
  * to the commitment it derives from (OBJ-32, MOD-12).

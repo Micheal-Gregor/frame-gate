@@ -10,3 +10,4 @@ __pycache__/
 # Node toolchain (ADR-001). Lockfile IS tracked: a pinned toolchain is what
 # makes "same inputs, same output" a claim rather than a hope.
 node_modules/
+*.bundle 

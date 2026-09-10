@@ -27,14 +27,14 @@ Three properties this phrasing buys, each of which a weaker phrasing loses:
 3. **Containment is computed on normalised absolute paths**, so `src/ports/../facts/x.ts` cannot pose
    as a ports file.
 
-**Acceptance test:** `test_external_import_outside_ports_module_is_malformed_at_parse` (REF-02),
+**Acceptance test:** `test_external_import_outside_ports_is_malformed` (REF-02),
 with its positive counterpart `test_external_reached_through_ports_module_succeeds` (REF-02+).
 
 **Watched failing:** yes — recorded below.
 
 | Base case | Test | Red at | Green at |
 |---|---|---|---|
-| BC-02-1 refusal | `test_external_import_outside_ports_module_is_malformed_at_parse` | stub, 4/4 red | detector body |
+| BC-02-1 refusal | `test_external_import_outside_ports_is_malformed` | stub, 4/4 red | detector body |
 | BC-02-1 positive | `test_external_reached_through_ports_module_succeeds` | stub, 4/4 red | detector body |
 | BC-02-1 RD-13 tripwire | `test_sibling_specifier_spellings_resolve_to_one_file` | stub, 4/4 red | detector body |
 | BC-02-1 self-check | `test_the_real_src_tree_has_no_external_isolation_violation` | stub, 4/4 red | detector body |

@@ -22,7 +22,7 @@ const fixture = (name: string) =>
   }) as const;
 
 describe("REF-02 - external isolation", () => {
-  it("test_external_import_outside_ports_module_is_malformed_at_parse", () => {
+  it("test_external_import_outside_ports_is_malformed", () => {
     const violations = findExternalIsolationViolations(fixture("violating"));
     expect(violations).toHaveLength(1);
     const v = violations[0]!;

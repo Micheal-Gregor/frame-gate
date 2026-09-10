@@ -7,7 +7,10 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 
 | ID | Location | Drift | Score (K7) | Status |
 |---|---|---|---|---|
-| — | — | none yet; no code written | — | — |
+| DR-01 | MOD-02 · S3 §5 REF-02 row vs `tests/ports/external-isolation.test.ts` | The authoritative §5 `Test name` resolves to **zero cases** under the declared `vitest -t` command. Verified: `-t "test_external_import_outside_ports_is_malformed"` reports 7 skipped, 0 run. The refusal row does not bind to an executable case, which is the one property the `Test name` column exists to provide | **6** (K7 round 1, CC-4, deduction 4) | OPEN → addressed this round |
+| DR-02 | MOD-02 · `INSTRUMENTS/drift-ledger.md` | A handoff conflict (S3 §5 vs facet F1 on REF-02's test name) was resolved in code with no Interpretation Register entry and no F-supersession proposal | **6** (K7 round 1, CC-3, deduction 2) | OPEN → addressed this round |
+| DR-03 | MOD-02 · `src/ports/index.ts:108` | `mayOnlyPropose` is exported, unused, untested, and named nowhere in S3 OBJ-38 | **6** (K7 round 1, CC-7, deduction 1) | OPEN → addressed this round |
+| DR-04 | `.metaframework/project.json` | `rederive_all` names `tools/rederive-impl.ts`, which does not exist; the repo's driver is `tools/rederive.py`. Not blocking at MOD-02 (no vectors) but blocks MOD-04 | (K7 round 1, CC-5, no deduction — out of MOD-02 scope) | OPEN → addressed this round |
 
 ## Interpretation Register (decisions the handoff did not make)
 

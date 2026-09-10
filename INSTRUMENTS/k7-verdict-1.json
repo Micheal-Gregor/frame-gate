@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 1,
+  "reviewed": {
+    "tree_sha": "dc9b6d8fb79e8e4df5c2b8118b0fb8dcf3c43db6",
+    "commit_sha": "34cc3ac4e7c9073196dfb5848fed4b68161b52f4",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "(all)"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-09-10T05:30:23+00:00",
+    "completed_at": "2026-09-10T05:37:23+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": null,
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Reasoned from reading (toolchain could not execute). src/ports/index.ts declares all five MOD-02 nodes and only those: OBJ-35 RecordPort (line 41), OBJ-36 RendererPort (60), OBJ-37 DispatchPort (83) with DISPATCH_SEMANTICS (81), OBJ-38 AuthorEnum/AUTHORS/mayDecide (100-106), OBJ-39 DigestPort (123). INSTRUMENTS/object-model-and-parameters.md:11 traces MOD-02->OBJ-35..OBJ-39 to src/ports/index.ts, and S3 \u00c2\u00a72:59 / \u00c2\u00a73:89-93 admit exactly these. No orphan export; no MOD-02 S3 node lacks a destination."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Read code paths, not test names. Append-only (SEAM-06/SEAM-20) is honored by absence: RecordPort exposes only append/readAsOf with no mutator (index.ts:41-44), so update/delete has nothing to call. DG-F3/SEAM-24 dispatch semantics are cited verbatim, never restated: DISPATCH_SEMANTICS='A scope is spent by dispatch, not by return.' (index.ts:81) matches DG-F3's canonical wording. SEAM-25 author-propose-only: mayDecide narrows to \"HUMAN\" (index.ts:104). External isolation (SEAM-20) is enforced by resolve+containment in tools/checks/external-isolation.ts, not a name scan. This is a declarative interface module with no exception/error code paths -> untraced-halt/dropped-link class N/A-by-absence."
+    },
+    "CC-3": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "The frozen S3 gives REF-02 two different Test names: the authoritative \u00c2\u00a75 table (governance/S3/CLAUDE_FrameGate_Phase3.md:165) says 'test_external_import_outside_ports_is_malformed', while facet F1 (governance/S3/facets/F1-kernel-ports.md:349) says 'test_external_import_outside_ports_module_is_malformed_at_parse'. The builder implemented F1's name (tests/ports/external-isolation.test.ts:25) - a resolution of conflicting handoff text - but registered NO Interpretation Register entry (INSTRUMENTS/drift-ledger.md IR-01..IR-10 contain none addressing it) and filed no F-supersession proposal (F-supersession-proposals.md is still the template). The process contract requires every decision the handoff did not make to be registered; this one was made silently. Minor adjacent note: mayOnlyPropose (index.ts:108) is an exported helper not named in S3 OBJ-38 and is unregistered, though benign."
+    },
+    "CC-4": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Could not execute the declared full suite: node is blocked in the reviewer sandbox ('node -e', 'node node_modules/vitest/...' and 'npx tsc' all returned 'requires approval'/denied), so `npx tsc --noEmit && npx vitest run` never ran and the completion-ledger.md:44 claim of '7 tests green' is unverified by me. Independent of execution, a concrete failure: the authoritative S3 \u00c2\u00a75 row for REF-02 (line 165) names 'test_external_import_outside_ports_is_malformed', which does not exist in the suite. The only REF-02 case is 'test_external_import_outside_ports_module_is_malformed_at_parse' (external-isolation.test.ts:25); 'ports_is_malformed' is not a substring of 'ports_module_is_malformed_at_parse', so the declared command `npx vitest run -t \"test_external_import_outside_ports_is_malformed\"` resolves to zero cases. Per CC-4 a \u00c2\u00a75 refusal row naming a non-existent test is a failure."
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": false,
+      "rationale": "MOD-02 pins no golden vector (S3 \u00c2\u00a76:201 lists MOD-02 under 'pin no value - N/A-by-absence'), so there is nothing in scope to re-derive. Separately, the re-derive command I was handed, `npx tsx tools/rederive-impl.ts --all`, cannot run: no such file exists (Glob over the tree finds only tools/rederive.py), and the repo's actual, working invocation is 'rederive.py --all' (INSTRUMENTS/C4-anchor-record.md:57). node execution was blocked regardless. This blocks no MOD-02 obligation but the command/tool mismatch must be reconciled before a vector-bearing module (MOD-04/VEC-01) reaches this gate."
+    },
+    "CC-6": {
+      "status": "not_applicable",
+      "mechanical": false,
+      "rationale": "MOD-02 registers no hook: S3 \u00c2\u00a77:208-217 lists none for MOD-02 and completion-ledger.md:12 records CT-6 as n/a-by-absence, so the two mandatory hook experiments are N/A-by-absence. The load-bearing artifact in this rung is the REF-02 detector; by reading, it RESOLVES specifiers via ts.resolveModuleName and tests CONTAINMENT on normalised absolute paths (external-isolation.ts:49-53,74-83), not a text scan, and its suite covers sibling spellings, the src/portsmith lookalike, reexport/dynamic-import, and resolves-outside-src. I could NOT independently reproduce the documented six-kill mutation battery (INSTRUMENTS/mutation-battery.md) because node execution is blocked and a /tmp mutation copy could not be run; those kills therefore remain builder claims unverified by me."
+    },
+    "CC-7": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Scored four dimensions. Object-model fidelity 9 (all five OBJ faithfully typed; append-only by absence; verbatim dispatch citation). Base-case support 8 (BC-02-1 written first, watched failing 4/4, strengthened with the portsmith lookalike). Extensibility 8 (ports parameterised over kernel types per IR-09; no external named outside ports/). Verification strength 6 (worst dimension): the module's sole refusal row does not resolve to a test under the declared single-test command, and the \u00c2\u00a75-vs-F1 conflict is unregistered. Value is the MIN = 6. Code-quality drift noted: mayOnlyPropose (index.ts:108) is exported but unused and untested; no tautological or vacuous assertions found in the REF-02 suite."
+    }
+  },
+  "drift_score": {
+    "value": 6,
+    "basis": [
+      {
+        "check_id": "CC-4",
+        "finding": "Worst dimension: verification strength. MOD-02's only refusal row (S3 \u00c2\u00a75 REF-02, CLAUDE_FrameGate_Phase3.md:165) names 'test_external_import_outside_ports_is_malformed', which resolves to zero test cases under the declared `vitest run -t` command; the real test is named differently (external-isolation.test.ts:25).",
+        "deduction": 4
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Interpretation hygiene: the S3 \u00c2\u00a75 vs facet-F1 REF-02 test-name conflict was resolved in code without an Interpretation Register entry or F-supersession proposal (drift-ledger.md IR-01..IR-10; F-supersession-proposals.md still template).",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Code-quality drift: mayOnlyPropose (src/ports/index.ts:108) is an exported, unregistered, unused and untested helper.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-4",
+      "module": "MOD-02 ports",
+      "required_change": "Make REF-02's authoritative S3 \u00c2\u00a75 Test name resolve to the real case: the property that must hold is that `npx vitest run -t \"<REF-02 \u00c2\u00a75 Test name>\"` selects exactly the external-isolation refusal test. Reconcile the \u00c2\u00a75 name ('test_external_import_outside_ports_is_malformed') with the implemented/facet name ('test_external_import_outside_ports_module_is_malformed_at_parse') via backflow to Phase 3 (S3 is frozen; do not edit in place). Do not supply the rename in code via the gate - the builder performs it."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-02 ports",
+      "required_change": "Register the decision that resolved the S3 \u00c2\u00a75-vs-facet-F1 REF-02 test-name conflict: add an Interpretation Register entry (and, if the \u00c2\u00a75 row is to change, an F-supersession proposal) so the choice of name is recorded rather than silent. The property: every handoff conflict the builder resolved has a logged interpretation."
+    }
+  ],
+  "next_action": "Reconcile REF-02's \u00c2\u00a75 test name so the authoritative refusal row resolves and register the \u00c2\u00a75-vs-F1 conflict, then re-run the full declared suite to green in an environment where node executes and resubmit MOD-02 for K7."
+}

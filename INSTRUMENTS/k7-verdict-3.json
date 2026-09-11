@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 3,
+  "reviewed": {
+    "tree_sha": "b83e6d7e13bbaa81b0ae87bf21b61c7e83671d76",
+    "commit_sha": "92484dd9e4b9e4b2debe70d02e25aeeb07611c0e",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "(all)"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-09-10T07:38:50+00:00",
+    "completed_at": "2026-09-10T07:44:01+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 2,
+    "prior_tree_sha": "350a2b5b5f8802437c8728e3efc4fdd445d4ee53",
+    "prior_failing_checks": [],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Reasoned from source + trace map. src/kernel/index.ts owns OBJ-01 AppendedFact (172), OBJ-02 Projection (158) with PROJECTION_MEMBERS ten-name list (130-141), OBJ-03 Gate (191), OBJ-04 UnknownValue closed-at-five (67-72), OBJ-10 RecordHeight (28-29); src/ports/index.ts owns OBJ-35 RecordPort (41), OBJ-36 RendererPort (60), OBJ-37 DispatchPort (83)/DISPATCH_SEMANTICS (81), OBJ-38 AuthorEnum (100-104), OBJ-39 DigestPort (119). Both trace in INSTRUMENTS/object-model-and-parameters.md:11-12 and are admitted at S3 \u00c2\u00a72:65-66 and \u00c2\u00a73:91-100. No orphan code; all other modules NOT_STARTED with no source files. No S3 node in scope lacks a destination."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Read code paths, not test names. Append-only by absence: RecordPort exposes only append/readAsOf (ports:41-44); AppendedFact fields readonly (kernel:172-176); no update/delete surface exists. Gate.onFail is required, not optional (kernel:196), and typed to a single UnknownValue member. DISPATCH_SEMANTICS is the verbatim external citation, never restated (ports:81), matching S3 DG-F3/SEAM-24. UnknownValue is a closed five-member union (kernel:67-72); isUnknown answers whether-not-which (93-101); no total boolean/null conversion. `npx tsc --noEmit` exits 0, so these type-level rules hold at parse. Exception/error paths are N/A-by-absence (declarative interface + type modules). Rules verified from code + compiler, independent of the failing suite."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "No behavior beyond registered interpretations. The parameterised bases are registered IR-17 (drift-ledger:30) and the nominal Projection brand is IR-18 (:31); IR-01 governs tagged BOTTOM/ABSENT. The kernel exports the ten-name PROJECTION_MEMBERS list and NO membership predicate (kernel:121, 130-143) \u00e2\u20ac\u201d the self-reliance point, per S3 \u00c2\u00a711:331-335 \u00e2\u20ac\u201d so OBJ-34 cannot rejoin by shape. No unregistered mechanism the suite depends on was found. Interpretation Register covers every kernel/ports decision the handoff left open."
+    },
+    "CC-4": {
+      "status": "fail",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit && npx vitest run",
+        "exit_code": 1
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all",
+        "exit_code": 2
+      }
+    },
+    "CC-6": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "MOD-01/MOD-02 register no S3 \u00c2\u00a77 hook, so the hook divergence/mutation experiments are N/A-by-absence. But the load-bearing parse-level guards ARE the deliverable here, and their falsifiability is void in the reviewed environment: `npx vitest run -t \"test_gate_without_on_fail_does_not_compile\"` (BC-01-4) exits 1 on the CLEAN tree with `spawnSync npx.cmd EINVAL` \u00e2\u20ac\u201d the fixture-compile harness (tests/kernel/kernel.test.ts:46-49 spawns npx.cmd via execFileSync without shell) never runs. A named guard test that is RED on the unmutated tree cannot distinguish a mutation kill from a permanent error, so CC-6's mandatory experiment cannot be performed for BC-01-3/BC-01-4 and the builder's recorded MOD-01 K3/K4 kills (mutation-battery \u00c2\u00a7Round 3) are unreproducible by the gate. The AST/runtime-based checks (BC-01-1/2/5) do run; the compile-fixture-based ones do not. No /tmp mutation was run because the base is already red \u00e2\u20ac\u201d that is the finding."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Four dimensions. Object-model fidelity 9: kernel and ports faithfully typed, tsc clean, verbatim dispatch citation, no orphan export. Axiom coverage 7: the carried invariants are encoded in the types, but two (append-only BC-01-3, ON_FAIL BC-01-4) have no operative verification in this environment. Base-case support 4 (WORST): the declared full suite fails 6/16 \u00e2\u20ac\u201d BC-01-3 and BC-01-4 error via spawnSync npx.cmd EINVAL and never verify, and the \u00c2\u00a75 refusal test REF-02 test_external_import_outside_ports_is_malformed plus two siblings fail on hard-coded POSIX path separators (external-isolation.test.ts:29,58,80); the suite the completion ledger's 'BUILT = suite green' rests on is not green where the gate runs. Extensibility 8: parameterised bases (IR-09/IR-17) let ports/kernel compile in build order. MIN = 4, a demonstrated verification gap. Tree byte-identical to HEAD before and after the battery except STATE.json."
+    }
+  },
+  "drift_score": {
+    "value": 4,
+    "basis": [
+      {
+        "check_id": "CC-4",
+        "finding": "Worst dimension: base-case support. The declared full suite `npx tsc --noEmit && npx vitest run` exits 1 (6/16 failing). MOD-01 base cases BC-01-3/BC-01-4 error with spawnSync npx.cmd EINVAL (kernel.test.ts:46) and never run; the \u00c2\u00a75 refusal test REF-02 and two siblings fail on POSIX-only path assertions (external-isolation.test.ts:29,58,80). The recorded '16 tests passing' baseline is falsified on execution.",
+        "deduction": 6
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "Falsifiability of the load-bearing parse-level guards is void: the named test for BC-01-4 is RED on the clean tree via the declared single-test command (exit 1, spawnSync EINVAL), so a mutation kill is indistinguishable from a permanent error and the builder's MOD-01 K3/K4 mutation kills are unreproducible by the gate.",
+        "deduction": 5
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-4",
+      "module": "MOD-01 kernel / MOD-02 ports",
+      "required_change": "The declared full suite must execute and pass in the environment the gate runs in, not only on the builder's unstated platform. Two portability defects make it red here: (a) the fixture-compile harness at tests/kernel/kernel.test.ts:46 spawns npx.cmd through execFileSync without a shell, throwing EINVAL on Windows so BC-01-3/BC-01-4 never run; (b) tests/ports/external-isolation.test.ts:29,58,80 assert forward-slash path suffixes that never match backslash-separated resolved paths. Property that must hold: every declared refusal/base-case test executes and asserts on normalised paths so the suite is green wherever the declared command is run. I name the property; I do not supply the fix."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-01 kernel",
+      "required_change": "The parse-level guard tests BC-01-3 and BC-01-4 must be GREEN-on-clean and RED-on-mutation under the declared single-test command, so their falsifiability can be exercised. Currently they are RED-on-clean (spawnSync EINVAL), which nullifies the CC-6 mutation experiment and leaves the append-only and ON_FAIL guards unverified by any run the gate can perform."
+    }
+  ],
+  "next_action": "Make the committed test suite pass under `npx tsc --noEmit && npx vitest run` in the gate's own environment \u00e2\u20ac\u201d fix the npx.cmd spawn and the POSIX-only path assertions \u00e2\u20ac\u201d then resubmit for a re-executed round-3 verdict."
+}

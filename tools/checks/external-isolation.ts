@@ -22,9 +22,16 @@
 import ts from "typescript";
 import { readdirSync, statSync } from "node:fs";
 import { isAbsolute, join, resolve, sep } from "node:path";
+import { reported, type ReportedPath } from "./reported-path.js";
 
 export interface ExternalImportViolation {
-  readonly file: string;
+  /**
+   * Platform-stable (K7 round 3, CC-4). Containment below is computed on the
+   * HOST-spelled absolute path, because that is what `sep` compares; only the
+   * path that leaves this module is respelled, so a caller's assertion means the
+   * same thing on every host.
+   */
+  readonly file: ReportedPath;
   readonly specifier: string;
   readonly reason: "resolves-outside-src" | "unresolved-builtin";
 }
@@ -147,9 +154,9 @@ export function findExternalIsolationViolations(
     for (const specifier of specifiersOf(file)) {
       const r = resolveSpecifier(file, specifier);
       if (r.resolved === null) {
-        violations.push({ file, specifier, reason: "unresolved-builtin" });
+        violations.push({ file: reported(file), specifier, reason: "unresolved-builtin" });
       } else if (!contains(scope.srcRoot, r.resolved)) {
-        violations.push({ file, specifier, reason: "resolves-outside-src" });
+        violations.push({ file: reported(file), specifier, reason: "resolves-outside-src" });
       }
     }
   }

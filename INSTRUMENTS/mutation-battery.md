@@ -141,3 +141,53 @@ The absence properties — `..._exports_no_projection_membership_predicate` and
 `..._exposes_no_height_arithmetic` — were **green throughout the red phase**, because absence is
 honestly true of a stub. They are pinned here instead: K5 and K8 add exactly what they forbid, and
 both die. An absence property that no mutation attacks is a property nobody has tested.
+
+---
+
+## Round 4 — portability, after K7 round 3 RETURN (drift 4)
+
+The gate ran the declared suite for the first time (CC-4 `"mechanical": true`, exit 1) and found
+what two rounds of reading could not: **the suite was green only on the host that wrote it.** Two
+defects, both platform, both in code the previous rounds had passed.
+
+The mutations below attack the *rule*, not the two call sites. The build happens on Linux and the
+gate runs on Windows; a fix that repaired only the instances would ship the same class at MOD-03.
+
+| # | Mutation | Result | Killed by |
+|---|---|---|---|
+| N1 | `respell` returns the path unchanged | KILLED (test) | `test_windows_separators_are_respelled_as_forward_slashes` |
+| N2 | `reported()` skips `respell`, returns `resolve()` raw | **SURVIVED** | — see below |
+| N3 | Spawn check inverts its node-binary test (admits names, flags node) | KILLED (test) | 4 cases |
+| N4 | Spawn check flags every spawn — passes by refusing everything | KILLED (test) | `test_spawning_the_node_binary_or_forking_is_admitted` |
+| N5 | Spawn check text-matches `"npx"` instead of reading the argument | KILLED (test) | `test_any_command_name_is_a_defect_not_just_the_one_that_broke` |
+| N6 | Spawn check ignores its exclude list | KILLED (test) | `test_the_real_tools_and_tests_trees_spawn_only_node` |
+| N7 | Kernel test goes back to spawning `npx.cmd` | KILLED (test) | `test_the_real_tools_and_tests_trees_spawn_only_node` |
+| N8 | External-isolation casts around the brand to report a raw host path | **SURVIVED** | — see below |
+| N8b | External-isolation reports the raw host path, no cast | KILLED (tsc) | type error at `file` |
+| N9 | Spawn check admits a shell command string | KILLED (test) | `test_handing_a_command_string_to_a_shell_is_a_portability_defect` |
+| N10 | Spawn check narrows its file sweep to `.mjs`/`.cjs`, skipping the `.ts` tests | KILLED (test) | 3 cases |
+
+**Nine of eleven killed. Two survive, for one reason, and it is disclosed rather than repaired.**
+
+### The two survivors are the same survivor
+
+On this host `path.sep` is already `/`, so `respell` is the identity and `reported(p)` is
+extensionally equal to `resolve(p)`. **No test that can run here can tell them apart.** N2 deletes
+the respelling at the one composition site; N8 casts past the brand. Both are invisible on Linux
+and both die on any host where the separator differs — which is the host the gate runs on, and the
+host neither can be run on from here.
+
+This is the declared self-reliance point of `tools/checks/reported-path.ts`, and it is guarded by
+construction rather than by test:
+
+- `respell` — which does all the work — **is** tested on both arms, because the separator is passed
+  in rather than read from the environment. A platform you cannot run is still a platform you can
+  pass in, and that is the whole reason the function takes an argument it appears not to need.
+- `reported` is one line, has no branches, and is the **only** place in the tree that asserts the
+  `ReportedPath` brand. N8's cast is not a mutation of the guard; it is someone deliberately writing
+  `as unknown as ReportedPath`, which defeats any brand in any language and is visible on sight.
+- N8b — the *accidental* form, assigning a raw string — is killed by the compiler, and `tsc --noEmit`
+  sits inside `test_command`, so it is killed wherever the gate runs.
+
+Claiming these two as kills would be claiming a run this host cannot perform. K7 round 2 credited
+disclosure of exactly this shape; the alternative is a battery that reports green by not looking.

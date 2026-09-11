@@ -9,8 +9,8 @@ every deferred vector computed from the real implementation and independently re
 
 | Module | CT-1 | CT-2 | CT-3 | CT-4 | CT-5 | CT-6 | PC enum | Status |
 |---|---|---|---|---|---|---|---|---|
-| MOD-02 ports | pass | pass | pass | REF-02 pass (7 tests) | n/a-by-absence | n/a-by-absence | PC-02 enumerated | **BUILT** — K7 round 1 RETURN remediated, round 2 pending |
-| MOD-01 kernel | pass | pass | pass | n/a-by-absence | n/a-by-absence | n/a-by-absence | PC-04 enumerated | **BUILT** — K7 pending |
+| MOD-02 ports | pass | pass | pass | REF-02 pass (7 tests) | n/a-by-absence | n/a-by-absence | PC-02 enumerated | **BUILT** — `k7-pass-2`; reopened by round 3 CC-4 (POSIX-only path assertions), remediated |
+| MOD-01 kernel | pass | pass | pass | n/a-by-absence | n/a-by-absence | n/a-by-absence | PC-04 enumerated | **BUILT** — K7 round 3 RETURN (drift 4) remediated, round 4 pending |
 | MOD-03 catalog | | | | REF-01 | n/a | HOOK-07 | PC-02 | NOT_STARTED |
 | MOD-05 facts | | | | REF-05, REF-06 | n/a | n/a | PC-01, PC-03 | NOT_STARTED |
 | MOD-04 reachability | | | | REF-03 | VEC-01 | HOOK-01 | PC-05 | NOT_STARTED |
@@ -64,3 +64,23 @@ One item is deliberately left open rather than fixed: **nine further §5 `Test n
 the same way REF-02 was.** They are a Phase 3 defect, filed as SP-1, and fixing them in code against
 a specification that may be corrected in the other direction would be work done twice and recorded
 wrong. They will surface one rung at a time until the backflow runs.
+
+## MOD-01 after K7 round 3 (RETURN, drift 4)
+
+Both blocking items closed, and closed as rules rather than as the two call sites that failed.
+
+**CC-4 — the declared suite must be green where the gate runs.** It was green on Linux and red on
+Windows, and nothing in three rounds had distinguished those two hosts. The fixture compile now
+spawns the Node binary at an absolute script path instead of reaching a `.cmd` shim through `npx`
+(IR-21), and every path a check reports is branded platform-stable (IR-19). `tools/checks/spawn-portability.ts`
+holds the first rule for the whole tree (IR-20) so the next module cannot reintroduce it.
+
+**CC-6 — the parse-level guards must be green-on-clean.** They are: BC-01-3 and BC-01-4 run again,
+because the process they depend on starts. Their falsifiability is re-established in battery round 4
+rather than asserted — N7 restores the old spawn and dies.
+
+24 tests green, `tsc --noEmit` clean, eleven mutations run, nine killed, two disclosed.
+
+**Status stays BUILT.** Drift 4 is below the floor of 7, so no new module opens — MOD-03 stays shut
+until a fresh verdict lifts it. The builder does not raise its own drift score, and a remediation is
+not a verdict.

@@ -9,7 +9,7 @@
   "current_module": "MOD-01",
   "k7_round": 0,
   "last_gate_tag": "",
-  "next_action": "Run K7 round 3 on MOD-01 kernel (python tools/k7-run.py). R-01 is in force, so the reviewer should now be able to execute the declared commands - if it still reports denials, that is the --allowedTools syntax and needs checking before the verdict is trusted. On PASS: tag k7-pass-3 AT THE REVIEWED COMMIT, then build MOD-03 catalog (unblocked by s3-anchor-v1.1).",
+  "next_action": "K7 round 4. FIRST commit INSTRUMENTS/k7-verdict-3.json (it is the round-3 artifact and belongs in the tree), THEN pull this remediation, THEN run python tools/k7-run.py. Round 3 executed for the first time (R-01 works) and returned drift 4 on two platform defects: a .cmd spawn and POSIX-only path assertions. Both are closed as RULES - IR-19 branded reported paths, IR-20 the spawn check, IR-21 fixture-compiles as plain .mjs. What to watch on round 4: CC-4 must be mechanical AND exit 0 this time; if it is still red the remaining failure is a platform fact this host cannot see and must be read from the verdict, never guessed. Drift 4 is below the floor of 7, so MOD-03 catalog stays shut until a verdict lifts it.",
   "blocked_on": null,
   "updated_at": "2026-09-10T07:29:12+00:00",
   "updated_by": "manual"

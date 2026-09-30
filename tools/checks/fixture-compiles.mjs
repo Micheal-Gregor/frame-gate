@@ -7,6 +7,15 @@
  * not. Keeping it here also matches MOD-02's shape - the detector is a tool,
  * the test is thin.
  *
+ * PLAIN JS, deliberately (K7 round 3, CC-4). As TypeScript this file could only
+ * be launched through a loader, and the test reached that loader through `npx`.
+ * Node refuses to spawn a `.cmd` shim without a shell (EINVAL, since the fix for
+ * CVE-2024-27980), so on Windows the spawn threw and BC-01-3 / BC-01-4 never ran
+ * - RED on a clean tree, which makes a mutation kill indistinguishable from a
+ * permanent error. Stripping the annotations removes the loader, which removes
+ * the shim, which removes the platform. Its correctness is established by the
+ * base cases it feeds: if this file breaks, BC-01-1..5 go red.
+ *
  * Output: one JSON object, {fixture: {count, messages}}.
  */
 import ts from "typescript";
@@ -32,7 +41,7 @@ const program = ts.createProgram(
   },
 );
 
-const out: Record<string, { count: number; messages: string[] }> = {};
+const out = {};
 for (const f of fixtures) {
   const sf = program.getSourceFile(resolve(dir, f));
   const d = [

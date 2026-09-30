@@ -39,13 +39,19 @@ function kernelSource(): ts.SourceFile {
  * heap inside a vitest worker - the work is identical, the host is not. Spawning
  * the checker keeps it inside `test_command` (so it remains a gate) without
  * putting the checker in the worker.
+ *
+ * It spawns the NODE BINARY at an absolute script path, never a command name
+ * (K7 round 3, CC-4). The previous form reached a `.cmd` shim through `npx`, and
+ * Node refuses to spawn one without a shell - so this threw EINVAL on Windows and
+ * BC-01-3 / BC-01-4 were red on a clean tree. tests/checks/spawn-portability
+ * now holds that rule for the whole tree.
  */
 let compiled: Record<string, { count: number; messages: string[] }> | undefined;
 function fixtures(): Record<string, { count: number; messages: string[] }> {
   if (compiled === undefined) {
     const raw = execFileSync(
-      process.platform === "win32" ? "npx.cmd" : "npx",
-      ["tsx", "tools/checks/fixture-compiles.ts"],
+      process.execPath,
+      [resolve(repo, "tools/checks/fixture-compiles.mjs")],
       { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 },
     );
     compiled = JSON.parse(raw) as Record<string, { count: number; messages: string[] }>;

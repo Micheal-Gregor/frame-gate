@@ -175,7 +175,16 @@ def main() -> int:
                   "violations": struct["violations"] + em["violations"]}
 
     if not clean_before:
-        return die("working tree is dirty; K7 reviews a committed tree only")
+        # IR-22: name it. The previous round's own verdict file is the usual cause -
+        # the runner writes INSTRUMENTS/k7-verdict-N.json and then requires the tree
+        # it just dirtied to be clean - and an unnamed refusal sends the reader to
+        # STATE.json, which is excluded and therefore never the answer.
+        porcelain = git(root, "status", "--porcelain", "--", ".", ":(exclude)STATE.json")
+        for line in porcelain.splitlines()[:20]:
+            print(f"  {line}", file=sys.stderr)
+        return die("working tree is dirty; K7 reviews a committed tree only. "
+                   "Commit the lines above (a prior verdict is evidence and belongs "
+                   "in the tree) or discard them, then re-run.")
     if struct["status"] == "fail":
         for v in struct["violations"][:10]:
             print(f"  {v.get('file','')}: {v.get('rule')}: {v.get('detail')}",

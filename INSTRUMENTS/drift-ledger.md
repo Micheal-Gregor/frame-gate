@@ -35,6 +35,11 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-13 | **`rederive_all` corrected to `python3 tools/rederive.py --all`.** It named `tools/rederive-impl.ts`, a placeholder written at C4 that has never existed. No check caught it because MOD-02 pins no vector, so nothing ever invoked it — it would have failed at MOD-04, the first vector-bearing module. `rederive_invoke` is a different key and was already correct: it is how the runner drives *this* implementation, with per-vector placeholders | benign | local |
 | IR-12 | **Where S3 §5 and a facet slice disagree on a `Test name`, §5 governs.** The emission contract makes §5's table the artifact Phase 4 parses and the field that "makes CC-4 and CC-6 mechanical"; a facet slice is the record of how the specification was produced, not the specification. So the REF-02 test was renamed in code to §5's `test_external_import_outside_ports_is_malformed` rather than superseding §5 to carry F1's name. **This resolves the instance; it does not resolve the class** — nine further rows disagree, and that goes to backflow as SP-1, because a frozen record that contradicts itself will keep producing this defect one rung at a time | latent | local + F-supersession SP-1 |
 
+| IR-19 | **A reported path is branded and platform-stable.** `tools/checks/reported-path.ts` introduces `ReportedPath` and `reported()`, and every path a check hands to a caller goes through it. K7 round 3 (CC-4) found `v.file.endsWith("src/facts/index.ts")` asserting a PLATFORM where it meant a PROPERTY: true on POSIX, false against a backslash-separated path. Fixing the assertions would have fixed two lines; branding the field makes the class unwritable, and `tsc --noEmit` is inside `test_command`, so the guard runs wherever the gate runs. Containment inside the detector is still computed on the HOST-spelled path, because that is what `sep` compares — only the value that leaves the module is respelled | benign | local; RD-12 |
+| IR-20 | **Every child process this repo starts must be the Node binary.** `tools/checks/spawn-portability.ts` refuses a spawn whose command is a NAME (resolved by the host, and the hosts disagree) or a command STRING handed to a shell (parsed by cmd.exe here and sh there). `fork` is admitted: it takes a module path and launches Node by construction. The check reads the AST and asks what the first ARGUMENT is — a text scan for `npx` would pass the moment someone wrote a different command name, which is the same defect in another spelling (RD-13). **This is the rule, not the call site**: the build happens on Linux and the gate runs on Windows, and without a rule the next module ships the same defect | benign | local; RD-12, RD-13 |
+| IR-21 | **`tools/checks/fixture-compiles` is plain JavaScript, not TypeScript.** As `.ts` it could only be launched through a loader, and the test reached that loader through `npx` — whose Windows form is a `.cmd` shim that Node has refused to spawn without a shell since the fix for CVE-2024-27980. So the spawn threw `EINVAL`, BC-01-3 and BC-01-4 never ran, and they were **RED on a clean tree**: a named guard test that is red before any mutation cannot distinguish a kill from a permanent error, which is what voided K7's CC-6 experiment. Stripping the annotations removes the loader, which removes the shim, which removes the platform. The file loses static typing and keeps its verification: if it breaks, BC-01-1..5 go red | benign | local |
+| IR-22 | **`tools/k7-run.py` now names what is dirty when it refuses.** The refusal was correct and its message was not: `working tree is dirty` sent two readers to `STATE.json` when the actual cause was `INSTRUMENTS/k7-verdict-3.json` — **the runner's own output from the previous round**, which dirties the tree it then requires clean. The gate's behaviour is unchanged (same condition, same exit); it prints the porcelain lines. Not an RD-15 charter change, on the IR-11 precedent: what K7 examines and how it scores are untouched | benign | local |
+
 ## Log
 
 - **2026-09-09 — ledger opened at C4 anchor.** S3 anchored at `s3-anchor-v1.0`; emission gate clean;
@@ -46,3 +51,20 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   that did not close is deliberate: nine further §5 test-name rows are broken and stay OPEN, because
   they are a Phase 3 defect and renaming code against a specification that may be corrected in the
   other direction is work done twice and recorded wrong. Filed as SP-1.
+
+- **2026-09-10 — K7 round 3 RETURN (drift 4). The first round the gate actually executed.**
+  R-01 worked: CC-4 and CC-5 came back `"mechanical": true` with exit codes, where rounds 1 and 2
+  were both scored by reading. The first thing execution bought was a finding two rounds of careful
+  reading had missed — **the committed suite was green only on the host that wrote it.** Sixteen
+  tests passed on Linux; six failed on Windows. The kernel's fixture compile spawned a `.cmd` shim
+  Node will not start without a shell, so the two base cases it feeds were red on a clean tree; and
+  the REF-02 refusal test plus two siblings compared resolved paths against POSIX spellings.
+
+  The lesson is not the two bugs. It is that **"the suite is green" is a claim about a host**, and
+  for three rounds nothing in this build distinguished the builder's host from the gate's. IR-19 and
+  IR-20 turn both instances into rules that fail on the machine that cannot run the other one.
+
+  Remediated in full: 24 tests green, `tsc` clean, mutation battery round 4 run (nine of eleven
+  killed, two disclosed as the constructor's self-reliance point and unfalsifiable on this host by
+  construction). Status stays BUILT — **only K7 raises a drift score**, and drift 4 is below the
+  floor of 7, so no new module opens until a fresh verdict lifts it.

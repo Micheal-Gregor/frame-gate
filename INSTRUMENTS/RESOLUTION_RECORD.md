@@ -38,6 +38,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-28 which refusal answers when several guards fail | **ACCEPTED 2026-10-12** (owner, live gate) | Admission (MOD-04), then `from` (MOD-05), then the signature (MOD-12), then the scope ceiling (MOD-11); the first failure answers and nothing is appended |
 | R-29 the reviewer model for K7 round 8 (MOD-05) | **ACCEPTED 2026-10-12** (owner, live gate) | Fable 5.1, as round 7 (R-13): a different model from the builder (Opus 5.5) keeps the review distinct in model as well as process. `reviewer_command` unchanged |
 | R-30 IR-53: a unit with no independence act cannot draw at the least currency | **ACCEPTED 2026-10-12** (owner, live gate) | Keep the built behaviour (the S3 and R-10 read literally) and route the question upstream as an addendum to SP-2; no code change |
+| R-31 K7 round 8 triage (MOD-05 RETURN, drift 5): the fix round | **ACCEPTED 2026-10-12** (owner, live gate) | DR-27/28: the candidate BINDS its draw context (REF-05 by construction; S-14's never-re-read; the candidate-to-context key); R-28's order becomes admission → context → from → signature → ceiling. DR-29: `paths` DECIDES appends through generic relays; act-signatures REGISTERS open members of library types as a limit. WI-06: COMMIT_GATE pinned by a test |
 
 ---
 
@@ -718,4 +719,27 @@ declaration, and the S3 never says what a non-independent unit derives from ther
 Keep the behaviour as built, which reads the S3 and R-10 literally. The question goes to the
 owner's Phase 3 revision run as an addendum to SP-2. No code changes. IR-53 stays latent until
 Phase 3 answers it.
+
+## R-31 · K7 round 8 triage: MOD-05's one fix round
+
+**Owner, 2026-10-12, live gate.** Round 8 returned MOD-05 at drift 5 (DR-27..DR-29, WI-06). RD-9
+allows one builder fix round and one re-check. **Rulings for the fix round:**
+
+- **DR-27 and DR-28: the candidate binds its draw context.** `appendCandidate` takes the
+  `DrawContext` (a nominal type that only `recordDraw` mints, and only when a declaration was in
+  force) and records it by height. A context for another unit or another condition, or one
+  recorded above the append height, is refused and nothing is appended. REF-05 then holds on the
+  candidate path by construction: a candidate cannot be formed without a context, and a context
+  cannot exist without a declaration. The declaration is never re-read from the catalog (F1
+  S-14), and SEAM-10's declaration-at-draw-time is recoverable per candidate by key. **R-28 is
+  amended:** admission → context → from → signature → ceiling.
+- **DR-29: decide the relay, register the library members.** `paths` follows appends through
+  generic relays (a function handing its own parameter to `RecordPort.append`) to a fixed point,
+  because S-01's single entry point is MOD-05's central claim. act-signatures registers open
+  members of LIBRARY types (an act taking `Error`) as a limit, pinned by a `limit-` fixture.
+- **WI-06: `COMMIT_GATE` is pinned by a test** asserting OBJ-31's condition, `closedBy`,
+  proposals and refusal.
+
+The re-check (round 9) runs with the `reviewer_command` unchanged: Fable 5.1, as in round 8
+(R-29).
 

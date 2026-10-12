@@ -10,8 +10,8 @@
   "k7_round": 7,
   "last_gate_tag": "closed-by-owner-7",
   "seal_tag": "",
-  "next_action": "MOD-05 slices 1-2 built (commitments; draw context), batteries 10-11 at 24/24 and 25/25. Next: owner rulings on slice 3 (CandidateLedger: scope-ceiling decider REF-16, how from is checked, signature/seed types, refusal order), then build it; then MOD-05's K7 gate; MOD-04 after, honouring IR-42.",
+  "next_action": "MOD-05 BUILT (3 slices; batteries 10-12 all killed; 143/143). Next: owner picks round 8's reviewer model and rules on IR-53; then mechanical checks and K7 round 8 on MOD-05 (k7-run.py --modules MOD-05). MOD-04 follows, honouring IR-42.",
   "blocked_on": null,
-  "updated_at": "2026-10-12T22:58:13+00:00",
+  "updated_at": "2026-10-12T23:29:37+00:00",
   "updated_by": "manual"
 }

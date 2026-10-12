@@ -493,3 +493,48 @@ declaration. **Re-run on `a968e65`:** D3 KILLED (test), D4 KILLED (test).
 the pre-battery pins: a verdict asserted only as empty is not tested by a mutation that
 empties it.
 
+## Round 12 — MOD-05 `facts/` slice 3 (candidates), before MOD-05's K7 gate
+
+Run on committed tree `038282c` with the round-5 discipline. Each planting also ran `tsc`, and
+none was killed by the compiler alone. Before the run, three claims that no test would notice
+breaking were pinned (`038282c`):
+
+- a Commitment `from` at the least currency WHILE licensed (the license masked it);
+- IR-55's passthrough of a non-"none" Unknown;
+- BOTTOM stored as a fresh value, not the caller's mutable object.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| E1 | admission never asked | KILLED (test) | `test_an_unreachable_draw_appends_nothing_and_asks_no_one_else` |
+| E2 | the signature asked before `from` is checked | KILLED (test) | `test_refusals_answer_in_order_and_later_deciders_are_not_asked` |
+| E3 | the ceiling asked before the signature | KILLED (test) | same |
+| E4 | every decider asked up front: an unreachable draw costs something | KILLED (test) | `test_an_unreachable_draw_appends_nothing_and_asks_no_one_else` |
+| E5 | a second candidate append path (a backfill) inside `src/facts` | KILLED (test) | `test_each_ledger_kind_has_exactly_one_append_path` |
+| E6 | `from` checked against the REQUESTED currency's fold, not the one below | KILLED (test) | `test_from_must_be_the_effective_commitment_immediately_below` |
+| E7 | "immediately below" read as the LEAST currency | KILLED (test) | same |
+| E8 | any commitment accepted as `from` (identity not compared) | KILLED (test) | `test_a_superseded_commitment_is_not_a_from` |
+| E9 | the fold read at a made-up "now", not the append height | KILLED (test) | `test_no_operation_answers_the_current_declaration` (the surface rule, statically - no behavioural test sees it) |
+| E10 | the license read at a made-up "now" | KILLED (test) | `test_bottom_from_needs_an_independence_license_at_the_least_currency` |
+| E11 | a withdrawn license still counts | KILLED (test) | same |
+| E12 | a Commitment accepted as `from` at the least currency | KILLED (test) | same (the pre-battery licensed case) |
+| E13 | the fold's `uncomputable` collapsed into `malformed-from` (IR-55) | KILLED (test) | `test_an_unanswerable_from_check_passes_the_unknown_through` (pre-battery) |
+| E14 | BOTTOM stored as the caller's own object | KILLED (test) | `test_a_bottom_from_is_recorded_as_a_fresh_value` (pre-battery) |
+| E15 | the signature check sees the proposal WITHOUT its `from` | KILLED (test) | `test_the_signature_check_sees_the_whole_proposal_and_its_refusal_passes_through` |
+| E16 | the ceiling never asked | KILLED (test) | `test_draw_beyond_the_scope_ceiling_is_refused_on_the_append_path` |
+| E17 | the signature not recorded on the candidate | KILLED (test) | `test_a_good_candidate_is_appended_once_with_its_lineage` |
+| E18 | the append height recorded as `from`, not the commitment's height | KILLED (test) | same |
+| E19 | `candidatesAsOf` ignores the condition identity (S-09) | KILLED (test) | `test_candidates_are_read_by_condition_identity_as_of_a_height` |
+| E20 | `derivedFrom` answers every candidate | KILLED (test) | `test_derived_from_answers_the_lineage` |
+| E21 | `countsAsOf` drops the currencies with no draws | KILLED (test) | `test_counts_are_per_currency_in_order_never_summed` |
+| E22 | `countsAsOf` answers running totals (summed) | KILLED (test) | same |
+| E23 | the ceiling slot not checked at construction (OS-1) | KILLED (test) | the isolation test's declared-slots case |
+| E24 | `appendCandidate`'s proposal opened to an engine note (REF-06) | KILLED (test) | `test_no_act_signature_accepts_diagnostic` |
+| E25 | paths: inline closures no longer climbed to their member | KILLED (test) | `test_each_ledger_kind_has_exactly_one_append_path` |
+| E26 | **a REGISTERED LIMIT closed silently** (an `unknown` entry read as a candidate) | KILLED (test) | same (the `limit-untyped-entry` pin) |
+
+**Twenty-six of twenty-six killed on the first pass.** E9 is why slice 3 registered the injected
+readers as reads: a fold read at a made-up height left every behavioural test green, and only the
+static surface rule saw it. E12–E14 would have survived without the pre-battery pins. That is the
+third round in a row where checking "what would no test notice?" before the run found the gaps
+the run would otherwise have reported.
+

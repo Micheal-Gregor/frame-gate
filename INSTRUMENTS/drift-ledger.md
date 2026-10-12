@@ -314,3 +314,10 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   - **Interpretations:** IR-53..IR-57; SP-3 proposed upstream. **IR-53 needs the owner:** a unit
     with no independence license cannot draw at the least currency at all.
 
+- **2026-10-12 — Builder battery round 12 (MOD-05 slice 3): 26/26 killed on the first pass.**
+  Three unpinned claims were pinned before the run (`038282c`). E9, a fold read at a made-up
+  height, was caught only by the static surface rule, because slice 3 registered the injected
+  readers as reads. **MOD-05 is BUILT: three slices, three batteries, 143/143.** Its K7 gate
+  (round 8) is next. The reviewer model for round 8 is undecided (R-13 put round 7 on
+  Fable 5.1). IR-53 awaits the owner.
+

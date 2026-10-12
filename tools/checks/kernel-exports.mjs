@@ -66,9 +66,12 @@ function kernelExport(name) {
 /** The brand: the one property of a declared type whose key is a computed unique symbol. */
 function brandOf(name) {
   const t = checker.getDeclaredTypeOfSymbol(kernelExport(name));
+  // Declared in user code only: a primitive's apparent type brings library members
+  // with computed names (String's [Symbol.iterator]); see catalog-checks.mjs.
   const brand = checker
     .getPropertiesOfType(t)
-    .find((p) => p.declarations?.some((d) => d.name && ts.isComputedPropertyName(d.name)));
+    .find((p) => p.declarations?.some((d) => d.name && ts.isComputedPropertyName(d.name) &&
+      !program.isSourceFileDefaultLibrary(d.getSourceFile())));
   if (!brand) throw new Error(`${name} carries no computed-key brand; the detector has no anchor`);
   return brand.escapedName; // "__@PROJECTION@<id>": unique to that symbol, not to a spelling
 }

@@ -87,15 +87,27 @@ export class DeclarationLedger {
     return noSubject();
   }
 
-  /** This ledger's own entries, recognised by kind among every module's facts. */
+  /**
+   * This ledger's own entries, recognised by kind among every module's facts.
+   *
+   * What this can and cannot certify (R-12; IR-35). An entry at a level outside
+   * `levels()` cannot have come from `declare()`, which refuses it, so it is never
+   * certified. An entry that says `author: "HUMAN"` at a configured level IS read
+   * as a declaration: the record is shared and untyped, so provenance beyond this
+   * rests on the static guard (no catalog-kind entry is built or appended outside
+   * src/catalog) and, at runtime, on PC-02's port-layer identity binding.
+   */
   #isDeclarationOf(fact: unknown, unit: Unit): fact is { author: "HUMAN"; payload: DeclarationPayload } {
     if (typeof fact !== "object" || fact === null || !("payload" in fact) || !("author" in fact)) return false;
     const payload = (fact as { payload: unknown }).payload;
+    if (typeof payload !== "object" || payload === null) return false;
+    const level = (payload as { level?: unknown }).level;
     return (
       (fact as { author: unknown }).author === "HUMAN" &&
-      typeof payload === "object" && payload !== null &&
       (payload as { kind?: unknown }).kind === "declaration" &&
-      (payload as { unit?: unknown }).unit === unit
+      (payload as { unit?: unknown }).unit === unit &&
+      typeof level === "string" &&
+      this.#levels.includes(level)
     );
   }
 }

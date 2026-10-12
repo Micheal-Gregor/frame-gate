@@ -8,8 +8,8 @@
  */
 import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { height, isUnknown } from "../../src/kernel/index.js";
@@ -27,10 +27,33 @@ import { inMemoryRecord } from "./in-memory-record.js";
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");
 
+interface Finding {
+  file: string;
+  line: number;
+  how: string;
+}
+interface Surface {
+  root: string;
+  returns: { operation: string; returns: string[]; ok: boolean }[];
+  fabricated: { file: string; line: number; read: string }[];
+  held: { file: string; line: number; field: string }[];
+}
 interface CatalogChecks {
   fixtures: Record<string, { codes: number[]; messages: string[] }>;
-  assertions: { file: string; line: number; type: string }[];
-  surface: { operation: string; returns: string[]; asOf: boolean; humanAppend: boolean; ok: boolean }[];
+  mint: { src: Finding[]; fixtures: Record<string, Finding[]> };
+  forge: { src: Finding[]; fixtures: Record<string, Finding[]> };
+  surface: { src: Surface; fixtures: Record<string, Surface> };
+  sc3: { src: Finding[]; fixtures: Record<string, Finding[]> };
+}
+/** Every fixture of one section, split by its declared intent (the file-name prefix). */
+function byIntent(section: Record<string, Finding[]>) {
+  const name = (k: string) => k.slice(k.lastIndexOf("/") + 1);
+  const entries = Object.entries(section).map(([k, v]) => [name(k), v] as const);
+  return {
+    flagged: entries.filter(([n]) => !n.startsWith("conforming") && !n.startsWith("limit-")),
+    conforming: entries.filter(([n]) => n.startsWith("conforming")),
+    limits: entries.filter(([n]) => n.startsWith("limit-")),
+  };
 }
 let checked: CatalogChecks | undefined;
 function catalogChecks(): CatalogChecks {
@@ -94,9 +117,20 @@ describe("BC-03-2 - REF-01: a derivation producing a Declaration is malformed at
     const d = fixture("derive-declaration.ts");
     expect(d.codes, "a derivation returned a Declaration and compiled").toEqual([2322]);
     expect(d.messages[0]).toContain("Declaration");
-    // The one escape from a brand is an explicit assertion. Outside the ledger that
-    // owns the type, there must be none (IR-30) - resolved by the brand's symbol.
-    expect(catalogChecks().assertions).toEqual([]);
+    // REF-01's REACH (K7 round 6, DR-19; IR-36 supersedes IR-30's "only way"): no
+    // value of a branded catalog type comes into existence outside its ledger - not
+    // by assertion, not through any, not through a generic cast, not through a
+    // user-written type guard, and no ts-directive silences the refusal. Each route
+    // has a fixture that must be flagged; passing a genuine act on must not be.
+    const { mint } = catalogChecks();
+    expect(mint.src, "a catalog act is minted outside its ledger in src/").toEqual([]);
+    const { flagged, conforming } = byIntent(mint.fixtures);
+    const routes = new Set(flagged.flatMap(([, v]) => v.map((x) => x.how)));
+    expect(routes).toEqual(
+      new Set(["assertion", "any-flow", "generic-launder", "type-parameter-cast", "type-guard", "ts-directive"]),
+    );
+    for (const [n, v] of flagged) expect(v.length, `${n} minted a Declaration unseen`).toBeGreaterThan(0);
+    for (const [n, v] of conforming) expect(v, `${n} passes a genuine act on`).toEqual([]);
   });
 });
 
@@ -176,6 +210,36 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
     expect(isUnknown(got) && got.kind === "no-subject", "a forged ENGINE entry was read as a HUMAN declaration").toBe(true);
   });
 
+  it("test_an_entry_at_an_unconfigured_level_is_never_certified", () => {
+    // R-12 (K7 round 6, E3): declare() refuses an unconfigured level, so an entry at
+    // one cannot be the ledger's own. It is skipped, and the genuine act before it
+    // remains the one in force.
+    const record = inMemoryRecord();
+    const ledger = new DeclarationLedger({ record, levels: ["L1"] });
+    const u = unitIn(unitsOf(["u1"]), "u1");
+    const genuine = ledger.declare(u, "L1", "HUMAN");
+    if (isUnknown(genuine)) throw new Error("declaration refused");
+    const forged = record.append({ author: "HUMAN", payload: { kind: "declaration", unit: u, level: "hard" } });
+    expect(ledger.declarationAt(u, forged), "an unconfigured level was certified").toEqual(genuine);
+  });
+
+  it("test_only_the_catalog_builds_or_appends_a_catalog_entry", () => {
+    // R-12, the static half of INV-PROV at the read seam: outside src/catalog/, no
+    // object whose type carries a catalog kind is built (literal, const, spread) and
+    // no RecordPort.append takes one (a replay). The runtime residue - a kind computed
+    // as a plain string - is a REGISTERED LIMIT (IR-38) pinned by its own fixture.
+    const { forge } = catalogChecks();
+    expect(forge.src, "src/ outside the catalog builds a catalog entry").toEqual([]);
+    const { flagged, conforming, limits } = byIntent(forge.fixtures);
+    expect(new Set(flagged.flatMap(([, v]) => v.map((x) => x.how)))).toEqual(
+      new Set(["catalog-kind-literal", "catalog-kind-spread", "catalog-kind-append"]),
+    );
+    for (const [n, v] of flagged) expect(v.length, `${n} forged a catalog entry unseen`).toBeGreaterThan(0);
+    for (const [n, v] of conforming) expect(v, `${n} is another module's own fact`).toEqual([]);
+    expect(limits.length, "the registered limit has no fixture").toBeGreaterThan(0);
+    for (const [n, v] of limits) expect(v, `${n} is a registered limit (IR-38)`).toEqual([]);
+  });
+
   it("test_an_unconfigured_level_is_refused_not_appended", () => {
     const record = inMemoryRecord();
     const ledger = new DeclarationLedger({ record, levels: ["L1"] });
@@ -188,9 +252,23 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
   it("test_no_operation_answers_the_current_declaration", () => {
     // Every exported operation returning a declaration is an as-of read or the
     // HUMAN-only append. Decided over the exported classes by the type checker.
-    const surface = catalogChecks().surface;
-    expect(surface.length, "the surface check found no declaration-returning operation").toBeGreaterThan(0);
-    for (const s of surface) expect(s.ok, `${s.operation} reads "now"`).toBe(true);
+    // Decided structurally (K7 round 6, DR-20; IR-37), not by return type alone:
+    //   returns     every exported class method AND free function returning an act
+    //               takes a RecordHeight or is the HUMAN-only append;
+    //   fabricated  every height handed to a read is a parameter of the caller - a
+    //               height made up inside the catalog is "now";
+    //   held        no class keeps mutable derived state (a cache of what was declared).
+    const { surface } = catalogChecks();
+    expect(surface.src.returns.length, "the surface check found no act-returning operation").toBeGreaterThan(0);
+    expect(surface.src.returns.filter((r) => !r.ok), "an operation reads the current act").toEqual([]);
+    expect(surface.src.fabricated, "a read in src/catalog uses a made-up height").toEqual([]);
+    expect(surface.src.held, "a catalog class holds mutable state").toEqual([]);
+    const cases = Object.entries(surface.fixtures);
+    expect(cases.length).toBeGreaterThan(1);
+    for (const [name, v] of cases) {
+      const caught = v.returns.some((r) => !r.ok) || v.fabricated.length > 0 || v.held.length > 0;
+      expect(caught, `${name}: a current read went unseen`).toBe(name !== "conforming");
+    }
   });
 });
 
@@ -251,31 +329,17 @@ describe("OBJ-06 - unit features are read-only", () => {
 
 describe("BC-03-6 - SC-3: the number two appears nowhere", () => {
   it("test_the_number_two_appears_nowhere", () => {
-    // OI-4's mechanical check, over the AST of every source file - so 2, 2.0, 0x2,
-    // 0b10 and 2n are all the same number, whatever the spelling.
-    const files: string[] = [];
-    const walk = (d: string): void => {
-      for (const name of readdirSync(d)) {
-        const full = join(d, name);
-        if (statSync(full).isDirectory()) walk(full);
-        else if (name.endsWith(".ts")) files.push(full);
-      }
-    };
-    walk(resolve(repo, "src"));
-    expect(files.length).toBeGreaterThan(0);
-    const twos: string[] = [];
-    for (const f of files) {
-      const sf = ts.createSourceFile(f, readFileSync(f, "utf8"), ts.ScriptTarget.ES2022, true);
-      const visit = (n: ts.Node): void => {
-        if ((ts.isNumericLiteral(n) && Number(n.text) === 2) ||
-            (ts.isBigIntLiteral(n) && Number(n.text.slice(0, -1)) === 2)) {
-          twos.push(`${f}:${sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1}`);
-        }
-        ts.forEachChild(n, visit);
-      };
-      visit(sf);
-    }
-    expect(twos).toEqual([]);
+    // OI-4's mechanical check (K7 round 6, DR-21; IR-39), over the AST of EVERY source
+    // file of every extension - so 2, 0x2, 0b10 and 2n are one number, and a .mjs is
+    // as much code as a .ts - and over cardinality: comparing a Currency collection's
+    // length or size to a literal asks how MANY currencies there are.
+    const { sc3 } = catalogChecks();
+    expect(sc3.src, "SC-3 broken in src/").toEqual([]);
+    const { flagged, conforming } = byIntent(sc3.fixtures);
+    expect(new Set(flagged.flatMap(([, v]) => v.map((x) => x.how)))).toEqual(
+      new Set(["the-number-two", "cardinality-branch"]),
+    );
+    for (const [n, v] of conforming) expect(v, `${n} is not a currency count`).toEqual([]);
   });
 });
 

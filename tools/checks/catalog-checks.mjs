@@ -1,160 +1,337 @@
 /**
  * MOD-03's parse-level rules, decided by the type checker in its own process.
  *
- *   fixtures     Compile each tests/fixtures/catalog/*.ts and report its diagnostic
- *                CODES (BC-03-2 REF-01, BC-03-3 HOOK-07): a base case pins the one
- *                diagnostic its fixture exists to produce, never "some error" (DR-09).
- *   assertions   Every `x as T` / `<T>x` in src/ whose T carries a catalog brand
- *                (Declaration, IndependenceAct), outside the ledger that owns T. The
- *                brand has no runtime value, so an assertion is the ONLY way to mint
- *                one elsewhere - the registered escape from REF-01 (IR-30), which this
- *                makes visible rather than silent. Decided by the brand's symbol, so
- *                no alias of the type hides it.
- *   surface      Every public method of every class exported by src/catalog/ whose
- *                return type can carry a catalog brand: it must take a RecordHeight
- *                (an as-of read) or an author typed exactly "HUMAN" (the HOOK-07
- *                append). Anything else is a "current declaration" read (BC-03-4).
+ *   fixtures  Compile tests/fixtures/catalog/*.ts and report each one's diagnostic
+ *             CODES (BC-03-2 REF-01, BC-03-3 HOOK-07). A base case pins the one
+ *             diagnostic its fixture exists to produce (DR-09).
+ *   mint      REF-01's reach (K7 round 6, DR-19): every way a value of a branded
+ *             catalog type (Declaration, IndependenceAct) can come into existence
+ *             outside the ledger that owns it -
+ *               assertion        `x as T` / `<T>x` whose RESULT type carries the brand
+ *               any-flow         an `any`-typed expression in a position whose
+ *                                contextual type carries the brand
+ *               generic-launder  a call to a user-written generic whose declared
+ *                                return is a bare type parameter, instantiated to a
+ *                                branded type (`cast<Declaration>(x)`)
+ *               type-parameter-cast  `x as T` on a bare type parameter: the root of
+ *                                every laundering generic, wrapped or not
+ *               type-guard       a user-written predicate asserting a branded type
+ *               ts-directive     `@ts-ignore` / `@ts-expect-error` / `@ts-nocheck`,
+ *                                which silences any parse-level refusal at all
+ *             IR-30 once said an assertion was "the ONLY way"; it was not (IR-36).
+ *   forge     R-12's static half of INV-PROV at the read seam (DR-18): outside
+ *             src/catalog/, no object whose type carries a catalog KIND is built
+ *             (a `kind` property, directly or through a const or a spread), and no
+ *             RecordPort.append takes one (a replay). The kinds are read from the
+ *             catalog's payload TYPES, never listed here.
+ *   surface   BC-03-4, "no current declaration" (DR-20), over each catalog root:
+ *               returns      every exported operation - class method or free
+ *                            function - returning a branded act takes a
+ *                            RecordHeight or is the HUMAN-only append;
+ *               fabricated   every RecordHeight handed to a READ (RecordPort.readAsOf,
+ *                            declarationAt, independenceAt) is a parameter of the
+ *                            enclosing function - a height made up inside the
+ *                            catalog is a "now";
+ *               held         no class holds mutable state other than its record
+ *                            port: a cache of what was declared is a current read
+ *                            waiting to happen ("no derived value is held", F1).
+ *   sc3       SC-3 (DR-21): no numeric 2 in any source file of any extension, and no
+ *             comparison of a Currency collection's length or size to a literal.
  *
  * Out of process and plain JavaScript for the reasons fixture-compiles.mjs gives
  * (heap inside a vitest worker; no loader, no shim, no platform - IR-21).
  *
  * Usage:  node tools/checks/catalog-checks.mjs
- * Output: {fixtures: {file: {codes, messages}}, assertions: [...], surface: [...]}
  */
 import ts from "typescript";
-import { readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const rel = (f) => relative(repo, f).split(sep).join("/");
+const SOURCE = /\.(ts|mts|cts|tsx|js|mjs|cjs|jsx)$/;
 
-function tsFiles(dir) {
+function walk(dir, re) {
   const out = [];
-  const walk = (d) => {
-    let entries;
-    try {
-      entries = readdirSync(d);
-    } catch {
-      return;
-    }
-    for (const name of entries) {
+  if (!existsSync(dir)) return out;
+  const go = (d) => {
+    for (const name of readdirSync(d)) {
       const full = join(d, name);
-      if (statSync(full).isDirectory()) walk(full);
-      else if (name.endsWith(".ts") && !name.endsWith(".d.ts")) out.push(resolve(full));
+      if (statSync(full).isDirectory()) go(full);
+      else if (re.test(name) && !/\.d\.(ts|mts|cts)$/.test(name)) out.push(resolve(full));
     }
   };
-  walk(dir);
+  go(dir);
   return out.sort();
 }
+const fx = (name) => resolve(repo, "tests/fixtures", name);
 
-const fixtureDir = resolve(repo, "tests/fixtures/catalog");
-const fixtures = tsFiles(fixtureDir);
-const sources = tsFiles(resolve(repo, "src"));
+const SRC = walk(resolve(repo, "src"), SOURCE);
+const CATALOG_DIR = resolve(repo, "src/catalog");
+const FIXTURES = walk(fx("catalog"), /\.ts$/);
+const MINT = walk(fx("catalog-mint"), /\.ts$/);
+const FORGE = walk(fx("catalog-forge"), /\.ts$/);
+const SC3 = walk(fx("sc3"), SOURCE);
+const SURFACE_CASES = existsSync(fx("catalog-surface"))
+  ? readdirSync(fx("catalog-surface")).filter((d) => existsSync(join(fx("catalog-surface"), d, "index.ts"))).sort()
+  : [];
+const SURFACE = SURFACE_CASES.flatMap((c) => walk(join(fx("catalog-surface"), c), /\.ts$/));
 
-const program = ts.createProgram([...sources, ...fixtures], {
+const program = ts.createProgram([...SRC, ...FIXTURES, ...MINT, ...FORGE, ...SC3, ...SURFACE], {
   strict: true,
-  exactOptionalPropertyTypes: true,
+  allowJs: true,
+  checkJs: false,
   module: ts.ModuleKind.NodeNext,
   moduleResolution: ts.ModuleResolutionKind.NodeNext,
   target: ts.ScriptTarget.ES2022,
   lib: ["lib.es2022.d.ts"],
-  types: [],
+  types: ["node"],
   noEmit: true,
   skipLibCheck: true,
 });
 const checker = program.getTypeChecker();
+const isUser = (sf) => sf && !program.isSourceFileDefaultLibrary(sf) && !sf.fileName.includes("/node_modules/");
 
-/** The brand property's escaped name for a type exported from a catalog file. */
-function brandOf(file, name) {
+// ---- anchors, all resolved from the source that owns them -------------------
+function exportOf(file, name) {
   const sf = program.getSourceFile(resolve(repo, file));
   const mod = sf && checker.getSymbolAtLocation(sf);
   const sym = mod && checker.getExportsOfModule(mod).find((s) => s.name === name);
   if (!sym) throw new Error(`${file} does not export ${name}; the check has no anchor`);
-  const t = checker.getDeclaredTypeOfSymbol(sym);
-  const brand = checker
-    .getPropertiesOfType(t)
-    .find((p) => p.declarations?.some((d) => d.name && ts.isComputedPropertyName(d.name)));
-  if (!brand) throw new Error(`${name} carries no computed-key brand; REF-01 has no anchor`);
-  return { owner: file, name, key: brand.escapedName };
+  return sym;
 }
-
-const BRANDS = [
-  brandOf("src/catalog/declaration-ledger.ts", "Declaration"),
-  brandOf("src/catalog/independence-ledger.ts", "IndependenceAct"),
-];
-const HEIGHT = (() => {
-  const sf = program.getSourceFile(resolve(repo, "src/kernel/index.ts"));
-  const mod = checker.getSymbolAtLocation(sf);
-  const sym = checker.getExportsOfModule(mod).find((s) => s.name === "RecordHeight");
-  const t = checker.getDeclaredTypeOfSymbol(sym);
-  return checker
+function brandKey(file, name) {
+  const t = checker.getDeclaredTypeOfSymbol(exportOf(file, name));
+  // The brand is the computed-key property declared in USER code. A primitive's
+  // apparent type contributes library members with computed names too - String has
+  // [Symbol.iterator] - and taking the first computed key made every array a
+  // "Currency" collection (caught by the sc3 conforming fixture on first run).
+  const b = checker
     .getPropertiesOfType(t)
-    .find((p) => p.declarations?.some((d) => d.name && ts.isComputedPropertyName(d.name)))
-    .escapedName;
-})();
+    .find((p) => p.declarations?.some((d) => d.name && ts.isComputedPropertyName(d.name) && isUser(d.getSourceFile())));
+  if (!b) throw new Error(`${name} carries no computed-key brand; the check has no anchor`);
+  return b.escapedName;
+}
+const BRANDS = [
+  { owner: "src/catalog/declaration-ledger.ts", name: "Declaration", key: brandKey("src/catalog/declaration-ledger.ts", "Declaration") },
+  { owner: "src/catalog/independence-ledger.ts", name: "IndependenceAct", key: brandKey("src/catalog/independence-ledger.ts", "IndependenceAct") },
+];
+const HEIGHT = brandKey("src/kernel/index.ts", "RecordHeight");
+const CURRENCY = brandKey("src/catalog/currency-order.ts", "Currency");
+const KINDS = new Set(
+  [["src/catalog/declaration-ledger.ts", "DeclarationPayload"], ["src/catalog/independence-ledger.ts", "IndependencePayload"]].map(([f, n]) => {
+    const t = checker.getDeclaredTypeOfSymbol(exportOf(f, n));
+    const k = checker.getTypeOfSymbol(checker.getPropertyOfType(t, "kind"));
+    if (!k.isStringLiteral()) throw new Error(`${n}.kind is not a string literal type`);
+    return k.value;
+  }),
+);
 
 const parts = (t) => (t.isUnion() ? t.types : [t]);
 const has = (t, key) => checker.getPropertiesOfType(t).some((p) => p.escapedName === key);
-const brandsIn = (t) => BRANDS.filter((b) => parts(t).some((c) => has(c, b.key)));
+const brandsIn = (t) => (t ? BRANDS.filter((b) => parts(t).some((c) => has(c, b.key))) : []);
 const isHeight = (t) => parts(t).every((c) => has(c, HEIGHT));
 const isExactlyHuman = (t) => t.isStringLiteral() && t.value === "HUMAN";
+const catalogKindIn = (t) => parts(t).some((c) => c.isStringLiteral() && KINDS.has(c.value));
+function carriesCatalogKind(t) {
+  return parts(t).some((c) => {
+    const kind = checker.getPropertyOfType(c, "kind");
+    if (kind && catalogKindIn(checker.getTypeOfSymbol(kind))) return true;
+    const payload = checker.getPropertyOfType(c, "payload");
+    return payload !== undefined && carriesCatalogKind(checker.getTypeOfSymbol(payload));
+  });
+}
+const lineOf = (sf, n) => sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
+const declOf = (sig) => (sig && (sig.getDeclaration?.() ?? sig.declaration)) || undefined;
+/** A method or function declared at `file` with `name`, or a member of an interface named `iface`. */
+const declaredAs = (d, file, name, iface) =>
+  d !== undefined &&
+  rel(d.getSourceFile().fileName) === file &&
+  d.name && ts.isIdentifier(d.name) && d.name.text === name &&
+  (iface === undefined || (d.parent && ts.isInterfaceDeclaration(d.parent) && d.parent.name.text === iface));
 
 // ---- fixtures ---------------------------------------------------------------
-const fixtureOut = {};
-for (const f of fixtures) {
+const fixtures = {};
+for (const f of FIXTURES) {
   const sf = program.getSourceFile(f);
   const d = [...program.getSemanticDiagnostics(sf), ...program.getSyntacticDiagnostics(sf)];
-  fixtureOut[rel(f)] = {
-    codes: d.map((x) => x.code),
-    messages: d.map((x) => ts.flattenDiagnosticMessageText(x.messageText, " ")),
-  };
+  fixtures[rel(f)] = { codes: d.map((x) => x.code), messages: d.map((x) => ts.flattenDiagnosticMessageText(x.messageText, " ")) };
 }
 
-// ---- assertions -------------------------------------------------------------
-const assertions = [];
-for (const f of sources) {
-  const sf = program.getSourceFile(f);
+// ---- mint -------------------------------------------------------------------
+function mintFindings(file) {
+  const sf = program.getSourceFile(file);
+  const here = rel(file);
+  const found = [];
+  const outsideOwner = (b) => b.owner !== here;
+  const add = (n, how, b) => found.push({ file: here, line: lineOf(sf, n), how, type: b.name });
+  if (/@ts-(ignore|expect-error|nocheck)\b/.test(sf.text)) found.push({ file: here, line: 0, how: "ts-directive", type: "*" });
   const visit = (n) => {
     if (ts.isAsExpression(n) || ts.isTypeAssertionExpression(n)) {
-      for (const b of brandsIn(checker.getTypeFromTypeNode(n.type))) {
-        if (rel(f) !== b.owner) {
-          const line = sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
-          assertions.push({ file: rel(f), line, type: b.name });
+      for (const b of brandsIn(checker.getTypeAtLocation(n)).filter(outsideOwner)) add(n, "assertion", b);
+      // `x as T` on a bare type parameter is a universal cast: whatever T is
+      // instantiated to at a call site - wrapped or not - is minted here. The
+      // call-site rule cannot see `wrap<Declaration>(x).v`; this sees its root.
+      const target = ts.isTypeReferenceNode(n.type) ? checker.getSymbolAtLocation(n.type.typeName) : undefined;
+      if (target && target.flags & ts.SymbolFlags.TypeParameter) {
+        found.push({ file: here, line: lineOf(sf, n), how: "type-parameter-cast", type: "*" });
+      }
+    }
+    if (ts.isCallExpression(n)) {
+      const sig = checker.getResolvedSignature(n);
+      const d = declOf(sig);
+      if (d && isUser(d.getSourceFile()) && d.type && ts.isTypeReferenceNode(d.type)) {
+        const target = checker.getSymbolAtLocation(d.type.typeName);
+        if (target && target.flags & ts.SymbolFlags.TypeParameter) {
+          for (const b of brandsIn(checker.getReturnTypeOfSignature(sig)).filter(outsideOwner)) add(n, "generic-launder", b);
         }
       }
+    }
+    if (ts.isExpression(n) && checker.getTypeAtLocation(n).flags & ts.TypeFlags.Any) {
+      for (const b of brandsIn(checker.getContextualType(n)).filter(outsideOwner)) add(n, "any-flow", b);
+    }
+    if (ts.isFunctionLike(n) && n.type && ts.isTypePredicateNode(n.type) && n.type.type) {
+      for (const b of brandsIn(checker.getTypeFromTypeNode(n.type.type)).filter(outsideOwner)) add(n, "type-guard", b);
     }
     ts.forEachChild(n, visit);
   };
   visit(sf);
+  return found;
+}
+
+// ---- forge ------------------------------------------------------------------
+function forgeFindings(file) {
+  const sf = program.getSourceFile(file);
+  const here = rel(file);
+  const found = [];
+  const add = (n, how) => found.push({ file: here, line: lineOf(sf, n), how });
+  const visit = (n) => {
+    if (ts.isPropertyAssignment(n) && ts.isObjectLiteralExpression(n.parent) && n.name.getText(sf) === "kind" &&
+        catalogKindIn(checker.getTypeAtLocation(n.initializer))) add(n, "catalog-kind-literal");
+    if (ts.isShorthandPropertyAssignment(n) && n.name.text === "kind") {
+      const s = checker.getShorthandAssignmentValueSymbol(n);
+      if (s && catalogKindIn(checker.getTypeOfSymbolAtLocation(s, n))) add(n, "catalog-kind-literal");
+    }
+    if (ts.isSpreadAssignment(n) && carriesCatalogKind(checker.getTypeAtLocation(n.expression))) add(n, "catalog-kind-spread");
+    if (ts.isCallExpression(n)) {
+      const d = declOf(checker.getResolvedSignature(n));
+      if (declaredAs(d, "src/ports/index.ts", "append", "RecordPort") && n.arguments[0] &&
+          carriesCatalogKind(checker.getTypeAtLocation(n.arguments[0]))) add(n, "catalog-kind-append");
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return found;
 }
 
 // ---- surface ----------------------------------------------------------------
-const surface = [];
-const catalogIndex = program.getSourceFile(resolve(repo, "src/catalog/index.ts"));
-const catalogMod = catalogIndex && checker.getSymbolAtLocation(catalogIndex);
-for (const exported of catalogMod ? checker.getExportsOfModule(catalogMod) : []) {
-  const sym = exported.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exported) : exported;
-  if (!(sym.flags & ts.SymbolFlags.Class)) continue;
-  const instance = checker.getDeclaredTypeOfSymbol(sym);
-  for (const p of checker.getPropertiesOfType(instance)) {
-    const decl = p.valueDeclaration;
-    if (!decl || p.name.startsWith("#")) continue;
-    for (const sig of checker.getTypeOfSymbol(p).getCallSignatures()) {
+const MUTATORS = ["set", "add", "delete", "clear", "push", "pop", "shift", "unshift", "splice", "sort", "reverse", "fill", "copyWithin"];
+const isRecordPort = (t) =>
+  parts(t).every((c) => (c.aliasSymbol?.name === "SharedRecord") || (c.symbol?.name === "RecordPort" &&
+    c.symbol.declarations?.some((d) => rel(d.getSourceFile().fileName) === "src/ports/index.ts")));
+const isRead = (d) =>
+  declaredAs(d, "src/ports/index.ts", "readAsOf", "RecordPort") ||
+  declaredAs(d, "src/catalog/declaration-ledger.ts", "declarationAt") ||
+  declaredAs(d, "src/catalog/independence-ledger.ts", "independenceAt");
+
+function surfaceOf(dir, indexFile) {
+  const files = walk(dir, /\.ts$/);
+  const out = { root: rel(dir), returns: [], fabricated: [], held: [] };
+  const sf = program.getSourceFile(indexFile);
+  const mod = sf && checker.getSymbolAtLocation(sf);
+  const signaturesOf = (name, t, push) => {
+    for (const sig of t.getCallSignatures()) {
       const carried = brandsIn(checker.getReturnTypeOfSignature(sig));
       if (carried.length === 0) continue;
       const params = sig.getParameters().map((q) => checker.getTypeOfSymbol(q));
-      const asOf = params.some(isHeight);
-      const humanAppend = params.some(isExactlyHuman);
-      surface.push({
-        operation: `${exported.name}.${p.name}`,
-        returns: carried.map((b) => b.name),
-        asOf,
-        humanAppend,
-        ok: asOf || humanAppend,
-      });
+      push({ operation: name, returns: carried.map((b) => b.name), ok: params.some(isHeight) || params.some(isExactlyHuman) });
+    }
+  };
+  for (const exported of mod ? checker.getExportsOfModule(mod) : []) {
+    const sym = exported.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exported) : exported;
+    if (sym.flags & ts.SymbolFlags.Class) {
+      for (const p of checker.getPropertiesOfType(checker.getDeclaredTypeOfSymbol(sym))) {
+        if (p.name.startsWith("#") || !p.valueDeclaration) continue;
+        signaturesOf(`${exported.name}.${p.name}`, checker.getTypeOfSymbol(p), (r) => out.returns.push(r));
+      }
+    } else if (sym.flags & (ts.SymbolFlags.Function | ts.SymbolFlags.Variable)) {
+      signaturesOf(exported.name, checker.getTypeOfSymbolAtLocation(sym, sf), (r) => out.returns.push(r));
     }
   }
+  for (const f of files) {
+    const fsf = program.getSourceFile(f);
+    const visit = (n) => {
+      if (ts.isCallExpression(n)) {
+        const sig = checker.getResolvedSignature(n);
+        const d = declOf(sig);
+        if (isRead(d)) {
+          sig.getParameters().forEach((q, i) => {
+            if (!isHeight(checker.getTypeOfSymbol(q))) return;
+            const arg = n.arguments[i];
+            let fn = n.parent;
+            while (fn && !ts.isFunctionLike(fn)) fn = fn.parent;
+            const s = arg && ts.isIdentifier(arg) ? checker.getSymbolAtLocation(arg) : undefined;
+            const isParam = s?.valueDeclaration && ts.isParameter(s.valueDeclaration) && s.valueDeclaration.parent === fn;
+            if (!isParam) out.fabricated.push({ file: rel(f), line: lineOf(fsf, n), read: d.name.getText() });
+          });
+        }
+      }
+      if (ts.isPropertyDeclaration(n) && ts.isClassLike(n.parent)) {
+        const t = checker.getTypeAtLocation(n);
+        const readonly = (ts.getCombinedModifierFlags(n) & ts.ModifierFlags.Readonly) !== 0;
+        const mutable = !isRecordPort(t) && MUTATORS.some((m) => checker.getPropertyOfType(t, m) !== undefined);
+        if (!readonly || mutable) out.held.push({ file: rel(f), line: lineOf(fsf, n), field: n.name.getText(fsf), readonly, mutable });
+      }
+      ts.forEachChild(n, visit);
+    };
+    visit(fsf);
+  }
+  return out;
 }
 
-process.stdout.write(JSON.stringify({ fixtures: fixtureOut, assertions, surface }));
+// ---- sc3 --------------------------------------------------------------------
+function sc3Findings(file) {
+  const sf = program.getSourceFile(file);
+  const found = [];
+  const elementOf = (t) =>
+    checker.getIndexTypeOfType(t, ts.IndexKind.Number) ?? (t.aliasTypeArguments?.[0]) ?? (checker.getTypeArguments?.(t)?.[0]);
+  const isCurrencyCollection = (t) => {
+    if (!t) return false;
+    const e = elementOf(t);
+    return e !== undefined && parts(e).every((c) => has(c, CURRENCY));
+  };
+  const isCardinality = (e) =>
+    ts.isPropertyAccessExpression(e) && (e.name.text === "length" || e.name.text === "size") &&
+    isCurrencyCollection(checker.getTypeAtLocation(e.expression));
+  const COMPARE = new Set([ts.SyntaxKind.LessThanToken, ts.SyntaxKind.GreaterThanToken, ts.SyntaxKind.LessThanEqualsToken,
+    ts.SyntaxKind.GreaterThanEqualsToken, ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsEqualsToken,
+    ts.SyntaxKind.EqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsToken]);
+  const visit = (n) => {
+    if ((ts.isNumericLiteral(n) && Number(n.text) === 2) || (ts.isBigIntLiteral(n) && Number(n.text.slice(0, -1)) === 2)) {
+      found.push({ file: rel(file), line: lineOf(sf, n), how: "the-number-two" });
+    }
+    if (ts.isBinaryExpression(n) && COMPARE.has(n.operatorToken.kind) &&
+        ((isCardinality(n.left) && ts.isNumericLiteral(n.right)) || (isCardinality(n.right) && ts.isNumericLiteral(n.left)))) {
+      found.push({ file: rel(file), line: lineOf(sf, n), how: "cardinality-branch" });
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return found;
+}
+
+const inCatalog = (f) => f === CATALOG_DIR || f.startsWith(CATALOG_DIR + sep);
+process.stdout.write(JSON.stringify({
+  fixtures,
+  mint: { src: SRC.flatMap(mintFindings), fixtures: Object.fromEntries(MINT.map((f) => [rel(f), mintFindings(f)])) },
+  forge: {
+    src: SRC.filter((f) => !inCatalog(f)).flatMap(forgeFindings),
+    fixtures: Object.fromEntries(FORGE.map((f) => [rel(f), forgeFindings(f)])),
+  },
+  surface: {
+    src: surfaceOf(CATALOG_DIR, resolve(CATALOG_DIR, "index.ts")),
+    fixtures: Object.fromEntries(SURFACE_CASES.map((c) => [c, surfaceOf(join(fx("catalog-surface"), c), join(fx("catalog-surface"), c, "index.ts"))])),
+  },
+  sc3: { src: SRC.flatMap(sc3Findings), fixtures: Object.fromEntries(SC3.map((f) => [rel(f), sc3Findings(f)])) },
+}));

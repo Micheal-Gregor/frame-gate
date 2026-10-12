@@ -21,6 +21,9 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-11 HOOK-07 enforcement shape | **ACCEPTED 2026-10-12** (owner, live gate) | `Declaration` is a nominal type only `declare()` can mint (REF-01 at parse); `declare()` takes only the narrowed `"HUMAN"` author. Limit registered: a holder of a HUMAN author calling `declare()` is not caught at parse (PC-02, K7) |
 | R-12 DR-18: INV-PROV at the catalog's read seam | **ACCEPTED 2026-10-12** (owner, live gate) | Decide statically what is decidable: no code outside `src/catalog` builds or appends a catalog-kind entry (resolved by type), and reads ignore entries at unconfigured levels. The runtime residue is a registered limit discharged by PC-02's port-layer identity binding |
 | R-13 who reviews round 7 | **ACCEPTED 2026-10-12** (owner, live gate) | MOD-03's re-check (round 7) runs on **Fable 5.1** (`--model claude-fable-5-1`), a reviewer that did not prescribe the R-06 closures, with scope covering them as well (RD-6) |
+| R-14 K7 round 7 triage; MOD-03's gate closed | **ACCEPTED 2026-10-12** (owner, live gate) | Gate closes as `closed-by-owner-7` (tag placed by the owner). Fix now: DR-24; DR-23 and DR-25 (decidable parts; array/property covariance registered); WI-02..WI-05; DR-26 (truthful limits, every limit pinned) |
+| R-15 detector reach is governed by a stated scope | **ACCEPTED 2026-10-12** (owner, live gate) | Each detector states the forms it decides and the limits it registers, each pinned by a fixture. K7 scores a detector against that statement; an evasion outside it is triaged as a known issue unless the owner promotes it |
+| R-16 MOD-04 opens with MOD-03 at drift 5 | **ACCEPTED 2026-10-12** (owner, live gate) | Explicit owner lift of the teeth rule, effective when the R-14 fix-now items are committed with their battery |
 
 ---
 
@@ -507,3 +510,55 @@ a separate decision**, recorded when it is made.
 `reviewer_command` gains `--model claude-fable-5-1`, probed before adoption (the CLI answered and
 `modelUsage` named only `claude-fable-5-1`). It applies from K7 round 7. Whether later rounds keep
 it is a separate ruling, still to be made.
+
+---
+
+## R-14 · K7 round 7 triage, and MOD-03's gate closes
+
+Round 7 (`k7-verdict-7.json`, Fable 5.1, reviewed `4c4ef5a`) was MOD-03's re-check: RETURN, drift
+5. The cap is reached, so this triage closes the gate. **Closed gates stay closed:** what follows
+is new work, reviewed at MOD-04's gate.
+
+| Item | Disposition |
+|---|---|
+| DR-24 forge decides `kind` by node text (RD-13) | **Fix now.** The key is decided by its resolved property name (quoted, computed, class field), with a fixture per form. IR-38 restated |
+| DR-23 mint escapes | **Fix the decidable part:** every overload signature's declared return; no hand-written ambient declarations (`.d.ts`, `declare`) in `src/`. **Registered:** array / property covariance, a hole in TypeScript's own type system, pinned by a `limit-` fixture |
+| DR-25 surface escapes | **Fix:** reads followed through catalog-internal wrappers to a fixed point; the "HUMAN" admission requires an actual append; `held` judges the field TYPE's writability |
+| DR-26 limit registers | **Fix:** every register entry states its true scope and limits, and every limit has a `limit-` fixture (SC-3 included) |
+| WI-02 composite height forms; WI-03 optional-parameter shape; WI-04 `.cts/.tsx/.jsx` and Python `import *`; WI-05 template-literal import specifier | **Fix all now**, as new work items against their closed slices |
+
+**The close.** The owner places `closed-by-owner-7` on the commit that records this ruling.
+
+---
+
+## R-15 · Detector reach is governed by a stated scope (from MOD-04 on)
+
+**Why.** Rounds 4–7 each widened the static detectors and each found the next ring of evasions:
+one declaration form, then aliases, then shapes and depth, then overloads, `.d.ts` files,
+covariance and quoted keys. Part of that ring is TypeScript's own unsoundness, which no checker
+over TypeScript can close. RD-19 names the shape: "a loop of ever-smaller fixes never trips the
+no-progress halt".
+
+**Ruling.**
+
+- **Every load-bearing detector carries a SCOPE STATEMENT** in its header. It lists the forms the
+  detector decides, by rule rather than by example, and the limits it registers. Each decided
+  form has a positive fixture, and each registered limit has a `limit-` fixture that the detector
+  must NOT flag. A limit that is quietly closed later turns its fixture red and must be
+  re-registered as covered.
+- **K7 scores a detector against its statement.** An evasion that falls inside a stated "decides"
+  rule is a defect of the detector, as before. An evasion of a form the statement does not claim
+  is reported, and triaged by default as a **known issue**, unless the owner promotes it to the
+  next fix round. A statement that claims a form it does not decide, or omits a limit it has, is a
+  CC-3 defect (DR-26's shape).
+- **Operationalized:** the k7-run prompt and the reviewer charter state this rule. Effective from
+  K7's next round, MOD-04's gate.
+
+---
+
+## R-16 · MOD-04 opens with MOD-03 at drift 5
+
+The teeth rule blocks new work on a module scoring under 7 until a fresh score or an explicit
+owner lift. **Lifted, explicitly, by the owner** (the R-15 choice: "MOD-04 opens on your lift"),
+effective once the R-14 fix-now items are committed with their mutation battery. MOD-04's first
+gate reviews the whole tree.

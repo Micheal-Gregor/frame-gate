@@ -12,6 +12,21 @@ preflight.*, progress. The reviewer supplies only checks, drift_score, verdict,
 blocking, next_action. Anything the reviewer says about the other fields is
 discarded, because a party cannot certify its own independence.
 
+Round cap (RD-9, enforced here): PASS, or ONE fix round + ONE re-check, then
+owner triage. The runner refuses a third consecutive non-PASS round unless a
+closing tag (k7-pass-*, closed-by-owner*, seal-*) has been placed at or after
+the last reviewed commit. The no-progress HALT below still applies inside the cap.
+
+After a seal: K7 reviews extension modules only (--modules is required), the
+sealed files must be unchanged, and in Phase 5 the runner refuses outright —
+Phase 5 does not run K7.
+
+PORTED, not copied (MetaFramework 2.3.0 migration, R-03; trial finding MF-16).
+This is the 2.3.0 template runner with this repo's local rulings re-applied:
+IR-22 (name the dirty files), R-07 (scratch worktree; a dirty-after verdict is
+refused), the positive-magnitude deduction wording, and raw-output preservation
+on a schema failure.
+
 Usage:
     k7-run.py [--root .] [--modules MOD-01,MOD-02] [--timeout 1800] [--dry-run]
 Exit: 0 verdict written (any verdict), 1 preflight/validation failure, 2 usage.
@@ -96,6 +111,53 @@ def load_prior(inst: Path, rnd: int) -> dict | None:
         return None
 
 
+def glob_to_regex(pattern: str) -> re.Pattern:
+    out, i, n = [], 0, len(pattern)
+    while i < n:
+        if pattern.startswith("**/", i):
+            out.append("(?:.*/)?"); i += 3
+        elif pattern.startswith("**", i):
+            out.append(".*"); i += 2
+        elif pattern[i] == "*":
+            out.append("[^/]*"); i += 1
+        elif pattern[i] == "?":
+            out.append("[^/]"); i += 1
+        else:
+            out.append(re.escape(pattern[i])); i += 1
+    return re.compile("^" + "".join(out) + "$")
+
+
+def is_ancestor(root: Path, a: str, b: str) -> bool:
+    return subprocess.run(["git", "-C", str(root), "merge-base", "--is-ancestor", a, b],
+                          capture_output=True).returncode == 0
+
+
+def non_pass_streak(root: Path, inst: Path) -> int:
+    """Consecutive non-PASS rounds not yet closed by a gate-closing tag."""
+    closing = []
+    for pat in ("k7-pass-*", "closed-by-owner*", "seal-*"):
+        for t in git(root, "tag", "-l", pat).splitlines():
+            c = git(root, "rev-list", "-n", "1", t)
+            if c:
+                closing.append(c)
+    rounds = []
+    for p in inst.glob("k7-verdict-*.json"):
+        m = re.search(r"k7-verdict-(\d+)\.json$", p.name)
+        if not m:
+            continue
+        try:
+            rounds.append((int(m.group(1)), json.loads(p.read_text(encoding="utf-8"))))
+        except (OSError, json.JSONDecodeError):
+            continue
+    streak = 0
+    for _, v in sorted(rounds, key=lambda r: r[0]):
+        streak = 0 if v.get("verdict") == "PASS" else streak + 1
+        reviewed = (v.get("reviewed") or {}).get("commit_sha", "")
+        if reviewed and any(is_ancestor(root, reviewed, c) for c in closing):
+            streak = 0
+    return streak
+
+
 def failing(verdict: dict) -> list[str]:
     return sorted(k for k, v in (verdict.get("checks") or {}).items()
                   if v.get("status") == "fail")
@@ -116,7 +178,7 @@ Use only the declared commands:
   single test:     {test_select}
   re-derive all:   {rederive_all}
 
-A throwaway worktree of the reviewed commit is at {scratch}. It is the ONLY
+{seal_note}A throwaway worktree of the reviewed commit is at {scratch}. It is the ONLY
 place you may write (R-07): run mutation experiments there, never in the
 repository. Run the declared commands against it by pointing them at it:
   npx tsc --noEmit -p {scratch}
@@ -178,6 +240,42 @@ def main() -> int:
     inst = root / "INSTRUMENTS"
     inst.mkdir(exist_ok=True)
 
+    # ---- phase, seal, and round-cap guards ---------------------------------
+    try:
+        phase = str(json.loads((root / "STATE.json").read_text(encoding="utf-8")).get("phase", 4))
+    except (OSError, json.JSONDecodeError):
+        phase = "4"
+    if phase == "5":
+        return die("STATE.json says phase 5. Phase 5 does not run K7: the library is sealed "
+                   "and the UI is not a library module. An engine gap goes to ui/gaps.md and, "
+                   "when ready, to an extension run (tools/seal.py begin-extension).")
+
+    seals = git(root, "tag", "-l", "seal-*", "--sort=-v:refname").splitlines()
+    seal_note = ""
+    if seals:
+        seal = seals[0]
+        if not args.modules:
+            return die(f"the library is sealed at {seal}; K7 reviews extension modules only. "
+                       f"Pass --modules with the new MOD ids.")
+        globs = cfg.get("sealed_globs") or [cfg.get("source_glob") or "src/**", "tests/**"]
+        rx = [glob_to_regex(g) for g in globs]
+        sealed = {f for f in git(root, "ls-tree", "-r", "--name-only", seal).splitlines()
+                  if any(r.match(f) for r in rx)}
+        broken = sorted(set(git(root, "diff", "--name-only", seal).splitlines()) & sealed)
+        if broken:
+            return die(f"files sealed at {seal} have changed ({', '.join(broken[:5])}); an "
+                       f"extension may not modify sealed code. K7 not spawned.")
+        seal_note = (f"Sealed library: {seal}. Files present at that tag are frozen, verified\n"
+                     f"unchanged by the runner, and OUT OF SCOPE. Review only the modules listed\n"
+                     f"above and their seams into the sealed library.\n\n")
+
+    streak = non_pass_streak(root, inst)
+    if streak >= 2:
+        return die("RD-9 round cap: this gate has had its fix round and its re-check. "
+                   "Everything still open goes to the OWNER as a triage list (fix now / known "
+                   "issue / won't-fix), recorded in RESOLUTION_RECORD.md; close the gate with "
+                   "a `closed-by-owner-<n>` tag. No round 3.")
+
     # ---- preflight -------------------------------------------------------
     # STATE.json is excluded: the SessionStart hook rewrites it on every session,
     # so counting it would make the tree permanently dirty and block every review.
@@ -226,7 +324,8 @@ def main() -> int:
         modules=", ".join(modules),
         test_command=cfg.get("test_command") or "(undeclared)",
         test_select=cfg.get("test_select") or "(undeclared)",
-        rederive_all=cfg.get("rederive_all") or "(undeclared)")
+        rederive_all=cfg.get("rederive_all") or "(undeclared)",
+        seal_note=seal_note)
 
     if args.dry_run:
         print(prompt)
@@ -320,7 +419,9 @@ def main() -> int:
     try:
         jsonschema.validate(verdict, schema)
     except jsonschema.ValidationError as e:
-        raw_out = inst / f"k7-raw-{rnd}.json"; raw_out.write_text(m.group(0), encoding="utf-8")
+        path = "/".join(str(p) for p in e.absolute_path) or "(root)"
+        raw_out = inst / f"k7-raw-{rnd}.json"
+        raw_out.write_text(m.group(0), encoding="utf-8")
         return die(f"verdict failed schema at {path}: {e.message}\n"
                    f"No verdict written. The reviewer's output was non-conforming.\n"
                    f"Raw output preserved at {raw_out}.")

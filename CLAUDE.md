@@ -109,44 +109,51 @@ while every module stays conformant.
 
 ---
 
-## Phase 4 process contract (applies to every session in this repo)
+## Phase 4 process contract (every Phase 4 session in this repo — the first build or an extension build — until the next seal)
 
-- **On a fresh clone, first:** `git config core.hooksPath .githooks` — activates the tag guard
-  (R-02). It cannot self-install; `.git/` is not versioned. Without it a `k7-pass` tag can be set on
-  a tree K7 never reviewed, which has already happened once.
-- **Governance:** `governance/Phase4_Conformance_Build_Roster.md` governs the build;
-  `governance/Phase5_Utilization_Roster.md` governs environment binding. Read both before work.
+- **Governance:** `governance/Phase4_Conformance_Build_Roster.md` governs the build. Read it
+  before work.
 - **C4 first.** The first session runs the C4 anchor: verify the handoff's pinned semantics are
   recoverable as rules and every typed interface defines its off-nominal behavior. Record in
-  `INSTRUMENTS/C4-anchor-record.md`. Halt-class defects -> stop; route upstream via F.
-- **Instruments are law.** A module not in `INSTRUMENTS/object-model-and-parameters.md` is not written
-  yet — propose it there first. Base cases in `INSTRUMENTS/axioms-and-base-cases.md` BEFORE the
-  feature, written first and watched failing. Every decision the handoff didn't make -> the
-  Interpretation Register in `INSTRUMENTS/drift-ledger.md` (benign / latent / conflicting).
-- **Base cases pin RULES, not instances.** A guard over "the five Unknown members" is a reflective
-  scan over every member discovered from source — a hard-coded list lets the sixth skate.
-- **Detectors resolve, never string-match.** Module-reach and conformance detectors resolve specifiers
-  and test containment; name scans are supplementary tripwires only.
-- **Two test frequencies.** `test_module` inside a rung for feedback; `test_command` — full suite,
-  unscoped — to close one. Scoping the gate run hides the regression you did not think you touched.
-- **RC-3 order.** No open body is filled before its resolution is recorded. Resolutions are live human
-  decisions, logged in `INSTRUMENTS/RESOLUTION_RECORD.md`.
-- **Vectors are computed** from the reference implementation, persisted to `vectors/<VEC-ID>.json`
-  with the `impl_sha` they were computed against, and re-derived. Deferred vectors block their
-  module's completion in `INSTRUMENTS/completion-ledger.md`, each row carrying its discharge condition.
-- **Mutation battery before K7**, on a committed tree, every restore verified against HEAD. "BUILT &
-  GREEN" without a battery is an unverified claim.
-- **K7 is distinct.** The builder NEVER scores its own conformance. K7 is launched by
-  `tools/k7-run.py` as a separate PROCESS with no builder context — never an in-session subagent.
-  Drift < 7 on any dimension blocks new work on that module; `tools/gate.py` enforces it at merge.
-- **Rounds are unbounded; no-progress halts.** A round changing neither the tree nor the failing-check
-  set goes to owner triage. Convergence is measured, not counted.
-- **Git discipline.** Commit at every approved increment; supersede, never rewrite; tag gates. A
-  `k7-pass-N` tag is refused unless verdict N exists, PASSed, and reviewed this exact tree. Closed
-  gates stay closed — a later defect is a new work item, never a retroactive RETURN.
-- **No mid-round instruction changes.** Any change to gate rules or K7's charter takes effect only
-  after it is recorded in `RESOLUTION_RECORD.md`.
-- **Backflow.** Handoff defects -> `INSTRUMENTS/F-supersession-proposals.md`, taken by the human to
-  the Phase 3 project as a revision run. Never patch `governance/S3/` in place.
-- **Phase 5 in this repo.** Bindings live in `utilization/`, never in the core. The drift ledger does
-  not close at deployment.
+  `INSTRUMENTS/C4-anchor-record.md`. Halt-class defects → stop; route upstream via F.
+- **Instruments are law — for engine modules.** A module not in
+  `INSTRUMENTS/object-model-and-parameters.md` is not written yet — propose it there first.
+  Base cases in `INSTRUMENTS/axioms-and-base-cases.md` BEFORE the feature. Every decision the
+  handoff didn't make → the Interpretation Register in `INSTRUMENTS/drift-ledger.md`
+  (benign / latent / conflicting), never a silent choice. `ui/` is Phase 5's tree, not a module
+  source; a build session does not touch it.
+- **RC-3 order.** No open body is filled before its resolution is recorded (Register discipline).
+  Resolutions are live human decisions, logged in `INSTRUMENTS/RESOLUTION_RECORD.md`.
+- **Vectors are computed.** Golden vectors come from the reference implementation, then
+  re-derive; deferred vectors block their module's completion in
+  `INSTRUMENTS/completion-ledger.md` until discharged, each row carrying its discharge condition.
+- **K7 is distinct and bounded.** The builder NEVER scores its own conformance. K7 is launched by
+  `tools/k7-run.py` as a separate PROCESS with no builder context — never an in-session
+  subagent — adversarially, per the CC-1..CC-7 battery, including divergence-injection and
+  mutation tests. PASS, or ONE fix round + ONE re-check, then owner triage (RD-9; the runner
+  refuses round 3). Drift score < 7 on any dimension blocks new work on that module, and
+  `tools/gate.py` enforces that at merge.
+- **Git discipline.** Commit at every approved increment; supersede, never rewrite; tag gates
+  (`k7-pass-*`, `resolution-run-*`, `closed-by-owner-*`). A `k7-pass-N` tag is refused unless
+  verdict N exists, PASSed, and reviewed this exact tree. Merges are the human gate.
+- **Backflow.** Handoff defects → `INSTRUMENTS/F-supersession-proposals.md`, taken by the human
+  to the Phase 3 chat project as a revision run. Never patch `governance/S3/` in place.
+- **Phase 4 ends at a seal.** When the last gate closes: `python3 tools/seal.py check` — one
+  sweep, no judgment — then owner triage of anything failing (fix now in one round, or known
+  issue), then `python3 tools/seal.py apply --approved-by "<owner, date>"` on the owner's live
+  approval. Never a second sweep. After a seal, files present at the seal tag are frozen
+  (`gate.py`); an extension build adds new files only and K7 reviews only its new modules.
+
+**Local to this repo** (recorded rulings; each is in `INSTRUMENTS/RESOLUTION_RECORD.md`):
+
+- **On a fresh clone, first:** `git config core.hooksPath .githooks` (R-02, the tag guard). It
+  cannot self-install. Start Claude Code sessions IN this folder: the hooks in
+  `.claude/settings.json` load only when the session is rooted here.
+- **Every class is written to the Object Writing Standard** (`governance/Object_Writing_Standard.md`,
+  OS-1..OS-12). Start each one with `python3 tools/new-object.py`. MOD-01 and MOD-02 predate it
+  (R-03 leaves open whether the seal's declaration check applies to them).
+- **The reviewer:** PowerShell is named beside Bash (R-05), and its only writable place is the
+  runner's `.k7/wt` worktree (R-07). On the Windows gate host, run `k7-run.py` with
+  `~/.local/bin` on `PATH`; that is an environment binding, not a repo change.
+- **Detectors resolve, never string-match; base cases pin rules, not instances** (RD-12,
+  RD-13). Every widened detector ships positive-control fixtures and its registered limits.

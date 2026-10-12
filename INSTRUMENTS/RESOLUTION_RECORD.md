@@ -359,3 +359,53 @@ height parameters, directly or through a conditional or `??`/`||`/`&&` whose ope
 body the test cannot read, such as an overload signature or an interface member, is not a
 selection, so a height-returning callable without a readable body is flagged. That bias is
 conservative and is registered.
+
+---
+
+## Implementation record — 2026-10-12 (R-03: migrated in place to MetaFramework 2.3.0)
+
+Applied after the round-5 gate closed (`closed-by-owner-5`), as the README requires, and after a
+clean rehearsal on a scratch clone. **Copy where the repo never changed the file; port where it
+did** (trial finding MF-16; the README's two instructions disagree on this).
+
+- **Ported:** `tools/k7-run.py`, the 2.3.0 template (round cap, seal guards, the Phase-5 refusal)
+  with this repo's rulings re-applied: IR-22, R-07, the deduction wording, and raw-output
+  preservation. The port also **fixes a latent bug in the old copy**: its schema-failure branch
+  used `{path}` after the line defining it had been removed, so the first non-conforming verdict
+  would have crashed the runner instead of reporting.
+- **Copied (no local rulings):** `state.py` (it now recognises `closed-by-owner-*`; STATE reads
+  `last_gate_tag: closed-by-owner-5`), `gate.py`, `phase4-checks.py`, `emission-check.py`,
+  `seal.py` and `new-object.py` (new). `rederive.py` is kept: it carries IR-26.
+- **Governance:** roster v0.4 and `Object_Writing_Standard.md` copied in. The README never lists
+  the latter, but the manifest pins it and RD-22 names it. `governance/contracts/` added;
+  `Phase5_Utilization_Roster.md` and `utilization/` removed (RD-20); `ui/README.md` added;
+  `roster-manifest.json` regenerated over the two pinned copies.
+- **Config:** `project.json` gains `sealed_globs`, `ui_root`, `ui_render_command`,
+  `object_standard` and `isolation_test_command` (`npx vitest run .isolation.test`), and
+  `scaffold_exempt` follows the governance change. `doc-roles.json` adds `ui/**/*.md` to
+  ledgers. The settings matcher adds `PowerShell` (GOV-1).
+- **Object model:** `Declared inputs (OS-1)` and `Decides` columns added. MOD-01/MOD-02: "n/a, no
+  class" and "NO", with reasons. Unbuilt modules are set at build.
+- **CLAUDE.md:** the v0.2 process contract ("rounds are unbounded", `utilization/`, the Phase 5
+  roster) is replaced by `governance/contracts/phase4-contract.md` plus a short local section.
+  159 lines.
+
+**Verified on the migrated tree:**
+
+- **`phase4-checks`, all six checks:** pass, except the 11 known `module_file_absent` rows for
+  unbuilt modules. `tags` and `rosters` now pass.
+- **`structure-check`:** pass.
+- **`emission-check`:** conforms. It notes that the S3 predates the binding rule, so OS-3 at the
+  seam is unchecked for this S3.
+- **Suite:** `tsc` clean, 37/37.
+- **`k7-run.py --dry-run`:** the 2.3.0 round cap admits the next round, and IR-22 names the
+  dirty file.
+- **`gate.py`, fed hook payloads directly:**
+  - denies frozen-S3 writes through Write, Bash and PowerShell;
+  - denies an OS-2 `Date.now()` in a class, with the fix in the message;
+  - denies a hand-made `seal-*` tag;
+  - allows an ordinary write.
+
+**Note:** this builder session is rooted one folder above the repo, so the repo's hooks do not
+guard it (MF-08). The gate was exercised directly instead. Sessions started in the repo get it
+automatically.

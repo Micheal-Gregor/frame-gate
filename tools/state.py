@@ -33,13 +33,13 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-GIT_FIELDS = ("branch", "head", "tree", "dirty", "k7_round", "last_gate_tag")
+GIT_FIELDS = ("branch", "head", "tree", "dirty", "k7_round", "last_gate_tag", "seal_tag")
 INTENT_FIELDS = ("phase", "concept", "current_module", "next_action", "blocked_on")
 
 TEMPLATE = {
     "schema_version": "1.0", "concept": "", "phase": 4,
     "branch": "", "head": "", "tree": "", "dirty": False,
-    "current_module": "", "k7_round": 0, "last_gate_tag": "",
+    "current_module": "", "k7_round": 0, "last_gate_tag": "", "seal_tag": "",
     "next_action": "", "blocked_on": None,
     "updated_at": "", "updated_by": "",
 }
@@ -81,8 +81,10 @@ def refresh(root: Path, st: dict) -> dict:
     st["k7_round"] = max(rounds) if rounds else 0
 
     tags = git(root, "tag", "--sort=-creatordate", "-l",
-               "k7-pass-*", "resolution-run-*", "k8-pass-*", "closed-by-owner")
+               "k7-pass-*", "resolution-run-*", "closed-by-owner*", "seal-*")
     st["last_gate_tag"] = tags.splitlines()[0] if tags else ""
+    seals = git(root, "tag", "-l", "seal-*", "--sort=-v:refname")
+    st["seal_tag"] = seals.splitlines()[0] if seals else ""
     return st
 
 
@@ -95,6 +97,7 @@ def render(st: dict) -> str:
         f"branch         {st.get('branch') or '(unknown)'}"
         + ("   [WORKING TREE DIRTY]" if st.get("dirty") else ""),
         f"HEAD           {(st.get('head') or '')[:12] or '(unknown)'}",
+        f"seal           {st.get('seal_tag') or '(none — library not yet sealed)'}",
         f"current module {st.get('current_module') or '(unset)'}",
         f"K7 round       {st.get('k7_round')}",
         f"last gate tag  {st.get('last_gate_tag') or '(none)'}",
@@ -102,10 +105,26 @@ def render(st: dict) -> str:
     ]
     if b:
         lines.append(f"BLOCKED ON     {b}")
-    lines += [
-        "",
-        "Before acting: read governance/ for the frozen S3 and the emission",
-        "contract. Do not reconstruct project position from memory or from this",
+    if str(st.get("phase")) == "5":
+        guide = [
+            f"Phase 5: the library is sealed at {st.get('seal_tag') or '(seal tag missing!)'}.",
+            "Work in ui/. Start from ui/surface-map.md and ui/gaps.md. State this",
+            "session's one goal (simulate / build / audit / review) and stop when it",
+            "is met. Do not run K7, re-score, or re-audit the library or its docs.",
+        ]
+    elif st.get("seal_tag"):
+        guide = [
+            f"Extension build over {st['seal_tag']}: files present at that tag are",
+            "frozen. Build new modules only; K7 runs with --modules. Read governance/",
+            "for the extension S3 and the emission contract.",
+        ]
+    else:
+        guide = [
+            "Before acting: read governance/ for the frozen S3 and the emission",
+            "contract.",
+        ]
+    lines += [""] + guide + [
+        "Do not reconstruct project position from memory or from this",
         "conversation — STATE.json is authoritative and was written by a tool.",
         "=" * 62,
     ]

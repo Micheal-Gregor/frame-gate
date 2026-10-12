@@ -1,7 +1,6 @@
-# Conformance Build Layer — Phase 4 Roster & Code-Conformance Gate (v0.2, input-agnostic)
+# Conformance Build Layer — Phase 4 Roster & Code-Conformance Gate (v0.4, input-agnostic)
 
 *Phase 4 of the #MetaFramework pipeline · The governed build · Reusable across concepts ·
-v0.1 drafted from the GateControl pilot build (interpretation log B-1..B-10) and the app-layer
 control system (drift ledger, axioms & base cases, object model & parameters, test strategy).
 v0.2 folds in the eight revisions (RD-1..RD-8) from the full pressure-test run: C4 → K7
 (RETURN) → regeneration → R → K7 re-verify (narrow RETURN) → surgical fix → K7 PASS.*
@@ -135,7 +134,7 @@ learns from its builds, the way v3 → v3.1 absorbed the verification-handoff ru
 
 ---
 
-# v0.3 amendments — RD-9..RD-16 (folded from the FirmOS governance run: two slices, five K7 rounds, 2026-08)
+# v0.3 amendments — RD-9..RD-16
 
 *These amend §5's regeneration loop and §3's battery discipline. Where v0.2 says "the K7 ⇄ R
 loop … RETURN loops to owning B" and "re-enter K7", RD-9 SUPERSEDES that mechanics. Everything
@@ -175,3 +174,83 @@ else in v0.2 stands.*
   Phase 5 when its discharge condition names a target event (e.g. a governed first
   enactment); the completion ledger row must carry that condition verbatim, and the module is
   BUILT-but-NOT-COMPLETE — an honest state Phase 5's C5 accepts as input.
+
+---
+
+# v0.4 amendments — RD-17..RD-24
+
+*Appended; everything above stands except where a line below says SUPERSEDES.*
+
+- **RD-17 · The seal is Phase 4's exit.** Once the last gate closes (K7 PASS or owner triage),
+  `tools/seal.py check` runs ONE sweep, mechanical only: the nearest closing tag covers the
+  code being sealed; full suite; `rederive --all`; the phase4 checks; structure and emission;
+  every ACTIVE module in S3 §2 exists on disk. Failures go to the OWNER once: fix now (one
+  round) or known issue. `tools/seal.py apply` then writes the seal record, archives the Phase
+  4 CLAUDE.md, installs the Phase 5 contract, and tags `seal-N`. After the tag, files present
+  at the seal that match `sealed_globs` are frozen — `gate.py` refuses writes, `seal.py verify`
+  and `phase4-checks seal` detect changes. **There is no second sweep.** Observed: reviewing
+  documentation and code together with no stated end goal produced relative verdicts —
+  what one pass accepted the next rejected — and each pass generated documentation the next
+  pass audited.
+- **RD-18 · Extension builds.** A gap Phase 5 cannot close with existing operations becomes an
+  extension run through Phases 1–3 (sealed objects are givens; new objects only), then
+  `seal.py begin-extension` returns the repo to Phase 4. The extension adds NEW files; a need
+  to change a sealed file is not an extension and halts for the owner. K7 reviews the new
+  modules only (`--modules` is required after a seal; the runner verifies sealed files
+  unchanged first). The extension closes by re-sealing as `seal-N+1`.
+- **RD-19 · The round cap is restored and enforced.** SUPERSEDES the skill-level note that
+  made rounds unbounded under a no-progress halt. Moving review to a separate process fixed
+  role blur; it did not fix convergence. The no-progress halt measures motion, not distance —
+  a loop of ever-smaller fixes changes the tree every round and never trips it. RD-9 stands as
+  written — PASS, or ONE fix round + ONE re-check, then owner triage — and `k7-run.py` refuses
+  a third consecutive non-PASS round until a closing tag is placed. The no-progress halt is
+  kept inside the cap. Owner-triaged closes are tagged `closed-by-owner-N` (a suffix, so more
+  than one gate can close that way).
+- **RD-20 · Phase 5 surfaces; it does not bind.** The Utilization roster (C5, W-ENV/SEC/PERS/
+  OBS/OPS/DISCHARGE, K8) is retired from this repo. RD-16 is amended accordingly: production
+  concerns (`PC-*`) and vectors deferred to a target event are carried in the seal record and
+  become inputs to Phase 5's latency / scale / security review. Discharging a target-deferred
+  vector computes and pins an engine value, so it runs as a scoped extension build, not as UI
+  work.
+- **RD-21 · Blocked by the seal: log, continue, batch.** When a build cannot proceed as written
+  because a sealed module would have to change — most often a decider reached by name that now
+  needs handing in — the builder does NOT stop and does NOT reach into the library. It records
+  the exception in `INSTRUMENTS/F-supersession-proposals.md` (call site, sealed target, what
+  the new code needs, what was built around it, what is left unbuilt), builds everything else
+  on the list, and finishes the full pass. At the end of the run it presents ONE consolidated
+  case covering every blocked item: the call sites, what each unlocks, the order, and the
+  default if the owner declines. The owner rules once. Fifteen interruptions for fifteen call
+  sites is the failure this rule exists to prevent; so is a builder that quietly edits a
+  helper to keep moving. Nothing is applied until the owner rules, and what is approved is
+  applied as one deliberate re-seal, not as fifteen reaches into sealed code.
+- **RD-22 · The Object Writing Standard is binding.** `governance/Object_Writing_Standard.md`
+  (OS-1..OS-12) governs how every class is written: dependencies declared at construction, no
+  ambient reads, deciders injected, valid-or-refuse constructors, private state, typed
+  refusals, declared determinism and side effects, no bucket modules, one responsibility,
+  injection at the wiring point, and an isolation test per class. `phase4-checks.py objects`
+  enforces what a scanner can see; OS-12's isolation test proves the rest. The seal sweep runs
+  both, so a library cannot seal over a hard-wired dependency. The failure this closes: an
+  object that reaches for what it was never handed works perfectly for one scenario, seals,
+  then answers the second scenario with the first one's assumption — which the next session
+  reports as a missing object and brings back as an extension request. Extensions are for
+  capabilities the engine lacks, not for dependencies it never declared.
+- **RD-23 · The standard is enforced where the choice is made, not where it is documented.**
+  A rule read 40,000 tokens ago loses to the three-token shortcut sitting in front of the
+  cursor, so OS-2 is refused by `gate.py` AT THE WRITE, with the fix in the denial;
+  `phase4-checks.py objects` runs at `git commit` on staged files, so a violation cannot
+  accumulate for a later sweep; `tools/new-object.py` scaffolds the compliant shape so
+  compliance costs fewer tokens than improvising; and the OS-12 isolation tests run at the seal
+  with the environment cleared, which is the only step that proves absence rather than scanning
+  for presence. Documentation states the rule; these four make it the path of least resistance.
+- **RD-24 · A seal may not close over an undeclared input.** The defect: a sealed class answers
+  from a fact nobody declared — a zero-argument helper returning a literal, a default argument,
+  a module constant — so it works for the scenario it was written for and lies to the second
+  one. Phase 5 then reads the lie as a missing class and opens an extension, which adds a class
+  and cannot repair one. The repair is upstream, in four places: OS-1 names the illegal shapes;
+  `gate.py` refuses them at the write; `phase4-checks.py objects` parses for them and requires
+  an isolation test that CALLS every operation and proves a declared input changes the answer;
+  and the seal sweep fails — not notes — on an undeclared `isolation_test_command`, an unwritten
+  interface contract, or any disagreement between a signature, the object model's Declared
+  inputs cell, and the contract's Inputs cell. The contract is copied from the signatures, never
+  written from memory of the happy path. This applies to classes written after the change; it
+  does not reopen sealed files.

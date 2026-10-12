@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|Write|Edit|NotebookEdit",
+        "matcher": "Bash|PowerShell|Write|Edit|NotebookEdit",
         "hooks": [{ "type": "command", "command": "python3 tools/gate.py" }]
       }
     ],

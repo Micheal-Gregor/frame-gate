@@ -6,7 +6,8 @@
     "**/steps/**/*.md"
   ],
   "ledger": [
-    "**/INSTRUMENTS/*.md"
+    "**/INSTRUMENTS/*.md",
+    "ui/**/*.md"
   ],
   "frozen": [
     "**/governance/**/*.md",

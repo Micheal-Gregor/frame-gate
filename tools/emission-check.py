@@ -28,6 +28,18 @@ ID_RE = re.compile(r"^[A-Z]+-[0-9]{2,}$")
 ENTITY_STATUS = {"PROPOSED", "ACTIVE", "DEFERRED", "DISCHARGED", "SUPERSEDED", "REFUSED"}
 READINESS = {"NOT_STARTED", "BUILT", "COMPLETE", "BLOCKED"}
 VECTOR_STATE = {"COMPUTED", "DEFERRED"}
+DECIDES = {"YES", "NO"}
+BINDING = {"INJECTED", "NAMED"}
+
+# Added by the binding rule: a module that answers a business question (who may act,
+# what is visible, which version is active, what time it is) is a DECIDER, and a seam
+# into a decider must hand it in, never reach for it by name. Documents emitted before
+# this rule carry neither column; they are noted, not failed.
+OPTIONAL_COLUMNS = {
+    "2. Expressed Object Model": ["Decides"],
+    "2. Resolved partition": ["Decides"],
+    "4. Seam contracts": ["Binding"],
+}
 
 PHASE2 = {
     "name": "Phase 2",
@@ -176,10 +188,13 @@ def check(path: Path, spec: dict, phase2_path: Path | None) -> list[dict]:
             out.append(v(f, "table_missing", f"no table under '## {section}'"))
             continue
         block = blocks[0]
-        if block["__columns__"] != tspec["columns"]:
+        extended = tspec["columns"] + OPTIONAL_COLUMNS.get(section, [])
+        if block["__columns__"] not in (tspec["columns"], extended):
             out.append(v(f, "column_mismatch",
                          f"'{section}' has {block['__columns__']}, "
-                         f"contract requires {tspec['columns']}"))
+                         f"contract requires {tspec['columns']}"
+                         + (f" (or {extended} under the binding rule)"
+                            if extended != tspec["columns"] else "")))
             continue
         rows = block["__rows__"]
         data[section] = rows
@@ -239,6 +254,8 @@ def check(path: Path, spec: dict, phase2_path: Path | None) -> list[dict]:
     for m in sorted(mods - seamed):
         out.append(v(f, "orphan_module", f"{m} is neither source nor target of any seam"))
 
+    out.extend(check_binding(f, data))
+
     mapped = [r.get("OBJ", "") for r in data.get("3. Object-to-module map", [])]
     for o in sorted({o for o in mapped if mapped.count(o) > 1}):
         out.append(v(f, "object_mapped_twice",
@@ -257,6 +274,42 @@ def check(path: Path, spec: dict, phase2_path: Path | None) -> list[dict]:
         for o in sorted(set(mapped) - objs - {""}):
             out.append(v(f, "id_unknown_reference",
                          f"§3 maps '{o}', which is not an object in Phase 2 §2"))
+    return out
+
+
+def check_binding(f: str, data: dict) -> list[dict]:
+    """A seam into a decider must be INJECTED. Unclassified documents are noted."""
+    out: list[dict] = []
+    mods = data.get("2. Resolved partition", []) or data.get("2. Expressed Object Model", [])
+    seams = data.get("4. Seam contracts", [])
+    has_decides = any("Decides" in r for r in mods)
+    has_binding = any("Binding" in r for r in seams)
+
+    for n, r in enumerate(mods, 1):
+        if "Decides" in r and r["Decides"] not in DECIDES:
+            out.append(v(f, "decides_value", f"module row {n}: Decides='{r['Decides']}' "
+                                             f"must be one of {sorted(DECIDES)}"))
+    for n, r in enumerate(seams, 1):
+        if "Binding" in r and r["Binding"] not in BINDING:
+            out.append(v(f, "binding_value", f"seam row {n}: Binding='{r['Binding']}' "
+                                             f"must be one of {sorted(BINDING)}"))
+    if not seams:
+        return out
+    if has_binding and not has_decides:
+        out.append(v(f, "decides_unclassified",
+                     "§4 carries Binding but §2 has no Decides column; the decider-injection "
+                     "rule cannot be checked"))
+        return out
+    if not has_binding:
+        return out
+
+    deciders = {r.get("ID", "") for r in mods if r.get("Decides") == "YES"}
+    for n, r in enumerate(seams, 1):
+        if r.get("Target MOD") in deciders and r.get("Binding") != "INJECTED":
+            out.append(v(f, "decider_called_by_name",
+                         f"seam row {n} ({r.get('ID')}): {r.get('Source MOD')} reaches "
+                         f"{r.get('Target MOD')} by name, but that module answers a business "
+                         f"question — it must be handed in (Binding=INJECTED)"))
     return out
 
 
@@ -284,13 +337,22 @@ def main() -> int:
         return 2
 
     violations = check(path, spec, p2)
-    result = {"status": "fail" if violations else "pass", "violations": violations}
+    notes = []
+    if not any(x["rule"].startswith(("decider_", "decides_", "binding_")) for x in violations):
+        text = path.read_text(encoding="utf-8")
+        if "| Binding |" not in text and "| Decides |" not in text:
+            notes.append("emitted before the binding rule: no Decides/Binding columns, so "
+                         "'a decider is handed in, never reached by name' is unchecked here")
+    result = {"status": "fail" if violations else "pass", "violations": violations,
+              "notes": notes}
 
     if args.json:
         print(json.dumps(result, indent=2))
     else:
         for x in violations:
             print(f"{x['file']}: [{x['rule']}] {x['detail']}")
+        for n in notes:
+            print(f"{path.name}: [note] {n}")
         print(f"\n{len(violations)} violation(s)." if violations
               else f"emission-check: {spec['name']} document conforms.")
     return 1 if violations else 0

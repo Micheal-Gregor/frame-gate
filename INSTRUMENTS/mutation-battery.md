@@ -191,3 +191,43 @@ construction rather than by test:
 
 Claiming these two as kills would be claiming a run this host cannot perform. K7 round 2 credited
 disclosure of exactly this shape; the alternative is a battery that reports green by not looking.
+
+## Round 5 — the R-04 fix round, after K7 round 4 RETURN (drift 5)
+
+Run on committed tree `9eb68b9` on the Windows gate host. Each mutation was killed or survived
+under the declared `test_select` command. Every restore was verified with `git diff --quiet` plus
+an empty `git status --porcelain`, and a failed restore would have aborted the run. Every selected
+test was confirmed green on the clean tree first, so a kill cannot be a permanent error. P1–P3 are
+the three K5 variants K7 named in CC-6.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| P1 | Kernel exports an arrow-const membership predicate | KILLED (test) | `test_kernel_exports_no_projection_membership_predicate` |
+| P2 | Kernel re-exports a local predicate through `export { looks as shaped }` | KILLED (test) | same |
+| P3 | Kernel predicate asserts a type ALIAS of `Projection` | KILLED (test) | same |
+| P4 | Kernel exports height arithmetic as an arrow const | KILLED (test) | `test_kernel_exposes_no_height_arithmetic` |
+| P5 | Kernel exports height arithmetic through an alias and a specifier | KILLED (test) | same |
+| P6 | `AppendedFact.payload` loses `readonly` | KILLED (test) | `test_assigning_to_an_appended_fact_field_does_not_compile` |
+| P7 | `mutate-fact` fixture broken for an UNRELATED reason (bad import path), DR-09's shape | KILLED (test) | same; the old `count > 0` passed this |
+| P8 | `gate-without-onfail` fixture gains an unrelated error | KILLED (test) | `test_gate_without_on_fail_does_not_compile` |
+| P9 | Export detector reverts to `getPropertyOfType` (its own first-run bug) | KILLED (test) | `test_the_membership_detector_sees_every_export_form` |
+| P10 | Export detector sees function declarations only | KILLED (test) | same |
+| P11 | Spawn resolver decides by the callee's local NAME | KILLED (test) | `test_a_renamed_import_does_not_hide_a_spawn` |
+| P12 | Real tree gains an aliased spawn of a name | KILLED (test) | `test_the_real_tools_and_tests_trees_spawn_only_node` |
+| P13 | Real tree gains an element-access spawn of a name | KILLED (test) | same |
+| P14 | Spawn resolver admits every command as the Node binary | KILLED (test) | `test_spawning_a_command_name_is_a_portability_defect` |
+| P15 | Python sweep merges function scopes (`ast.walk` semantics) | KILLED (test) | `test_python_launches_are_resolved_through_bindings` |
+| P16 | Python sweep loses `getattr` resolution | KILLED (test) | same |
+| P17 | `rederive.py` launches the split command again | KILLED (test) | `test_the_python_the_declared_commands_reach_spawns_only_node` |
+| P18 | `reported()` skips `respell` | KILLED (test) | `test_the_constructor_absolutises_and_respells_the_host_separator` |
+| P19 | `rederive_invoke` reverts to `npx tsx` | KILLED (test) | `test_the_declared_rederive_invoke_launches_node` |
+
+**Nineteen of nineteen killed.** The first pass, on `d85974d`, killed seventeen. P15 survived for
+want of a fixture that merging scopes would wrongly ADMIT (it only made the check stricter), and P19
+survived because `rederive.py`'s runtime refusal runs only when a vector exists, which no module has
+before MOD-04. Both were closed by test (`violating-sibling-scope.py`, and a guard on the declared
+command), committed, and the whole battery re-run.
+
+**P18 is round 4's N2.** It was disclosed then as unkillable because "on this host `path.sep` is
+already `/`". On the gate's host it is killed. The disclosure was correct about Linux and is now
+moot where it mattered.

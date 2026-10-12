@@ -146,3 +146,31 @@ killed by the full suite, one killed by the declared selector.
 **What this does not fix.** Property B can only be checked where tests exist. Eighteen of nineteen
 rows are `pending` today. Each becomes checkable as its module is built, and a row that never
 resolves is a defect the check will name at that point rather than at emission.
+
+
+---
+
+## SP-2 · MOD-03's interface omits the owner of "independent unit" (ODG-FG-06)
+
+**Defect class:** an open design gap the S3 assigns to a module without giving that module the
+operations to own it.
+
+**Where.** S3 §9 lists ODG-FG-06, "'Independent unit', the predicate licensing a null lineage, is
+stated as a constraint and owned by no object", with the resolution "assign it to MOD-03". F2 O-8
+states the constraint (`from = BOTTOM` only for the least currency of an independent unit). F1's
+MOD-03 public interface lists eight operations, and none answers it.
+
+**Resolved locally (R-10, owner, 2026-10-12)** as a human-declared, appended, as-of-height act.
+MOD-03 builds two operations the S3 does not name, registered as IR-29 and linked to ODG-FG-06:
+
+- `declare_independence(unit, independent, author) -> IndependenceAct`, HOOK-07-guarded;
+- `independence_at(unit, height) -> IndependenceAct | NoSubject`.
+
+**Proposed superseding edit (for the owner's Phase 3 project):**
+
+- In F1 §2 MOD-03 "Public interface", add the two operations above.
+- In S3 §9, mark ODG-FG-06 RESOLVED with R-10's ruling.
+- In the S3 §5 refusal table, add REF-11a-style rows for MOD-05: a `from = BOTTOM` draw refused
+  when `independence_at` is `NoSubject` or asserts `false`, with its positive case.
+
+**Status:** OPEN, awaiting the owner's Phase 3 revision run. Never patched in `governance/S3/`.

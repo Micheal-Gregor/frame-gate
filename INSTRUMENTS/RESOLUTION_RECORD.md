@@ -17,6 +17,8 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-07 reviewer scratch worktree (amends R-05) | **ACCEPTED 2026-10-12** (owner, live gate), **subject to probe** | Runner-owned gitignored worktree `.k7/wt`; reviewer Write/Edit scoped to `.k7/**`; `k7-run.py` refuses, not warns, a verdict that leaves the real tree dirty |
 | R-08 MOD-03 opens with MOD-01 at drift 5 | **ACCEPTED 2026-10-12** (owner, live gate) | Explicit owner lift of the teeth rule, effective when the R-06 fix-now items are committed with their battery. MOD-03's first K7 gate reviews everything, these fixes included |
 | R-09 what "height arithmetic" means (BC-01-5, DR-14) | **ACCEPTED 2026-10-12** (owner, in chat) | Height in, plain number out: arithmetic. Height in, height out: arithmetic unless every return hands back one of the callable's own height parameters unchanged. Ordering (-1/0/1), boolean and other results are not arithmetic |
+| R-10 ODG-FG-06 "independent unit" | **ACCEPTED 2026-10-12** (owner, live gate) | HUMAN-declared: an appended, never-inferred act, read as of a height; no act in force → `NoSubject` → not licensed. Owned by MOD-03; F-route proposal SP-2 |
+| R-11 HOOK-07 enforcement shape | **ACCEPTED 2026-10-12** (owner, live gate) | `Declaration` is a nominal type only `declare()` can mint (REF-01 at parse); `declare()` takes only the narrowed `"HUMAN"` author. Limit registered: a holder of a HUMAN author calling `declare()` is not caught at parse (PC-02, K7) |
 
 ---
 
@@ -409,3 +411,50 @@ did** (trial finding MF-16; the README's two instructions disagree on this).
 **Note:** this builder session is rooted one folder above the repo, so the repo's hooks do not
 guard it (MF-08). The gate was exercised directly instead. Sessions started in the repo get it
 automatically.
+
+---
+
+## R-10 · ODG-FG-06: "independent unit" is a human declaration
+
+**Owner, 2026-10-12, live gate.** OBJ-11 permits `from = BOTTOM` only for the least currency of an
+*independent* unit (F2 O-8). No object defined the predicate, and the S3 assigned it to MOD-03.
+
+**Ruling.** Independence is **declared by a HUMAN, appended, and read as of a height**, under the
+same INV-PROV discipline as classification: never derived, never inferred, and never a field on a
+Unit.
+
+- MOD-03 gains `declare_independence(unit, independent, author)`, an appended act. `independent`
+  is a boolean so that a later act can withdraw the license. It is HOOK-07-guarded like
+  `declare`.
+- MOD-03 gains `independence_at(unit, height)`, which returns the act in force at that height,
+  or `NoSubject` when none has been made.
+- **No act in force means not licensed.** MOD-05 refuses a `from = BOTTOM` draw unless
+  `independence_at` returns an act asserting independence.
+- `NoSubject` follows the sibling modules' precedent for "none has been declared":
+  `condition_in_force` (F3), `observation_of` (F3), `governing_scope` (F5). The same member is
+  used for `declaration_at` with no declaration in force (IR-29).
+
+**Upstream.** The S3 interface for MOD-03 does not list these two operations, so they are a
+registered interpretation linked to ODG-FG-06 (RD-4), and SP-2 proposes adding them to the
+Phase 3 S3. `governance/S3/` is not patched.
+
+---
+
+## R-11 · HOOK-07: how much of "no derivation in the call chain" is enforced at parse
+
+**Owner, 2026-10-12, live gate.** HOOK-07's condition is "author is HUMAN **and** no derivation is in
+the call chain", with BLOCK "fail at parse". TypeScript can constrain types but not call chains.
+
+**Ruling.**
+
+- **REF-01, enforced at parse.** `Declaration` (and the independence act) is a nominal type
+  carrying a brand that only MOD-03's `declare` / `declare_independence` can mint. Any other
+  definition that produces one cannot compile.
+- **The author half of HOOK-07, enforced at parse.** `declare` accepts only the narrowed
+  `"HUMAN"` member of OBJ-38 `Author`. Passing `ENGINE` or `DIRECTOR` cannot compile, and a
+  caller holding a plain `Author` must narrow it through ports' `mayDecide`.
+- **Registered limit (IR-30).** A function that already holds a narrowed `"HUMAN"` and calls
+  `declare` with a level it computed is not detectable at parse. That half rests on PC-02 (who
+  may act as HUMAN is bound at the port layer, a deployment fact) and on K7 review. A capability
+  token minted at a human-input boundary would close it, at the price of a new work item against
+  the closed MOD-02 slice; the owner declined that for now.

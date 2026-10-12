@@ -8,7 +8,7 @@
  * precisely so the Windows arm is reachable from here.
  */
 import { describe, expect, it } from "vitest";
-import { resolve, sep } from "node:path";
+import { isAbsolute, resolve, sep } from "node:path";
 import { reported, respell } from "../../tools/checks/reported-path.js";
 
 describe("reported paths are platform-stable", () => {
@@ -26,9 +26,16 @@ describe("reported paths are platform-stable", () => {
   });
 
   it("test_the_constructor_absolutises_and_respells_the_host_separator", () => {
+    // Properties, not a second copy of the implementation (K7 round 4, CC-7 /
+    // DR-10: the previous first assertion compared reported() with its own body,
+    // so it could not fail, and the second was a ternary with identical arms).
+    // Each line below fails for some reported() that breaks the rule.
     const made = reported("src/facts/index.ts");
-    expect(made).toBe(respell(resolve("src/facts/index.ts"), sep));
-    expect(made.includes(sep === "/" ? "\\" : "\\")).toBe(false);
-    expect(made.endsWith("src/facts/index.ts")).toBe(true);
+    expect(isAbsolute(made), "not absolutised").toBe(true);
+    expect(made, "a host separator survived").not.toContain("\\");
+    expect(made.endsWith("/src/facts/index.ts"), "the relative tail was altered").toBe(true);
+    // Lossless: undoing the respelling on this host gives back exactly the host's
+    // own absolute path - nothing dropped, re-cased or reordered on the way.
+    expect(made.split("/").join(sep)).toBe(resolve("src/facts/index.ts"));
   });
 });

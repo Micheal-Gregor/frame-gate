@@ -90,17 +90,26 @@ might re-derive the family from admits it. If it rejoins, δ becomes consumable 
 is consumed and owner ruling DG-F1 is defeated **without anyone editing a line that mentions
 difficulty**. The list is the definition; the absent predicate is what keeps it the definition.
 
-**BC-01-3 — `AppendedFact` has no mutator, and a subclass cannot introduce one.**
+**BC-01-3 — `AppendedFact` has no mutator through the base view.**
 
-> A fixture that assigns to a field of an `AppendedFact` subtype **must fail to compile**.
+> A fixture that assigns to a field of an `AppendedFact` **must fail to compile, with exactly the
+> read-only-assignment diagnostic (TS2540) naming the field**.
 
-Checked by running the compiler over a fixture and requiring diagnostics — a parse-level refusal,
-not a runtime throw. "The fact was corrected" must have no expression in the type system.
+Checked by running the compiler over a fixture and requiring that ONE diagnostic, a parse-level
+refusal rather than a runtime throw. "The fact was corrected" must have no expression through the
+base type.
+
+*Amended 2026-10-11 (R-04, K7 round 4).* The original statement also claimed "a subclass cannot
+introduce one". That was never true: `AppendedFact` is an interface, and an implementer or an
+extending interface can add a mutable member. The claim is **withdrawn, not tested**. Its actual
+scope is registered as IR-23. Separately, "requiring diagnostics" became "requiring the diagnostic"
+(DR-09): any unrelated compile error satisfied the old check.
 
 **BC-01-4 — a `Gate` without `ON_FAIL` is malformed at parse.**
 
-> A fixture declaring a Gate that omits `onFail` **must fail to compile**, and `onFail` must be typed
-> to exactly one `Unknown` member.
+> A fixture declaring a Gate that omits `onFail` **must fail to compile, with exactly the
+> missing-required-property diagnostic (TS2741) naming `onFail`**, and `onFail` must be typed to
+> exactly one `Unknown` member. *(Diagnostic pinned 2026-10-11, R-04 / DR-09.)*
 
 A gate that can fail without saying in which of the five ways re-opens the collapse OBJ-04 exists to
 prevent.

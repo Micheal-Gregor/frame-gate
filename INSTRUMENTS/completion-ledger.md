@@ -10,7 +10,7 @@ every deferred vector computed from the real implementation and independently re
 | Module | CT-1 | CT-2 | CT-3 | CT-4 | CT-5 | CT-6 | PC enum | Status |
 |---|---|---|---|---|---|---|---|---|
 | MOD-02 ports | pass | pass | pass | REF-02 pass (7 tests) | n/a-by-absence | n/a-by-absence | PC-02 enumerated | **BUILT** — `k7-pass-2`; reopened by round 3 CC-4 (POSIX-only path assertions), remediated |
-| MOD-01 kernel | pass | pass | pass | n/a-by-absence | n/a-by-absence | n/a-by-absence | PC-04 enumerated | **BUILT** — K7 round 3 RETURN (drift 4) remediated, round 4 pending |
+| MOD-01 kernel | pass | pass | pass | n/a-by-absence | n/a-by-absence | n/a-by-absence | PC-04 enumerated | **BUILT** — K7 round 4 RETURN (drift 5; the gate could not execute, DR-05). R-04 fix round done; K7 round 5 pending, the last under R-04 |
 | MOD-03 catalog | | | | REF-01 | n/a | HOOK-07 | PC-02 | NOT_STARTED |
 | MOD-05 facts | | | | REF-05, REF-06 | n/a | n/a | PC-01, PC-03 | NOT_STARTED |
 | MOD-04 reachability | | | | REF-03 | VEC-01 | HOOK-01 | PC-05 | NOT_STARTED |

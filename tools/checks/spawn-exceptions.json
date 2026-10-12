@@ -1,0 +1,11 @@
+{
+  "_comment": "IR-20 admits ONE named command at ONE file per entry, and nothing else. An entry is a reviewed decision with its IR, not a convenience: a command NAME is resolved by the host, so every entry is a place the hosts may disagree. tools/checks/spawn-resolve.mjs reads this file.",
+  "exceptions": [
+    {
+      "file": "tools/checks/spawn-portability.ts",
+      "command": "python3",
+      "ir": "IR-25",
+      "reason": "The .py half of the IR-20 sweep is Python's own parser (tools/checks/spawn-portability.py). python3 is already a host dependency of the declared rederive_all command, so this adds no host the gate does not already need."
+    }
+  ]
+}

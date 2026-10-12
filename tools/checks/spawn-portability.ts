@@ -13,30 +13,30 @@
  * Why this check exists (K7 round 3, CC-4). The kernel's fixture compile spawned
  * `npx.cmd`. Node has refused to spawn `.cmd` without a shell since the fix for
  * CVE-2024-27980, so on Windows it threw EINVAL and the two base cases it fed -
- * BC-01-3 (append-only) and BC-01-4 (ON_FAIL) - were RED ON A CLEAN TREE. A named
- * guard test that is red before any mutation cannot distinguish a kill from a
- * permanent error, so the guards were unverified by any run the gate could perform.
+ * BC-01-3 (append-only) and BC-01-4 (ON_FAIL) - were RED ON A CLEAN TREE.
  *
- * RD-12: this pins the RULE, not that one call site. The build happens on Linux
- * and the gate runs on Windows; without a rule the next module ships the same
- * defect. `fork` is admitted because it launches Node by construction - it takes a
- * module path, never a command.
+ * RD-12: this pins the RULE, not that one call site. `fork` is admitted because it
+ * launches Node by construction - it takes a module path, never a command.
  *
- * RD-13: this RESOLVES nothing and scans no names - it reads the AST and asks what
- * the first ARGUMENT is. A text scan for "npx" would pass the moment someone wrote
- * a different command name, which is the same defect wearing another spelling.
+ * RD-13, as K7 round 4 (CC-6 / DR-07) found it was NOT honoured: the previous
+ * version read the callee's NAME, so an aliased import, an element access or a
+ * destructured rename walked past it, and it never read a .py file while
+ * tools/rederive.py launched `npx` by name. The decision now belongs to resolvers
+ * that know which function a call IS:
+ *
+ *   TS/JS   tools/checks/spawn-resolve.mjs - the type checker resolves each call's
+ *           signature; a spawn is a call declared in Node's child_process module.
+ *   Python  tools/checks/spawn-portability.py - Python's own parser, resolving
+ *           through import bindings, for the .py files the declared commands reach.
+ *
+ * Both run in their own process (heap; IR-21). This module is the typed front: it
+ * brands every reported path (IR-19) and is where the one registered exception to
+ * the rule lives - the python3 launch below (tools/checks/spawn-exceptions.json).
  */
-import ts from "typescript";
-import { readdirSync, statSync } from "node:fs";
-import { join, resolve, sep } from "node:path";
+import { execFileSync } from "node:child_process";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { reported, type ReportedPath } from "./reported-path.js";
-
-/** Takes a command string handed to a shell. Never portable. */
-const SHELL_FORMS = new Set(["exec", "execSync"]);
-/** Takes a command plus an argv array. Portable iff the command is the node binary. */
-const ARGV_FORMS = new Set(["execFile", "execFileSync", "spawn", "spawnSync"]);
-/** Launches Node by construction: the first argument is a module path. */
-const ADMITTED_FORMS = new Set(["fork"]);
 
 export type SpawnDefect = "shell-command-string" | "command-is-not-the-node-binary";
 
@@ -53,87 +53,59 @@ export interface SpawnScope {
   readonly exclude: readonly string[];
 }
 
-const contained = (parent: string, child: string): boolean => {
-  const p = resolve(parent);
-  const c = resolve(child);
-  return c === p || c.startsWith(p.endsWith(sep) ? p : p + sep);
-};
-
-function sourceFiles(root: string, exclude: readonly string[]): string[] {
-  const out: string[] = [];
-  const walk = (dir: string): void => {
-    if (exclude.some((e) => contained(e, dir))) return;
-    let entries: string[];
-    try {
-      entries = readdirSync(dir);
-    } catch {
-      return;
-    }
-    for (const name of entries) {
-      const full = join(dir, name);
-      if (statSync(full).isDirectory()) {
-        if (name !== "node_modules") walk(full);
-      } else if (/\.(ts|mts|mjs|cjs|js)$/.test(name) && !name.endsWith(".d.ts")) {
-        if (!exclude.some((e) => contained(e, full))) out.push(resolve(full));
-      }
-    }
-  };
-  walk(resolve(root));
-  return out.sort();
+interface RawViolation {
+  file: string;
+  line: number;
+  callee: string;
+  defect: SpawnDefect;
 }
 
-/** The rightmost name of a callee: `execFileSync` and `cp.execFileSync` both give one. */
-function calleeName(expr: ts.Expression): string | null {
-  if (ts.isIdentifier(expr)) return expr.text;
-  if (ts.isPropertyAccessExpression(expr)) return expr.name.text;
-  return null;
-}
+const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
-/** True only for the expression `process.execPath` - nothing that merely looks like it. */
-function isNodeBinary(arg: ts.Expression): boolean {
-  return (
-    ts.isPropertyAccessExpression(arg) &&
-    ts.isIdentifier(arg.expression) &&
-    arg.expression.text === "process" &&
-    arg.name.text === "execPath"
+const brand = (raw: readonly RawViolation[]): readonly SpawnViolation[] =>
+  raw.map((v) => ({ file: reported(v.file), line: v.line, callee: v.callee, defect: v.defect }));
+
+/** Every scope in ONE resolver process: one program, one load of @types/node. */
+export function findSpawnPortabilityViolationsIn(
+  scopes: readonly SpawnScope[],
+): readonly (readonly SpawnViolation[])[] {
+  const request = JSON.stringify({
+    scopes: scopes.map((s) => ({
+      roots: s.roots.map((r) => resolve(r)),
+      exclude: s.exclude.map((e) => resolve(e)),
+    })),
+  });
+  const raw = execFileSync(
+    process.execPath,
+    [resolve(repo, "tools/checks/spawn-resolve.mjs"), request],
+    { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 },
   );
+  const parsed = JSON.parse(raw) as { results: RawViolation[][] };
+  return parsed.results.map(brand);
 }
 
 export function findSpawnPortabilityViolations(scope: SpawnScope): readonly SpawnViolation[] {
-  const exclude = scope.exclude.map((e) => resolve(e));
-  const violations: SpawnViolation[] = [];
-  for (const root of scope.roots) {
-    for (const file of sourceFiles(root, exclude)) {
-      const text = ts.sys.readFile(file);
-      if (text === undefined) continue;
-      const sf = ts.createSourceFile(file, text, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
-      const visit = (node: ts.Node): void => {
-        if (ts.isCallExpression(node)) {
-          const name = calleeName(node.expression);
-          if (name !== null && !ADMITTED_FORMS.has(name)) {
-            const line = sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;
-            const first = node.arguments[0];
-            if (SHELL_FORMS.has(name)) {
-              violations.push({
-                file: reported(file),
-                line,
-                callee: name,
-                defect: "shell-command-string",
-              });
-            } else if (ARGV_FORMS.has(name) && (first === undefined || !isNodeBinary(first))) {
-              violations.push({
-                file: reported(file),
-                line,
-                callee: name,
-                defect: "command-is-not-the-node-binary",
-              });
-            }
-          }
-        }
-        ts.forEachChild(node, visit);
-      };
-      visit(sf);
-    }
-  }
-  return violations;
+  const [only] = findSpawnPortabilityViolationsIn([scope]);
+  return only ?? [];
+}
+
+/**
+ * The Python half. `"declared"` sweeps the .py files the commands in
+ * .metaframework/project.json reach; otherwise the given files or directories.
+ *
+ * REGISTERED EXCEPTION (IR-25): this is the one launch in the tree that is not the
+ * Node binary. Python's parser is the only resolver for Python, and `python3` is
+ * already a host dependency of the declared rederive_all command.
+ */
+export function findPythonSpawnViolations(
+  target: "declared" | readonly string[],
+): { files: readonly ReportedPath[]; violations: readonly SpawnViolation[] } {
+  const args = target === "declared" ? ["--declared", "--root", repo] : target.map((t) => resolve(t));
+  const raw = execFileSync("python3", [resolve(repo, "tools/checks/spawn-portability.py"), ...args], {
+    cwd: repo,
+    encoding: "utf8",
+    maxBuffer: 8 * 1024 * 1024,
+  });
+  const parsed = JSON.parse(raw) as { files: string[]; violations: RawViolation[] };
+  return { files: parsed.files.map((f) => reported(f)), violations: brand(parsed.violations) };
 }

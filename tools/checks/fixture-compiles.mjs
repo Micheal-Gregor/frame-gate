@@ -16,7 +16,12 @@
  * the shim, which removes the platform. Its correctness is established by the
  * base cases it feeds: if this file breaks, BC-01-1..5 go red.
  *
- * Output: one JSON object, {fixture: {count, messages}}.
+ * Output: one JSON object, {fixture: {count, codes, messages}}.
+ *
+ * `codes` exists because a count cannot tell the diagnostic a fixture is FOR from
+ * any other (K7 round 4, CC-6 / DR-09): an unrelated error - a broken import, a
+ * typo - satisfied "count > 0" and left a must-not-compile base case green while
+ * proving nothing. The base cases pin the code.
  */
 import ts from "typescript";
 import { resolve, dirname } from "node:path";
@@ -50,6 +55,7 @@ for (const f of fixtures) {
   ];
   out[f] = {
     count: d.length,
+    codes: d.map((x) => x.code),
     messages: d.map((x) => ts.flattenDiagnosticMessageText(x.messageText, " ")),
   };
 }

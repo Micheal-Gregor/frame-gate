@@ -5,7 +5,7 @@
   "test_module": "npx vitest run tests/{module}",
   "test_select": "npx vitest run -t \"{test_name}\"",
   "_test_notes": "tsc --noEmit sits INSIDE test_command by ADR-001 action 6. Six of nineteen refusals (REF-01, REF-02, REF-06, REF-09, REF-12, REF-17) demand rejection at parse rather than at runtime, so a transpile-only run would bypass a third of the guard set. test_command is the gate: full suite, unscoped. test_module is the inner loop and is never a gate. test_select runs one named test and is what the mutation battery invokes with the Test name column from S3 section 5.",
-  "rederive_invoke": "npx tsx {entry} {input_file}",
+  "rederive_invoke": "node --import tsx {entry} {input_file}",
   "rederive_all": "python3 tools/rederive.py --all",
   "source_glob": "src/**/*.ts",
   "s2_document": "governance/S3/CLAUDE_FrameGate_Phase2.md",

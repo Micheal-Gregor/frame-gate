@@ -162,9 +162,16 @@ export interface Projection<T> {
 
 /* ─── OBJ-01 AppendedFact - append-only by ABSENCE ──────────────────────────
  * A record entry that came into existence by an append at a height and never
- * changed. The contract is negative as much as positive: every field is
- * readonly, and no `update` or `delete` exists on the base or on any subclass,
- * so "the fact was corrected" HAS NO EXPRESSION IN THE TYPE SYSTEM.
+ * changed. The contract is negative as much as positive: through this type every
+ * field is readonly and no `update` or `delete` exists, so "the fact was
+ * corrected" has no expression THROUGH THE BASE VIEW.
+ *
+ * Scope, stated exactly (K7 round 4, CC-2 / DR-08; IR-23). This is an interface,
+ * and TypeScript cannot forbid an implementing class or an extending interface
+ * from adding a member - including a mutable field or a mutator method. So the
+ * guarantee is about what a holder of an `AppendedFact` can do, not about what
+ * a subtype can declare. Append-only at the RECORD is carried by `ports/`:
+ * RecordPort offers append and read and nothing else (SEAM-06).
  *
  * A correction is a new fact at a greater height whose relationship to the
  * earlier one is itself recorded (OBJ-18, MOD-12).

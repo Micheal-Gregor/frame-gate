@@ -19,6 +19,13 @@ Placeholders: {entry} (the module's File from the object model), {module},
 {input_file} (a temp file holding the vector's encoded input), {vector_id}.
 The command must write only the encoded output to stdout.
 
+LOCAL RULING, this repo (K7 round 4, DR-07; IR-26). The command must begin with
+`node`, and is launched as the Node binary resolved by shutil.which("node") - never
+as a name handed to the host. The template launched whatever the string split to,
+so `npx tsx ...` reached a .cmd shim that Python cannot start on Windows, and CC-5
+would have failed on the gate's host at MOD-04, the first vector-bearing rung.
+IR-20 holds for this file too: tools/checks/spawn-portability.py reads it.
+
 Usage:
     rederive.py <VEC-ID> [...]        one or more vectors
     rederive.py --all                 every COMPUTED vector
@@ -31,6 +38,7 @@ import hashlib
 import json
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -105,13 +113,24 @@ def check_one(root: Path, vec: dict, entries: dict, invoke: str,
         tf.write(vec.get("input", ""))
         in_file = tf.name
     try:
-        cmd = shlex.split(invoke.format(entry=entry, module=module,
-                                        input_file=in_file, vector_id=vid))
+        # Split the TEMPLATE, then fill each token. Filling first put a host path
+        # (a Windows temp file is C:\...\tmpXXXX.in) into a string that POSIX-mode
+        # shlex then split, and shlex reads a backslash as an escape: the path
+        # arrived with its separators deleted. Placeholders never contain spaces
+        # the template did not quote, so token-wise filling is exact.
+        argv = [tok.format(entry=entry, module=module, input_file=in_file,
+                           vector_id=vid) for tok in shlex.split(invoke)]
+        if not argv or argv[0] != "node":
+            return False, (f"rederive_invoke must begin with `node` (IR-26), got "
+                           f"{argv[0] if argv else 'nothing'!r}")
+        node = shutil.which("node")
+        if node is None:
+            return False, "the Node binary is not on PATH; CC-5 cannot recompute"
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True,
+            r = subprocess.run([node, *argv[1:]], capture_output=True, text=True,
                                timeout=120, cwd=str(root))
         except FileNotFoundError:
-            return False, f"rederive_invoke command not found: {cmd[0]}"
+            return False, f"the Node binary at {node} could not be started"
         except subprocess.TimeoutExpired:
             return False, "recomputation exceeded 120s"
     finally:

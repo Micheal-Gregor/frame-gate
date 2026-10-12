@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import ts from "typescript";
 import {
@@ -46,20 +46,53 @@ function kernelSource(): ts.SourceFile {
  * BC-01-3 / BC-01-4 were red on a clean tree. tests/checks/spawn-portability
  * now holds that rule for the whole tree.
  */
-let compiled: Record<string, { count: number; messages: string[] }> | undefined;
-function fixtures(): Record<string, { count: number; messages: string[] }> {
+interface Diagnostics {
+  count: number;
+  codes: number[];
+  messages: string[];
+}
+let compiled: Record<string, Diagnostics> | undefined;
+function fixtures(): Record<string, Diagnostics> {
   if (compiled === undefined) {
     const raw = execFileSync(
       process.execPath,
       [resolve(repo, "tools/checks/fixture-compiles.mjs")],
       { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 },
     );
-    compiled = JSON.parse(raw) as Record<string, { count: number; messages: string[] }>;
+    compiled = JSON.parse(raw) as Record<string, Diagnostics>;
   }
   return compiled;
 }
-const diagnosticsFor = (f: string): { count: number; messages: string[] } =>
-  fixtures()[f] ?? { count: -1, messages: ["fixture not compiled"] };
+const diagnosticsFor = (f: string): Diagnostics =>
+  fixtures()[f] ?? { count: -1, codes: [], messages: ["fixture not compiled"] };
+
+/**
+ * What the kernel's exports - and each detector fixture's - can answer, decided by
+ * the type checker in its own process (tools/checks/kernel-exports.mjs; K7 round 4,
+ * DR-06). One spawn covers the kernel and every fixture, for the same heap reason
+ * as the fixture compile above.
+ */
+interface ExportAnswers {
+  membership: string[];
+  heightArithmetic: string[];
+}
+const exportFixtureDir = resolve(repo, "tests/fixtures/kernel-exports");
+const exportFixtures = readdirSync(exportFixtureDir).filter((f) => f.endsWith(".ts")).sort();
+let answered: Record<string, ExportAnswers> | undefined;
+function exportsOf(file: string): ExportAnswers {
+  if (answered === undefined) {
+    const files = [kernelPath, ...exportFixtures.map((f) => resolve(exportFixtureDir, f))];
+    const raw = execFileSync(
+      process.execPath,
+      [resolve(repo, "tools/checks/kernel-exports.mjs"), ...files],
+      { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 },
+    );
+    answered = JSON.parse(raw) as Record<string, ExportAnswers>;
+  }
+  const a = answered[file];
+  if (a === undefined) throw new Error(`kernel-exports did not report ${file}`);
+  return a;
+}
 
 describe("BC-01-1 - the Unknown family is closed at five", () => {
   it("test_unknown_family_is_closed_at_five_by_source", () => {
@@ -101,27 +134,31 @@ describe("BC-01-1 - the Unknown family is closed at five", () => {
 
 describe("BC-01-2 - no Projection membership predicate", () => {
   it("test_kernel_exports_no_projection_membership_predicate", () => {
-    // RD-13: resolve the AST, do not scan names. Any exported function whose
-    // return type is a type predicate asserting the family or a member would let
-    // a caller ask "is this a Projection?" and get an answer from shape - which
-    // readmits OBJ-34 and defeats DG-F1.
-    const sf = kernelSource();
-    const offenders: string[] = [];
-    const visit = (n: ts.Node): void => {
-      if (ts.isFunctionDeclaration(n) && n.type && ts.isTypePredicateNode(n.type)) {
-        const asserted = n.type.type?.getText() ?? "";
-        const isMember =
-          asserted.includes("Projection") ||
-          PROJECTION_MEMBERS.some((m) => asserted.includes(m));
-        const exported = n.modifiers?.some(
-          (m) => m.kind === ts.SyntaxKind.ExportKeyword,
-        );
-        if (isMember && exported) offenders.push(n.name?.text ?? "<anonymous>");
-      }
-      ts.forEachChild(n, visit);
-    };
-    visit(sf);
-    expect(offenders).toEqual([]);
+    // RD-13: resolved by the type checker, never by text. Any exported callable -
+    // in any declaration form, under any name, asserting the family through any
+    // alias - whose type predicate asserts a Projection lets a caller ask "is this
+    // a Projection?" and get an answer from shape, which readmits OBJ-34 and
+    // defeats DG-F1.
+    expect(exportsOf(kernelPath).membership).toEqual([]);
+  });
+
+  it("test_the_membership_detector_sees_every_export_form", () => {
+    // RD-12: the forms are discovered from the fixture directory, not listed here.
+    // An empty answer for the kernel above is only evidence if the same detector
+    // answers non-empty for every form that could carry a predicate out.
+    const forms = exportFixtures.filter((f) => f.startsWith("membership-"));
+    expect(forms.length, "no membership fixtures discovered").toBeGreaterThan(0);
+    for (const f of forms) {
+      const a = exportsOf(resolve(exportFixtureDir, f));
+      expect(a.membership, `${f} carries a membership predicate the detector missed`).not.toEqual([]);
+      expect(a.heightArithmetic, `${f} is not height arithmetic`).toEqual([]);
+    }
+    for (const f of exportFixtures.filter((x) => x.startsWith("conforming-"))) {
+      expect(exportsOf(resolve(exportFixtureDir, f)), `${f} must not be flagged`).toEqual({
+        membership: [],
+        heightArithmetic: [],
+      });
+    }
   });
 
   it("test_projection_family_is_the_ten_named_members", () => {
@@ -136,17 +173,27 @@ describe("BC-01-2 - no Projection membership predicate", () => {
   });
 });
 
+/*
+ * BC-01-3 and BC-01-4 pin the ONE diagnostic each fixture exists to produce
+ * (K7 round 4, CC-6 / DR-09). "Some error" was satisfied by any unrelated
+ * breakage - a bad import path, a typo - which left the base case green while it
+ * proved nothing. Exactly one diagnostic, with the code and the subject named.
+ */
 describe("BC-01-3 - AppendedFact has no mutator", () => {
   it("test_assigning_to_an_appended_fact_field_does_not_compile", () => {
     const d = diagnosticsFor("mutate-fact.ts");
-    expect(d.count, "assigning to an AppendedFact field must be a compile error").toBeGreaterThan(0);
+    // TS2540: Cannot assign to 'payload' because it is a read-only property.
+    expect(d.codes, "assigning to an AppendedFact field must fail as a read-only assignment").toEqual([2540]);
+    expect(d.messages[0]).toContain("'payload'");
   });
 });
 
 describe("BC-01-4 - a Gate without ON_FAIL is malformed", () => {
   it("test_gate_without_on_fail_does_not_compile", () => {
     const d = diagnosticsFor("gate-without-onfail.ts");
-    expect(d.count, "a Gate omitting onFail must be a compile error").toBeGreaterThan(0);
+    // TS2741: Property 'onFail' is missing in type ... but required in type 'Gate<...>'.
+    expect(d.codes, "a Gate omitting onFail must fail as a missing required property").toEqual([2741]);
+    expect(d.messages[0]).toContain("'onFail'");
   });
 
   it("test_well_formed_gate_compiles", () => {
@@ -176,24 +223,18 @@ describe("BC-01-5 - RecordHeight ordering", () => {
   });
 
   it("test_kernel_exposes_no_height_arithmetic", () => {
-    const sf = kernelSource();
-    const exported: string[] = [];
-    const visit = (n: ts.Node): void => {
-      if (
-        ts.isFunctionDeclaration(n) &&
-        n.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) &&
-        n.type?.getText() === "RecordHeight" &&
-        n.parameters.length > 1
-      ) {
-        // A RecordHeight-returning function of two heights would be arithmetic.
-        const allHeights = n.parameters.every(
-          (p) => p.type?.getText() === "RecordHeight",
-        );
-        if (allHeights) exported.push(n.name?.text ?? "<anonymous>");
-      }
-      ts.forEachChild(n, visit);
-    };
-    visit(sf);
-    expect(exported).toEqual([]);
+    // A RecordHeight-returning callable of two or more RecordHeights is arithmetic,
+    // in whatever form it is exported and through whatever alias it is spelled.
+    expect(exportsOf(kernelPath).heightArithmetic).toEqual([]);
+  });
+
+  it("test_the_height_detector_sees_every_export_form", () => {
+    const forms = exportFixtures.filter((f) => f.startsWith("height-"));
+    expect(forms.length, "no height fixtures discovered").toBeGreaterThan(0);
+    for (const f of forms) {
+      const a = exportsOf(resolve(exportFixtureDir, f));
+      expect(a.heightArithmetic, `${f} is height arithmetic the detector missed`).not.toEqual([]);
+      expect(a.membership, `${f} is not a membership predicate`).toEqual([]);
+    }
   });
 });

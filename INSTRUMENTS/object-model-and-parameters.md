@@ -26,6 +26,7 @@ checks against the tree, in both directions.
 | MOD-03 · DeclarationLedger | src/catalog/declaration-ledger.ts | OBJ-13 | Appends HUMAN classification declarations; reads the one in force at a height | record, levels | NO | BUILT |
 | MOD-03 · IndependenceLedger | src/catalog/independence-ledger.ts | OBJ-06/ODG-FG-06 (R-10) | Appends HUMAN independence acts; reads the one in force at a height | record | NO | BUILT |
 | MOD-05 · CommitmentLedger | src/facts/commitment-ledger.ts | OBJ-12, OBJ-31 | Appends HUMAN commitments; folds the effective commitment per (unit, currency) as of a height | record, invalidations | NO | BUILT |
+| MOD-05 · DrawContextLog | src/facts/draw-context-log.ts | OBJ-16 (R-21..R-24) | Appends draw contexts (declaration read at the draw height, REF-05) and their later resolution labels; reads draws and resolutions as of a height | record, declarations | NO | BUILT |
 
 Rows are in build order (S3 section 10), not module-number order.
 

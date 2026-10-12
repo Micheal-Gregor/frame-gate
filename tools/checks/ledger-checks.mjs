@@ -18,12 +18,23 @@
  *            LIMITS: a kind typed plain `string` (limit-dynamic-kind.ts); an entry typed
  *            `any` (limit-any-entry.ts). BOUNDARY: runtime wiring is PC-02's.
  *   surface  DECIDES, per ledger root: an exported act-returning operation that takes
- *            no height and does not append under a HUMAN author; a height handed to a
+ *            no height and does not append (any author: draw contexts and labels are
+ *            not HUMAN acts, IR-47, IR-48); a height handed to a
  *            read (directly or through any wrapper in the root) that is not the
  *            caller's parameter; a class field that is not readonly or whose TYPE is
  *            writable (record port excepted).
  *            LIMITS: module-level mutable state read by a class (limit-module-state/);
  *            the caller's own choice of height is the caller's (as-of semantics).
+ *   reach    DECIDES, in src/ outside src/advisory/ (MOD-13), a call to or a reference
+ *            of UnitRegistry.features - by property access, element access with a
+ *            literal key, or destructuring - resolved to its declaration (R-22, F1,
+ *            SEAM-27). Fixtures under tests/fixtures/features-reach/src/<root>/ are
+ *            judged at the path they mirror.
+ *            LIMITS: a member reached through a cast to a structural record of
+ *            functions (limit-cast-member.ts).
+ *   ledgers  DECIDES: every `AppendedFact<_, P>` alias in src/ has its payload kind in
+ *            LEDGERS, owned by the root it is declared in, and its brand in BRANDS -
+ *            so a new ledger kind cannot skate past every rule above unlisted (RD-12).
  *   sc3      DECIDES: a numeric 2 in any source file of any extension; a comparison of
  *            a Currency collection's length or size to a numeric literal.
  *            LIMITS: cardinality asked by index (limit-cardinality-by-index.ts).
@@ -60,10 +71,13 @@
  *             (`src` keeps the catalog's own report; `ledgers` holds every root):
  *               returns      every exported operation - class method or free
  *                            function - returning a branded act takes a
- *                            RecordHeight or is the HUMAN-only append;
+ *                            RecordHeight or appends (IR-48: was "the HUMAN-only
+ *                            append" while every ledger append was HUMAN);
  *               fabricated   every RecordHeight handed to a READ (RecordPort.readAsOf,
- *                            declarationAt, independenceAt, effectiveCommitment) is a
- *                            parameter of the
+ *                            declarationAt, independenceAt, effectiveCommitment, the
+ *                            injected readers, drawsAsOf, resolutionAt) is a parameter
+ *                            of the function it is called in, or of one enclosing it
+ *                            through inline closures (IR-49) - otherwise of the
  *                            enclosing function - a height made up inside the
  *                            catalog is a "now";
  *               held         no class holds mutable state other than its record
@@ -107,7 +121,11 @@ const FIXTURES = [...walk(fx("catalog"), /\.ts$/), ...walk(fx("facts"), /\.ts$/)
 /** Every ledger module: its root, and the payload types whose `kind` it owns. */
 const LEDGERS = [
   { root: "src/catalog", payloads: [["src/catalog/declaration-ledger.ts", "DeclarationPayload"], ["src/catalog/independence-ledger.ts", "IndependencePayload"]] },
-  { root: "src/facts", payloads: [["src/facts/commitment-ledger.ts", "CommitmentPayload"]] },
+  { root: "src/facts", payloads: [
+    ["src/facts/commitment-ledger.ts", "CommitmentPayload"],
+    ["src/facts/draw-context-log.ts", "DrawContextPayload"],
+    ["src/facts/draw-context-log.ts", "ResolutionLabelPayload"],
+  ] },
 ];
 const MINT = walk(fx("catalog-mint"), /\.ts$/);
 /** Hand-written declaration files: an ambient declaration can assert any type (DR-23). */
@@ -132,12 +150,16 @@ const OWNERS_DIR = fx("ledger-owners");
 const OWNERS = walk(OWNERS_DIR, /\.ts$/);
 const mirrored = (f) => relative(OWNERS_DIR, f).split(sep).join("/");
 const SC3 = walk(fx("sc3"), SOURCE);
+/** R-22 fixtures, judged AS IF at the src/ path they mirror. */
+const REACH_DIR = fx("features-reach");
+const REACH = walk(REACH_DIR, /\.ts$/);
+const reachMirrored = (f) => relative(REACH_DIR, f).split(sep).join("/");
 const SURFACE_CASES = existsSync(fx("catalog-surface"))
   ? readdirSync(fx("catalog-surface")).filter((d) => existsSync(join(fx("catalog-surface"), d, "index.ts"))).sort()
   : [];
 const SURFACE = SURFACE_CASES.flatMap((c) => walk(join(fx("catalog-surface"), c), /\.ts$/));
 
-const program = ts.createProgram([...SRC, ...SRC_DTS, ...FIXTURES, ...MINT, ...MINT_DTS, ...FORGE, ...OWNERS, ...SC3, ...SURFACE], {
+const program = ts.createProgram([...SRC, ...SRC_DTS, ...FIXTURES, ...MINT, ...MINT_DTS, ...FORGE, ...OWNERS, ...REACH, ...SC3, ...SURFACE], {
   strict: true,
   allowJs: true,
   checkJs: false,
@@ -176,6 +198,8 @@ const BRANDS = [
   { owner: "src/catalog/declaration-ledger.ts", name: "Declaration", key: brandKey("src/catalog/declaration-ledger.ts", "Declaration") },
   { owner: "src/catalog/independence-ledger.ts", name: "IndependenceAct", key: brandKey("src/catalog/independence-ledger.ts", "IndependenceAct") },
   { owner: "src/facts/commitment-ledger.ts", name: "Commitment", key: brandKey("src/facts/commitment-ledger.ts", "Commitment") },
+  { owner: "src/facts/draw-context-log.ts", name: "DrawContext", key: brandKey("src/facts/draw-context-log.ts", "DrawContext") },
+  { owner: "src/facts/draw-context-log.ts", name: "ResolutionLabel", key: brandKey("src/facts/draw-context-log.ts", "ResolutionLabel") },
 ];
 const HEIGHT = brandKey("src/kernel/index.ts", "RecordHeight");
 const CURRENCY = brandKey("src/catalog/currency-order.ts", "Currency");
@@ -353,21 +377,37 @@ const isBaseRead = (d) =>
   declaredAs(d, "src/ports/index.ts", "readAsOf", "RecordPort") ||
   declaredAs(d, "src/catalog/declaration-ledger.ts", "declarationAt") ||
   declaredAs(d, "src/catalog/independence-ledger.ts", "independenceAt") ||
-  declaredAs(d, "src/facts/commitment-ledger.ts", "effectiveCommitment");
+  declaredAs(d, "src/facts/commitment-ledger.ts", "effectiveCommitment") ||
+  declaredAs(d, "src/facts/commitment-ledger.ts", "isInvalidated", "InvalidationReader") ||
+  declaredAs(d, "src/facts/draw-context-log.ts", "declarationAt", "DeclarationReader") ||
+  declaredAs(d, "src/facts/draw-context-log.ts", "drawsAsOf") ||
+  declaredAs(d, "src/facts/draw-context-log.ts", "resolutionAt");
 const isAppend = (d) =>
   declaredAs(d, "src/ports/index.ts", "append", "RecordPort") ||
   declaredAs(d, "src/catalog/declaration-ledger.ts", "declare") ||
   declaredAs(d, "src/catalog/independence-ledger.ts", "declareIndependence") ||
-  declaredAs(d, "src/facts/commitment-ledger.ts", "commit");
+  declaredAs(d, "src/facts/commitment-ledger.ts", "commit") ||
+  declaredAs(d, "src/facts/draw-context-log.ts", "recordDraw") ||
+  declaredAs(d, "src/facts/draw-context-log.ts", "label");
 const enclosingFunction = (n) => {
   let fn = n.parent;
   while (fn && !ts.isFunctionLike(fn)) fn = fn.parent;
   return fn;
 };
-const paramIndexOf = (arg, fn) => {
+/**
+ * The function whose PARAMETER `arg` is, looking outward from `fn` through inline closures
+ * (IR-49): a height an arrow captures from the method around it is still the caller's.
+ * A class-field arrow is a member, not a closure, so the search stops there.
+ */
+const isInlineClosure = (f) => (ts.isArrowFunction(f) || ts.isFunctionExpression(f)) && !ts.isPropertyDeclaration(f.parent);
+const ownerOfParam = (arg, fn) => {
   const s = arg && ts.isIdentifier(arg) ? checker.getSymbolAtLocation(arg) : undefined;
   const d = s?.valueDeclaration;
-  return d && ts.isParameter(d) && d.parent === fn ? fn.parameters.indexOf(d) : -1;
+  if (!d || !ts.isParameter(d)) return undefined;
+  for (let f = fn; f; f = isInlineClosure(f) ? enclosingFunction(f) : undefined) {
+    if (d.parent === f) return { fn: f, index: f.parameters.indexOf(d) };
+  }
+  return undefined;
 };
 /** Writable data on a TYPE (DR-25): a non-readonly property or index signature, or a mutator method. */
 function isWritableType(t) {
@@ -404,10 +444,11 @@ function surfaceOf(dir, indexFile) {
       const carried = brandsIn(checker.getReturnTypeOfSignature(sig));
       if (carried.length === 0) continue;
       const params = sig.getParameters().map((q) => checker.getTypeOfSymbol(q));
-      // A "HUMAN" parameter admits an operation only when it actually APPENDS (DR-25):
-      // the parameter alone excused a made-up-height read wearing it.
-      const humanAppend = params.some(isExactlyHuman) && appendsInBody(declOf(sig));
-      push({ operation: name, returns: carried.map((b) => b.name), ok: params.some(isHeight) || humanAppend });
+      // An operation is admitted by APPENDING, not by a parameter (DR-25: a "HUMAN"
+      // parameter alone excused a made-up-height read wearing it). Any author (IR-48):
+      // MOD-05 records draw contexts and labels that are not HUMAN acts.
+      const appends = appendsInBody(declOf(sig));
+      push({ operation: name, returns: carried.map((b) => b.name), ok: params.some(isHeight) || appends });
     }
   };
   for (const exported of mod ? checker.getExportsOfModule(mod) : []) {
@@ -449,15 +490,16 @@ function surfaceOf(dir, indexFile) {
       if (idx.length === 0) continue;
       const fn = enclosingFunction(n);
       if (!fn) continue;
-      const mine = new Set(reads.get(fn) ?? []);
       for (const i of idx) {
-        const k = paramIndexOf(n.arguments[i], fn);
-        if (k >= 0 && !mine.has(k)) {
-          mine.add(k);
+        const o = ownerOfParam(n.arguments[i], fn);
+        if (!o) continue;
+        const mine = new Set(reads.get(o.fn) ?? []);
+        if (!mine.has(o.index)) {
+          mine.add(o.index);
+          reads.set(o.fn, [...mine]);
           changed = true;
         }
       }
-      if (mine.size > 0) reads.set(fn, [...mine]);
     }
   }
   for (const { f, fsf, n } of calls) {
@@ -466,7 +508,7 @@ function surfaceOf(dir, indexFile) {
     const idx = d ? heightIndexes(sig, d) : [];
     const fn = enclosingFunction(n);
     for (const i of idx) {
-      if (paramIndexOf(n.arguments[i], fn) < 0) {
+      if (!ownerOfParam(n.arguments[i], fn)) {
         out.fabricated.push({ file: rel(f), line: lineOf(fsf, n), read: d.name ? d.name.getText() : "(anonymous)" });
       }
     }
@@ -518,6 +560,57 @@ function sc3Findings(file) {
   return found;
 }
 
+// ---- reach: R-22 / F1 / SEAM-27 - UnitRegistry.features is MOD-13's alone ---------------
+const FEATURES_OWNER = "src/advisory";
+const isFeaturesMethod = (d) => declaredAs(d, "src/catalog/unit-registry.ts", "features");
+function reachFindings(file, here) {
+  if (here === FEATURES_OWNER || here.startsWith(FEATURES_OWNER + "/")) return [];
+  const sf = program.getSourceFile(file);
+  const found = [];
+  const add = (n, how) => found.push({ file: here, line: lineOf(sf, n), how });
+  const visit = (n) => {
+    if (ts.isCallExpression(n) && isFeaturesMethod(declOf(checker.getResolvedSignature(n)))) {
+      add(n, "features-read");
+    } else if ((ts.isPropertyAccessExpression(n) || ts.isElementAccessExpression(n)) &&
+               !(ts.isCallExpression(n.parent) && n.parent.expression === n)) {
+      const at = ts.isPropertyAccessExpression(n) ? n.name : n.argumentExpression;
+      if (checker.getSymbolAtLocation(at)?.declarations?.some(isFeaturesMethod)) add(n, "features-reference");
+    } else if (ts.isBindingElement(n) && ts.isObjectBindingPattern(n.parent)) {
+      const key = (n.propertyName ?? n.name).getText(sf);
+      const prop = checker.getPropertyOfType(checker.getTypeAtLocation(n.parent), key);
+      if (prop?.declarations?.some(isFeaturesMethod)) add(n, "features-reference");
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return found;
+}
+
+// ---- ledgers: every AppendedFact alias in src/ is listed (RD-12) -----------------------
+function discoveredLedgers() {
+  const out = [];
+  for (const f of SRC) {
+    const sf = program.getSourceFile(f);
+    const visit = (n) => {
+      if (ts.isTypeReferenceNode(n) && n.typeArguments?.length === 2) {
+        const s = checker.getSymbolAtLocation(n.typeName);
+        const target = s && (s.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(s) : s);
+        if (target?.name === "AppendedFact" && target.declarations?.some((d) => rel(d.getSourceFile().fileName) === "src/kernel/index.ts")) {
+          const k = checker.getPropertyOfType(checker.getTypeFromTypeNode(n.typeArguments[1]), "kind");
+          const kt = k && checker.getTypeOfSymbol(k);
+          let alias = n.parent;
+          while (alias && !ts.isTypeAliasDeclaration(alias)) alias = alias.parent;
+          if (kt?.isStringLiteral()) out.push({ file: rel(f), kind: kt.value, brand: alias?.name.text ?? null });
+        }
+      }
+      ts.forEachChild(n, visit);
+    };
+    visit(sf);
+  }
+  return out;
+}
+const LEDGER_FACTS = discoveredLedgers();
+
 process.stdout.write(JSON.stringify({
   fixtures,
   mint: {
@@ -535,4 +628,14 @@ process.stdout.write(JSON.stringify({
     fixtures: Object.fromEntries(SURFACE_CASES.map((c) => [c, surfaceOf(join(fx("catalog-surface"), c), join(fx("catalog-surface"), c, "index.ts"))])),
   },
   sc3: { src: SRC.flatMap(sc3Findings), fixtures: Object.fromEntries(SC3.map((f) => [rel(f), sc3Findings(f)])) },
+  reach: {
+    src: SRC.flatMap((f) => reachFindings(f, rel(f))),
+    fixtures: Object.fromEntries(REACH.map((f) => [reachMirrored(f), reachFindings(f, reachMirrored(f))])),
+  },
+  ledgers: {
+    discovered: LEDGER_FACTS,
+    unlisted: LEDGER_FACTS.filter((x) => !KINDS.has(x.kind)),
+    misowned: LEDGER_FACTS.filter((x) => KINDS.has(x.kind) && !x.file.startsWith(KIND_OWNER.get(x.kind) + "/")),
+    unbranded: LEDGER_FACTS.filter((x) => !BRANDS.some((b) => b.name === x.brand && b.owner === x.file)),
+  },
 }));

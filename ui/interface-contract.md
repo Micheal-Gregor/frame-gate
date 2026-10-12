@@ -21,6 +21,8 @@ The marker above stays until the seal writes the whole page. MOD-01 and MOD-02 e
 | IndependenceAct (R-10) | A HUMAN act licensing (or withdrawing) a unit's independence, at a height | yes, once appended |
 | Commitment (OBJ-12) | A HUMAN commitment for a (unit, currency), at a height; what the next currency's reachability reads | yes, once appended — it leaves force only when the invalidation reader (MOD-12) says so |
 | CommitGate (OBJ-31) | The gate a commitment passes: closed by a HUMAN act; a diagnostic or an observation may propose, never close | yes — a fixed descriptor |
+| DrawContext (OBJ-16) | What held at a draw: the given features, the declaration in force at the draw height (by its height), the governing scope (by its height) and the condition's identity | yes, once appended — a re-declaration never changes it |
+| ResolutionLabel (OBJ-16) | `DRAW` or `REVISION`, attached to a draw context after the fact | yes, once appended |
 
 ## Actions
 
@@ -43,6 +45,10 @@ operation legitimately ignores — the only way an OS-12 two-call test may retur
 | IndependenceLedger.independenceAt | MOD-03 | The independence act in force for a unit as of a height | unit, at | IndependenceAct, or Unknown | Unknown `NoSubject` when no act had been made by that height, which means NOT licensed | none — reads the record | deterministic for a given record prefix | none |
 | CommitmentLedger.commit | MOD-05 | Appends a HUMAN commitment for a unit at a currency | unit, currency, author | Commitment | a non-HUMAN author does not compile (OBJ-31); no diagnostic or observation can be passed (REF-06) | appends exactly one entry to the record | the returned height is assigned by the record; otherwise deterministic | invalidations |
 | CommitmentLedger.effectiveCommitment | MOD-05 | The commitment in force for a unit at a currency as of a height — a fold, never stored | unit, currency, at | Commitment, or Unknown | Unknown `NoSubject` when none is in force (BOTTOM); Unknown `uncomputable("two-effective-commitments")` when more than one is (R-20) | none — reads the record and asks the invalidation reader | deterministic for a given record prefix and invalidation reader | none |
+| DrawContextLog.recordDraw | MOD-05 | Appends the context of a draw, reading the declaration in force at the draw height (R-21) | unit, features, scope, condition, at, author | DrawContext, or Unknown | Unknown `refuse("no-declaration")` when none is in force at `at` (REF-05), nothing appended; any other Unknown from the declaration reader is returned unchanged, nothing appended | appends exactly one entry to the record, unless refused | the returned height is assigned by the record; otherwise deterministic for a given record prefix | none |
+| DrawContextLog.label | MOD-05 | Appends a resolution label (`DRAW` / `REVISION`) to a draw context, after the fact | context, resolution, author | ResolutionLabel | none — a second label is appended and the read answers `uncomputable` (R-24) | appends exactly one entry to the record | the returned height is assigned by the record; otherwise deterministic | declarations |
+| DrawContextLog.drawsAsOf | MOD-05 | The draw contexts for a unit appended at or below a height, in append order | unit, at | readonly DrawContext[] | none — no draws is an empty list | none — reads the record | deterministic for a given record prefix | declarations |
+| DrawContextLog.resolutionAt | MOD-05 | A draw context's resolution as of a height | context, at | Resolution, or Unknown | Unknown `NoSubject` when no label yet (not a refusal); Unknown `uncomputable("two-resolution-labels")` when more than one (R-24) | none — reads the record | deterministic for a given record prefix | declarations |
 
 ## Error states
 
@@ -52,6 +58,7 @@ operation legitimately ignores — the only way an OS-12 two-call test may retur
 | RangeError "…must have a least element: the list is empty" | CurrencyOrder constructor | the currency order is empty |
 | RangeError "currencies must be distinct: a total order has no ties" | CurrencyOrder constructor | a currency appears twice in the order |
 | TypeError "UnitRegistry requires units" | UnitRegistry constructor | configuration is missing the units |
-| TypeError "… requires record" / "record must offer append and readAsOf" | DeclarationLedger, IndependenceLedger, CommitmentLedger constructors | the record binding is missing or is not a RecordPort |
+| TypeError "… requires record" / "record must offer append and readAsOf" | DeclarationLedger, IndependenceLedger, CommitmentLedger, DrawContextLog constructors | the record binding is missing or is not a RecordPort |
 | TypeError "DeclarationLedger requires levels" | DeclarationLedger constructor | configuration is missing the classification levels |
 | TypeError "CommitmentLedger requires invalidations" / "invalidations must offer isInvalidated" | CommitmentLedger constructor | the invalidation reader (MOD-12, R-19) is missing or does not answer isInvalidated |
+| TypeError "DrawContextLog requires declarations" / "declarations must offer declarationAt" | DrawContextLog constructor | the declaration reader (MOD-03, R-21) is missing or does not answer declarationAt |

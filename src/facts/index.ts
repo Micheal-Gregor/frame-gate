@@ -5,8 +5,9 @@
  * draws reachable (slice 1), the context of each draw (slice 2), and the candidates
  * drawn (slice 3). Every cross-module decider is handed in at construction (R-18).
  *
- * Deliberately NOT exported: a "current commitment" read, any way to build a
- * Commitment except through its ledger, and any stored effective commitment.
+ * Deliberately NOT exported: a "current commitment" or "current declaration" read, any
+ * way to build a Commitment, DrawContext or ResolutionLabel except through its ledger,
+ * and any stored effective commitment or resolution.
  */
 export {
   COMMIT_GATE,
@@ -16,3 +17,12 @@ export {
   type FactRecord,
   type InvalidationReader,
 } from "./commitment-ledger.js";
+export {
+  DrawContextLog,
+  type DeclarationReader,
+  type DrawContext,
+  type DrawContextPayload,
+  type Resolution,
+  type ResolutionLabel,
+  type ResolutionLabelPayload,
+} from "./draw-context-log.js";

@@ -284,3 +284,51 @@ Written before the class, and watched failing against typed stubs.
 > record port. These are the same checks as MOD-03's, now applied to every ledger.
 
 **BC-05-7 — OS-12, the class in isolation.**
+> `CommitmentLedger` is constructed with its declared inputs (`record`, `invalidations`) and
+> nothing else. Every operation is called, and each declared input is varied with the answers
+> asserted to differ. `commit` is invariant to `invalidations`, as its contract row declares.
+
+### MOD-05 slice 2 — the draw context (OBJ-16), under R-21..R-24
+
+Written before the class, and watched failing against typed stubs.
+
+**BC-05-8 — REF-05: a draw with no declaration in force is refused (R-21).**
+> `recordDraw(u, features, scope, condition, h, author)` reads the declaration in force for `u` at
+> `h` through the declared reader. When none is in force, it answers `Refuse(no-declaration)` and
+> appends NOTHING. Any other Unknown the reader answers is passed through unchanged, never
+> collapsed into the refusal. Named test: `test_draw_without_declaration_is_refused`.
+
+**BC-05-9 — the recorded declaration is the one in force AT THE DRAW HEIGHT, recorded by its
+height (R-21, S-08, SEAM-10).**
+> A draw at `h` records the height of the declaration in force at `h`. A re-declaration appended
+> after the draw does not change what any recorded draw context says, read at any height. A
+> draw context whose declaration is read "now" is the defect this exists to prevent.
+
+**BC-05-10 — draw-time features are given and recorded as given (R-22).**
+> The context records the caller's features. A later change to the caller's object does not change
+> the record. No code in `src/` outside MOD-13 calls `UnitRegistry.features` (F1, SEAM-27, DG-F1).
+> That is decided by resolution, with fixtures judged at the `src/` path they mirror.
+
+**BC-05-11 — scope and condition are carried, not interpreted (R-23).**
+> The context records the scope's height and the condition's identity string exactly as given.
+> MOD-05 makes no check that needs to know what either one is. Recording a scope spends nothing
+> (O-4 is held, owned by MOD-11).
+
+**BC-05-12 — the resolution label is a later append, read as of a height (R-24).**
+> A context with no label answers `NoSubject` for its resolution: the label is not known at draw
+> time, and its absence is not a refusal. One label answers its value from its own height on. Two
+> labels answer `uncomputable("two-resolution-labels")`. A label for another context never
+> counts.
+
+**BC-05-13 — draws are read as of a height, per unit.**
+> `drawsAsOf(u, h)` answers exactly the draw contexts for `u` appended at or below `h`, in append
+> order. Another unit's draws and another module's facts never appear.
+
+**BC-05-14 — OS-12, the class in isolation.**
+> `DrawContextLog` is constructed with its declared inputs (`record`, `declarations`) and nothing
+> else. Every operation is called, and each declared input is varied with the answers asserted
+> to differ.
+
+BC-05-5 (REF-06) and BC-05-6 (the ledger rules) apply to the draw context and the label as they
+do to commitments: their kinds are owned by `src/facts`, their brands are minted only by
+`DrawContextLog`, and every operation returning one takes a height or appends.

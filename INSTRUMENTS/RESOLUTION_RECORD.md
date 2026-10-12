@@ -213,3 +213,30 @@ grant fails open into a read-only review that still scores.
 **Recorded, not changed.** The allowlist does not admit the copy/edit commands a CC-6 mutation
 experiment needs ("copy to a throwaway /tmp directory"). That is why round 3's CC-6 was also
 non-mechanical. Changing it would widen the reviewer's grant, so it needs its own ruling.
+
+---
+
+## Implementation record — 2026-10-11
+
+**R-05** applied. `.claude/agents/k7-reviewer.md` now has `tools: Read, Grep, Glob, Bash, PowerShell`.
+`reviewer_command` adds `PowerShell(npx tsc:*)`, `PowerShell(npx vitest:*)` and
+`PowerShell(python3 tools/rederive.py:*)` beside the three `Bash(...)` entries. The adoption probe
+used `reviewer_command` from `project.json`, launched through Python `subprocess` with
+`k7-run.py`'s environment:
+
+| Check | Result |
+|---|---|
+| (a) shell tool listed | **yes**: `Read, Grep, Glob, PowerShell` (no `Bash` on this host) |
+| (b) declared command runs | **yes**: `npx tsc --version` → `Version 5.9.3`; `npx vitest --version` → `vitest/2.1.9 win32-x64 node-v24.16.0` |
+| (c) undeclared write refused | **yes**: `New-Item` on a file inside the repo and in `%TEMP%` both blocked; no file created |
+| undeclared read-only command | **ran**: `whoami` was auto-approved by the CLI's read-only rule. Not a write path; recorded so it is not mistaken for a grant |
+
+**Two things the round-5 reviewer will meet, recorded so they are not discovered as defects:**
+
+- The host shell is Windows PowerShell 5.1, which has no `&&`. The declared `test_command` runs as
+  its two declared commands in sequence.
+- The reviewer reported that the PowerShell tool does not display an exit code. A failing command
+  reports an error, so the exit status is observable but not printed.
+
+The k7-run launch still needs `~/.local/bin` on `PATH` on this host. That is an environment binding,
+not a repo change: the npm `claude` shim here is broken, and Python cannot spawn a `.cmd` by name.

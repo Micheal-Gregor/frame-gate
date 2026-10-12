@@ -28,6 +28,10 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-18 O-5 / O-6: MOD-04 ↔ MOD-05 and MOD-05 ↔ MOD-12 cycles | **ACCEPTED 2026-10-12** (owner, live gate) | Broken by INJECTION: MOD-05 receives MOD-04's admission and MOD-12's signature check as constructor-declared deciders (OS-1, OS-3); MOD-04 later receives MOD-05's fold the same way; a composition root wires them (OS-11). No module imports another's decider |
 | R-19 supersession before MOD-12 exists | **ACCEPTED 2026-10-12** (owner, live gate) | The effective-commitment fold takes a declared invalidation reader ("was this commitment invalidated as of h?"); MOD-12 supplies it; nothing of MOD-12's fact shape is defined in MOD-05 |
 | R-20 two effective commitments for one (unit, currency) | **ACCEPTED 2026-10-12** (owner, live gate) | The fold answers `uncomputable("two-effective-commitments")` — neither a commitment nor BOTTOM — so reachability refuses rather than guesses; prevention at the source stays PC-03 |
+| R-21 how the draw context gets its declaration (REF-05, SEAM-05) | **ACCEPTED 2026-10-12** (owner, live gate) | READ, not taken: the append reads the declaration in force at the draw height through an injected declaration reader (R-18 pattern) and records it by its height; none in force → `Refuse(no-declaration)`, nothing appended |
+| R-22 where draw-time features come from | **ACCEPTED 2026-10-12** (owner, live gate) | GIVEN by the caller as values of the catalog's closed `Features` type; MOD-05 never calls `UnitRegistry.features` (F1: MOD-13 only; SEAM-27; DG-F1) |
+| R-23 carrying scope (OBJ-14) and condition (OBJ-07) before MOD-11 / MOD-06 exist | **ACCEPTED 2026-10-12** (owner, live gate) | The scope is recorded by its record height (an appended fact's identity); the condition as an uninterpreted identity string MOD-06 will define. MOD-05 inspects neither; recording a scope spends nothing (O-4 / DG-F3 stays MOD-11's, held) |
+| R-24 two resolution labels on one draw context | **ACCEPTED 2026-10-12** (owner, live gate) | The label read answers `uncomputable("two-resolution-labels")`, as R-20; nothing is refused at append |
 
 ---
 
@@ -617,3 +621,40 @@ malformed — a defect in the fold or in the record, not a case to be resolved b
 commitment nor BOTTOM, so reachability (MOD-04) refuses rather than guessing. The defect stays
 inside the closed Unknown family as a typed, testable answer. Preventing it at the source (two
 simultaneous commitments) remains PC-03's claim-or-collide primitive at the record port.
+
+## R-21 · The draw context READS its declaration; it is not handed one
+
+**Owner, 2026-10-12, live gate.** F2 says the draw-context append is "given ... the declaration in
+force at that record height", and REF-05 refuses a draw when none was in force. Taking the
+declaration from the caller would let a stale one be recorded, which is the history-rewrite
+that S-08 / SEAM-10 exist to prevent. **Ruling.** The append takes the unit and the draw height,
+reads the declaration in force at that height through a constructor-declared declaration reader
+(SEAM-05, the R-18 injection pattern), and records that declaration by its height (IR-43). When
+none is in force, it answers `Refuse(no-declaration)` and appends nothing.
+
+## R-22 · Draw-time features are given, never read from the catalog
+
+**Owner, 2026-10-12, live gate.** F1 states `features(unit)` is "consumed by MOD-13 advisory
+only", and SEAM-27 is the only seam that carries features. F2 says the append is "given
+draw-time features". **Ruling.** The caller passes the features as values of the catalog's
+closed `Features` type, and MOD-05 never calls `UnitRegistry.features`. Difficulty therefore
+cannot reach a gate through this module (DG-F1).
+
+## R-23 · Scope by height, condition by identity string
+
+**Owner, 2026-10-12, live gate.** OBJ-16 records the governing scope (OBJ-14, MOD-11) and the
+condition (OBJ-07, MOD-06), and both modules are built after MOD-05. O-4 (DG-F3: is a scope spent
+by dispatch or by return?) is open and owned by MOD-11 / MOD-02. A type parameter cannot carry
+either one: REF-06 refuses an unconstrained parameter on an act. **Ruling.** A scope is an
+appended fact ("appended before any draw; spent, never edited"), so the context records it by
+its record height. The condition is recorded as an uninterpreted identity string that MOD-06
+will define. MOD-05 inspects neither. Recording a scope is not spending it: the answer to O-4
+stays with MOD-11, and MOD-05 registers it as a hold.
+
+## R-24 · Two resolution labels on one draw context is `uncomputable`
+
+**Owner, 2026-10-12, live gate.** A resolution label (`DRAW` or `REVISION`) is attached after the
+draw, as a further append (F2). F2 does not say what two labels mean. **Ruling.** As R-20 does
+for commitments: the label read answers `uncomputable("two-resolution-labels")` and never
+chooses. Nothing is refused at append, because an append has no height to check against and
+two racing appends would both pass.

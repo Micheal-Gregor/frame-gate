@@ -391,3 +391,59 @@ and `module-cache-human/` isolates the HUMAN-needs-an-append rule.
 **Seventeen of seventeen killed on the first pass.** T17 is the R-15 mechanism proving itself: a
 change to what a detector claims to decide cannot happen silently, because the limit's pin turns
 red and the scope statement has to be re-registered.
+
+## Round 10 — MOD-05 `facts/` slice 1 (commitments, REF-06), before its K7 gate
+
+Run on committed tree `cf5280a` on the Windows gate host, with the round-5 discipline: tree
+clean before the run, baselines green, and every restore verified against HEAD. Each planting
+also ran `tsc`, so that a kill made only by the compiler would show as "build only". None did.
+C14–C16 plant the defect in REAL source rather than in a fixture: the owner-scoped rules
+(BC-05-6) are tested where the code lives.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| C1 | zero in force answers `null`, not BOTTOM (cast past the compiler) | KILLED (test) | `test_no_commitment_folds_to_bottom_never_null` |
+| C2 | two in force: the first is CHOSEN instead of `uncomputable` (R-20) | KILLED (test) | `test_two_effective_commitments_are_uncomputable_not_chosen` |
+| C3 | two in force: the LATEST is chosen (the preference F2 forbids) | KILLED (test) | same |
+| C4 | the invalidation reader is never asked (R-19) | KILLED (test) | `test_an_invalidated_commitment_is_not_in_force` |
+| C5 | the reader is asked at the commitment's own height, not the read's | KILLED (test) | same |
+| C6 | the fold ignores the currency | KILLED (test) | `test_a_commitment_answers_only_for_its_own_unit_and_currency` |
+| C7 | the fold ignores the unit | KILLED (test) | same |
+| C8 | a non-HUMAN entry is read as a commitment | KILLED (test) | `test_only_the_ledgers_own_human_entries_count` |
+| C9 | a commitment minted on read at the wrong height (off by one) | KILLED (test) | `test_a_commitment_is_in_force_from_its_height_on` |
+| C10 | `commit` appends twice | KILLED (test) | `test_each_commit_appends_exactly_one_entry` |
+| C11 | `commit`'s author widened to any string (OBJ-31 closed at parse) | KILLED (test) | `test_a_non_human_author_cannot_commit` |
+| C12 | `commit` takes the engine's reason, `basis?: unknown` (REF-06 on a real act) | KILLED (test) | `test_no_act_signature_accepts_diagnostic` |
+| C13 | the invalidation slot is not checked at construction (OS-1) | KILLED (test) | the isolation test's declared-slots case |
+| C14 | the CATALOG builds a commitment-kind entry, planted in `src/catalog/` | KILLED (test) | `test_only_the_catalog_builds_or_appends_a_catalog_entry` |
+| C15 | the FACTS module builds a declaration-kind entry, planted in `src/facts/` | KILLED (test) | same |
+| C16 | a Commitment minted by assertion in `src/catalog/`, outside its ledger | KILLED (test) | `test_declaration_from_derivation_is_malformed` |
+| C17 | REF-06: acts no longer found to a fixed point (direct appends only) | KILLED (test) | `test_no_act_signature_accepts_diagnostic` |
+| C18 | REF-06: an inline closure's append no longer belongs to its method | KILLED (test) | same |
+| C19 | REF-06: a function type's RETURN no longer inspected | KILLED (test) | same |
+| C20 | REF-06: a constrained type parameter judged by flag alone | KILLED (test) | same |
+| C21 | REF-06: the class-field form dropped (RD-12) | KILLED (test) | same |
+| C22 | **a REGISTERED LIMIT closed silently** (calls through an interface followed) | KILLED (test) | same (the `limit-call-through-port` pin) |
+| C23 | forge: every kind's owner collapsed to "any ledger root", with a cross-ledger forge planted in `src/catalog/` | **SURVIVED** | — |
+
+**C23 survived, and it was a real gap.** C14 and C15 prove the forge rule catches a cross-ledger
+forge planted in `src/`, but nothing pinned the OWNER logic itself. With ownership collapsed,
+the catalog could build commitments and every test stayed green, because no such code exists
+in `src/` for a test to see. **Fix (`82b1fbd`):** fixtures under
+`tests/fixtures/ledger-owners/src/<root>/` are judged AT the path they mirror. Each root builds
+its own kind (conforming) and not the other's (violating). The forge test pins all four.
+
+**Re-run on `82b1fbd`:**
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| C14 | as above | KILLED (test) | `test_only_the_catalog_builds_or_appends_a_catalog_entry` |
+| C15 | as above | KILLED (test) | same |
+| C23 | as above | KILLED (test) | same (the ownership pin) |
+| C24 | ownership collapsed in the DETECTOR alone, with no `src/` plant | KILLED (test) | same (the ownership pin) |
+
+**Twenty-four of twenty-four killed after one fix.** IR-44 (one tree for every check) is a
+tooling fix with no automated test. It is verified by its own run: the false
+`OS-12_no_isolation_test` disappeared. The patch script asserted that no bare `ls-files`
+remained when it ran, but nothing in the repo stops one from returning. That is recorded as
+unpinned, not as covered.

@@ -252,3 +252,11 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
     contract rows), `scaffold`, `rosters`, `tags` and `structure-check` pass. The nine
     `module_file_absent` entries are the modules not yet built.
   - **Interpretations:** IR-42..IR-46. IR-42 carries a forward constraint MOD-04 must honour.
+
+- **2026-10-12 — Builder battery round 10 (MOD-05 slice 1): 24/24 killed after one fix.** On
+  `cf5280a`, 22 of 23 were killed by a test and none by the compiler alone. **C23 survived:**
+  forge OWNERSHIP was unpinned. A collapse to "any ledger root owns every kind" left every test
+  green, because `src/` holds no cross-ledger code for a test to see. Pinned in `82b1fbd` by
+  fixtures judged at the `src/` path they mirror. C14, C15, C23 and C24 (the detector-only
+  collapse) were then re-planted and killed. Recorded in `mutation-battery.md`. The slice is
+  ready for its K7 gate, which waits until MOD-05 is complete (all three slices).

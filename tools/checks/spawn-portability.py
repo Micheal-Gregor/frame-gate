@@ -41,6 +41,9 @@ from pathlib import Path
 LAUNCHERS = {
     "subprocess": {"run", "Popen", "call", "check_call", "check_output",
                    "getoutput", "getstatusoutput"},
+    # K7 round 5 (DR-15): the asyncio launchers start processes as surely as
+    # subprocess does.
+    "asyncio": {"create_subprocess_exec", "create_subprocess_shell"},
     "os": {"system", "popen", "startfile", "posix_spawn", "posix_spawnp",
            "execl", "execle", "execlp", "execlpe", "execv", "execve", "execvp", "execvpe",
            "spawnl", "spawnle", "spawnlp", "spawnlpe", "spawnv", "spawnve", "spawnvp",
@@ -48,9 +51,9 @@ LAUNCHERS = {
 }
 # Take a command string for a shell. Never portable.
 SHELL = {("os", "system"), ("os", "popen"), ("subprocess", "getoutput"),
-         ("subprocess", "getstatusoutput")}
+         ("subprocess", "getstatusoutput"), ("asyncio", "create_subprocess_shell")}
 # Where the PROGRAM sits, for launchers that do not take an argv list first.
-PROGRAM_ARG = {"posix_spawn": 0, "posix_spawnp": 0}
+PROGRAM_ARG = {"posix_spawn": 0, "posix_spawnp": 0, "create_subprocess_exec": 0}
 PROGRAM_ARG.update({f: 0 for f in LAUNCHERS["os"] if f.startswith("exec")})
 PROGRAM_ARG.update({f: 1 for f in LAUNCHERS["os"] if f.startswith("spawn")})
 
@@ -69,6 +72,19 @@ class Bindings(ast.NodeVisitor):
     def visit_ImportFrom(self, node):
         for a in node.names:
             self.functions[a.asname or a.name] = (node.module or "", a.name)
+
+    def module_of(self, expr):
+        """The module an expression evaluates to, or None."""
+        if isinstance(expr, ast.Name):
+            return self.modules.get(expr.id)
+        if (isinstance(expr, ast.Call) and len(expr.args) == 1
+                and isinstance(expr.args[0], ast.Constant) and isinstance(expr.args[0].value, str)):
+            f = expr.func
+            if isinstance(f, ast.Name) and f.id == "__import__":
+                return expr.args[0].value
+            if self.target(f) == ("importlib", "import_module"):
+                return expr.args[0].value
+        return None
 
     def target(self, expr):
         """(module, function) an expression resolves to, or None."""
@@ -131,12 +147,26 @@ def check_file(path):
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     binds = Bindings()
     binds.visit(tree)
-    # `run = subprocess.run` makes `run` resolve too.
-    for name, values in assignments(tree).items():
-        for v in values:
-            t = binds.target(v)
-            if t:
-                binds.functions[name] = t
+    # `run = subprocess.run` makes `run` resolve too; so does rebinding a MODULE
+    # (`sp = subprocess`, `sp = __import__("subprocess")`,
+    # `sp = importlib.import_module("subprocess")`) - K7 round 5, DR-15. Repeated
+    # until nothing new binds, so a chain of rebindings resolves. Bounded: a name
+    # assigned two different modules (`x = subprocess; x = os`) flips on every
+    # pass of a flow-insensitive scan and would never settle.
+    for _ in range(16):
+        changed = False
+        for name, values in assignments(tree).items():
+            for v in values:
+                mod = binds.module_of(v)
+                if mod and binds.modules.get(name) != mod:
+                    binds.modules[name] = mod
+                    changed = True
+                t = binds.target(v)
+                if t and binds.functions.get(name) != t:
+                    binds.functions[name] = t
+                    changed = True
+        if not changed:
+            break
     module_level = assignments(tree)
     found = []
 

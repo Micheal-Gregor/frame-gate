@@ -29,6 +29,19 @@ describe("REF-02 - external isolation", () => {
     expect(v.file.endsWith("src/facts/index.ts")).toBe(true);
     expect(v.specifier).toBe("node:crypto");
     expect(v.reason).toBe("unresolved-builtin");
+
+    // WI-01 (K7 rounds 4-5): the same refusal through the two doors the sweep
+    // did not see - the TypeScript `import x = require()` form, and a source file
+    // that is not `.ts`. Each must be refused on its own.
+    const viaImportEquals = findExternalIsolationViolations(fixture("import-equals"));
+    expect(viaImportEquals).toHaveLength(1);
+    expect(viaImportEquals[0]!.specifier).toBe("node:fs");
+    expect(viaImportEquals[0]!.file.endsWith("src/facts/index.ts")).toBe(true);
+
+    const viaNonTs = findExternalIsolationViolations(fixture("non-ts"));
+    expect(viaNonTs).toHaveLength(1);
+    expect(viaNonTs[0]!.specifier).toBe("node:crypto");
+    expect(viaNonTs[0]!.file.endsWith("src/facts/digest.mjs")).toBe(true);
   });
 
   it("test_external_reached_through_ports_module_succeeds", () => {

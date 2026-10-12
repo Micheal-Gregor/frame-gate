@@ -16,6 +16,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-06 K7 round 5 triage; gate closed | **ACCEPTED 2026-10-12** (owner, live gate) | Gate closes as `closed-by-owner-5` (tag placed by the owner, R-02). Fix now: DR-12, DR-13, WI-01; DR-11, DR-14, DR-15 decidable parts, limits registered |
 | R-07 reviewer scratch worktree (amends R-05) | **ACCEPTED 2026-10-12** (owner, live gate), **subject to probe** | Runner-owned gitignored worktree `.k7/wt`; reviewer Write/Edit scoped to `.k7/**`; `k7-run.py` refuses, not warns, a verdict that leaves the real tree dirty |
 | R-08 MOD-03 opens with MOD-01 at drift 5 | **ACCEPTED 2026-10-12** (owner, live gate) | Explicit owner lift of the teeth rule, effective when the R-06 fix-now items are committed with their battery. MOD-03's first K7 gate reviews everything, these fixes included |
+| R-09 what "height arithmetic" means (BC-01-5, DR-14) | **ACCEPTED 2026-10-12** (owner, in chat) | Height in, plain number out: arithmetic. Height in, height out: arithmetic unless every return hands back one of the callable's own height parameters unchanged. Ordering (-1/0/1), boolean and other results are not arithmetic |
 
 ---
 
@@ -331,3 +332,30 @@ the gate rather than read from the builder's record.
 - **`closed-by-owner-5`** placed by the owner on `5ca4355`, the commit recording R-06. Verdicts 4
   (`4b6a37e`) and 5 (`e0dd0cc`) both reviewed ancestors of it, so the gate is closed under
   RD-11, and under 2.3.0's round cap the non-PASS streak ends here.
+
+---
+
+## R-09 · What counts as height arithmetic (BC-01-5; DR-14)
+
+**Owner, 2026-10-12, in chat:** "latest is not arithmetic, flag asNumber."
+
+K7 round 5 showed that "two heights in, a height out" misses a delta, an offset, a successor and
+a fold, and that `order` and a delta share a signature, so the line must be drawn on what comes
+back. The owner drew it:
+
+- **A height in, a plain `number` out, is arithmetic.** This covers a delta (`a - b`) and also
+  a bare unwrap (`asNumber(h)`), because a height's value leaving the type is how arithmetic gets
+  done outside the kernel.
+- **A height in, a height out, is arithmetic unless it is a SELECTION.** A selection is a
+  callable whose every return hands back one of its own height parameters unchanged, as in
+  `latest(a, b)`. A successor, an offset, a fold or a sum manufactures a new height, which is
+  arithmetic.
+- **Not arithmetic:** an ordering (`-1 | 0 | 1`), a boolean, any other result type, and any
+  callable that takes no height at all (the constructor `height(n: number)`).
+
+Signatures cannot separate `latest` from `sum`, which have identical types, so the selection test
+reads the body: every return expression must resolve (by symbol) to one of the declaration's own
+height parameters, directly or through a conditional or `??`/`||`/`&&` whose operands all do. A
+body the test cannot read, such as an overload signature or an interface member, is not a
+selection, so a height-returning callable without a readable body is flagged. That bias is
+conservative and is registered.

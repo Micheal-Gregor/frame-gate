@@ -26,6 +26,7 @@ const pyFixtures = resolve(repo, "tests/fixtures/spawn-portability-py");
 const FIXTURES = [
   "violating", "other-name", "shell", "conforming",
   "aliased", "element-access", "destructured", "process-module",
+  "shell-option", "shell-option-variable", "call", "apply", "reflect-apply", "conforming-call",
 ] as const;
 const realTree: SpawnScope = {
   roots: [resolve(repo, "tools"), resolve(repo, "tests"), resolve(repo, "src")],
@@ -102,6 +103,30 @@ describe("spawn portability", () => {
     // process.execPath are the Node binary; refusing them would make the rule
     // pass by refusing everything that does not match one spelling.
     expect(violationsIn("process-module")).toEqual([]);
+  });
+
+  it("test_shell_true_hands_any_command_to_a_shell", () => {
+    // K7 round 5 (DR-15): `shell: true` makes even process.execPath a command
+    // string for cmd.exe or sh - decided by the option's TYPE, so an options
+    // object held in a variable is read the same as a literal.
+    for (const f of ["shell-option", "shell-option-variable"] as const) {
+      const v = violationsIn(f);
+      expect(v, `${f}: shell: true went unseen`).toHaveLength(1);
+      expect(v[0]!.defect).toBe("shell-command-string");
+    }
+  });
+
+  it("test_call_apply_and_reflect_apply_do_not_hide_a_spawn", () => {
+    // K7 round 5 (DR-15): through Function.prototype.call / .apply and
+    // Reflect.apply the resolved signature is not child_process's, so the target
+    // is resolved from the type of the expression being invoked.
+    expect(violationsIn("call").map((v) => v.callee)).toEqual(["execFileSync"]);
+    expect(violationsIn("apply").map((v) => v.callee)).toEqual(["spawnSync"]);
+    expect(violationsIn("reflect-apply").map((v) => v.callee)).toEqual(["execFileSync"]);
+  });
+
+  it("test_the_node_binary_through_call_and_an_explicit_shell_false_are_admitted", () => {
+    expect(violationsIn("conforming-call")).toEqual([]);
   });
 
   it("test_the_real_tools_and_tests_trees_spawn_only_node", () => {

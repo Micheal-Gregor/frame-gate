@@ -135,6 +135,71 @@ function isNodeBinary(expr, depth = 0) {
   return false;
 }
 
+/**
+ * True when any options argument turns the shell on (K7 round 5, DR-15). Decided
+ * by the TYPE of the `shell` property, so an options object held in a variable or
+ * built by spreading is read the same as a literal: anything but `false` (or
+ * absent) means the command is handed to cmd.exe on one host and sh on another,
+ * whatever the first argument is.
+ */
+function shellOn(args) {
+  return args.some((a) => {
+    const t = checker.getTypeAtLocation(a);
+    const shell = checker.getPropertiesOfType(t).find((p) => p.escapedName === "shell");
+    if (!shell) return false;
+    const st = checker.getTypeOfSymbolAtLocation(shell, a);
+    const parts = st.isUnion() ? st.types : [st];
+    return parts.some((c) => !(c.flags & (ts.TypeFlags.BooleanLiteral | ts.TypeFlags.Undefined)) ||
+      (c.flags & ts.TypeFlags.BooleanLiteral && c.intrinsicName === "true"));
+  });
+}
+
+/**
+ * The child_process function a call invokes, and the arguments it receives -
+ * directly, or through `f.call(this, ...)`, `f.apply(this, [...])` or
+ * `Reflect.apply(f, this, [...])` (K7 round 5, DR-15). Through the indirections
+ * the resolved signature is Function.prototype's, so the TARGET is resolved from
+ * the type of the expression being called. Arguments passed as a non-literal
+ * array cannot be read; they come back as `null`, which no rule admits.
+ */
+function invoked(node) {
+  const direct = checker.getResolvedSignature(node);
+  const dd = direct?.getDeclaration?.() ?? direct?.declaration;
+  const directFn = dd ? childProcessFunction(dd) : null;
+  if (directFn !== null) return { fn: directFn, args: [...node.arguments] };
+
+  const fnOf = (expr) => {
+    for (const sig of checker.getTypeAtLocation(expr).getCallSignatures()) {
+      const d = sig.getDeclaration?.() ?? sig.declaration;
+      const fn = d ? childProcessFunction(d) : null;
+      if (fn !== null) return fn;
+    }
+    return null;
+  };
+  const spread = (arr) => (arr && ts.isArrayLiteralExpression(arr) ? [...arr.elements] : null);
+
+  const callee = node.expression;
+  // Reflect.apply FIRST: it is also a property access named "apply", and the
+  // .call/.apply branch below would take it, fail to resolve `Reflect`, and stop.
+  if (
+    ts.isPropertyAccessExpression(callee) &&
+    callee.name.text === "apply" &&
+    ts.isIdentifier(callee.expression) &&
+    callee.expression.text === "Reflect" &&
+    node.arguments[0] !== undefined
+  ) {
+    const fn = fnOf(node.arguments[0]);
+    if (fn === null) return null;
+    return { fn, args: spread(node.arguments[2]) };
+  }
+  if (ts.isPropertyAccessExpression(callee) && (callee.name.text === "call" || callee.name.text === "apply")) {
+    const fn = fnOf(callee.expression);
+    if (fn === null) return null;
+    return { fn, args: callee.name.text === "call" ? node.arguments.slice(1) : spread(node.arguments[1]) };
+  }
+  return null;
+}
+
 /** A registered exception: this exact command, named literally, at this exact file. */
 function isRegistered(file, first) {
   if (!first || !ts.isStringLiteralLike(first)) return false;
@@ -148,18 +213,15 @@ for (const file of allFiles) {
   const found = [];
   if (sf) {
     const visit = (node) => {
-      if (ts.isCallExpression(node)) {
-        const sig = checker.getResolvedSignature(node);
-        const decl = sig?.getDeclaration?.() ?? sig?.declaration;
-        const fn = decl ? childProcessFunction(decl) : null;
-        if (fn !== null && !ADMITTED_FORMS.has(fn)) {
-          const line = sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;
-          const first = node.arguments[0];
-          if (SHELL_FORMS.has(fn)) {
-            found.push({ file, line, callee: fn, defect: "shell-command-string" });
-          } else if (ARGV_FORMS.has(fn) && !isNodeBinary(first) && !isRegistered(file, first)) {
-            found.push({ file, line, callee: fn, defect: "command-is-not-the-node-binary" });
-          }
+      const call = ts.isCallExpression(node) ? invoked(node) : null;
+      if (call !== null && !ADMITTED_FORMS.has(call.fn)) {
+        const { fn, args } = call;
+        const line = sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;
+        const first = args?.[0];
+        if (SHELL_FORMS.has(fn) || (args !== null && shellOn(args))) {
+          found.push({ file, line, callee: fn, defect: "shell-command-string" });
+        } else if (ARGV_FORMS.has(fn) && (args === null || (!isNodeBinary(first) && !isRegistered(file, first)))) {
+          found.push({ file, line, callee: fn, defect: "command-is-not-the-node-binary" });
         }
       }
       ts.forEachChild(node, visit);

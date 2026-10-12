@@ -51,15 +51,20 @@ interface Diagnostics {
   codes: number[];
   messages: string[];
 }
-let compiled: Record<string, Diagnostics> | undefined;
-function fixtures(): Record<string, Diagnostics> {
+interface MemberAssignments {
+  members: string[];
+  perMember: Record<string, { codes: number[]; messages: string[] }>;
+}
+type Compiled = Record<string, Diagnostics> & { "appended-fact-members"?: MemberAssignments };
+let compiled: Compiled | undefined;
+function fixtures(): Compiled {
   if (compiled === undefined) {
     const raw = execFileSync(
       process.execPath,
       [resolve(repo, "tools/checks/fixture-compiles.mjs")],
       { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 },
     );
-    compiled = JSON.parse(raw) as Record<string, Diagnostics>;
+    compiled = JSON.parse(raw) as Compiled;
   }
   return compiled;
 }
@@ -94,38 +99,60 @@ function exportsOf(file: string): ExportAnswers {
   return a;
 }
 
+/**
+ * The `kind` of every member of the UnknownValue union, read from the declaration.
+ * Each member is a type literal; its `kind` property's type is a string literal.
+ * Shared by BC-01-1 (the family is closed at five) and the isUnknown check, so the
+ * runtime answer is tested against the same discovered set the closure is.
+ */
+function discoveredUnknownKinds(): string[] {
+  const sf = kernelSource();
+  let members: string[] | null = null;
+  const visit = (n: ts.Node): void => {
+    if (ts.isTypeAliasDeclaration(n) && n.name.text === "UnknownValue" && ts.isUnionTypeNode(n.type)) {
+      members = n.type.types.map((m) => {
+        if (!ts.isTypeLiteralNode(m)) return "<not a type literal>";
+        const kind = m.members.find(
+          (p): p is ts.PropertySignature =>
+            ts.isPropertySignature(p) && p.name.getText(sf) === "kind",
+        );
+        const t = kind?.type;
+        return t && ts.isLiteralTypeNode(t) && ts.isStringLiteral(t.literal)
+          ? t.literal.text
+          : "<unparsed>";
+      });
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  if (members === null) throw new Error("UnknownValue must be a union type alias in the kernel");
+  return members;
+}
+
 describe("BC-01-1 - the Unknown family is closed at five", () => {
   it("test_unknown_family_is_closed_at_five_by_source", () => {
     // Discovered from source, not asserted against a list we also wrote.
     // A test that counts a hard-coded five passes when a sixth is added,
     // because it never looked at the declaration.
-    const sf = kernelSource();
-    let members: string[] | null = null;
-    const visit = (n: ts.Node): void => {
-      if (
-        ts.isTypeAliasDeclaration(n) &&
-        n.name.text === "UnknownValue" &&
-        ts.isUnionTypeNode(n.type)
-      ) {
-        members = n.type.types.map((m) => {
-          const lit = m.getText().match(/kind:\s*"([a-z-]+)"/);
-          return lit?.[1] ?? "<unparsed>";
-        });
-      }
-      ts.forEachChild(n, visit);
-    };
-    visit(sf);
-
-    expect(members, "UnknownValue must be a union type alias in the kernel").not.toBeNull();
-    expect(new Set(members!)).toEqual(
+    const members = discoveredUnknownKinds();
+    expect(new Set(members)).toEqual(
       new Set(["refuse", "no-subject", "uncomputable", "undetermined", "latent"]),
     );
-    expect(members!).toHaveLength(5);
+    expect(members).toHaveLength(5);
   });
 
   it("test_is_unknown_answers_whether_not_which", () => {
+    // RD-12 (K7 round 5, DR-13): EVERY member discovered from the declaration, not
+    // the two this test used to name. Two of five let "refuse" leave the runtime
+    // answer unnoticed - a refusal reported as a non-Unknown.
+    const kinds = discoveredUnknownKinds();
+    expect(kinds.length, "no Unknown members discovered").toBeGreaterThan(0);
+    for (const kind of kinds) {
+      expect(isUnknown({ kind }), `${kind} is a member and must answer true`).toBe(true);
+    }
     expect(isUnknown({ kind: "latent" })).toBe(true);
     expect(isUnknown({ kind: "undetermined", ae: "AE-3" })).toBe(true);
+    expect(isUnknown({ kind: "toString" })).toBe(false); // inherited keys are not members
     expect(isUnknown(null)).toBe(false);
     expect(isUnknown(0)).toBe(false);
     expect(isUnknown({ kind: "absent", discharge: "x" })).toBe(false); // OBJ-09 is not a member
@@ -161,6 +188,18 @@ describe("BC-01-2 - no Projection membership predicate", () => {
     }
   });
 
+  it("test_the_registered_limits_of_the_membership_detector_hold", () => {
+    // IR-27 (K7 round 5, DR-11): what no checker can decide is REGISTERED, not
+    // presented as covered. Each limit-* fixture is a membership answer the
+    // detector cannot see. If a future detector does see one, this goes red and
+    // the limit must be re-registered as covered - it cannot quietly change sides.
+    const limits = exportFixtures.filter((f) => f.startsWith("limit-"));
+    expect(limits.length, "the registered limits have no fixture").toBeGreaterThan(0);
+    for (const f of limits) {
+      expect(exportsOf(resolve(exportFixtureDir, f)).membership, `${f} is a registered limit`).toEqual([]);
+    }
+  });
+
   it("test_projection_family_is_the_ten_named_members", () => {
     expect(PROJECTION_MEMBERS).toHaveLength(10);
     expect(new Set(PROJECTION_MEMBERS)).toEqual(
@@ -185,6 +224,18 @@ describe("BC-01-3 - AppendedFact has no mutator", () => {
     // TS2540: Cannot assign to 'payload' because it is a read-only property.
     expect(d.codes, "assigning to an AppendedFact field must fail as a read-only assignment").toEqual([2540]);
     expect(d.messages[0]).toContain("'payload'");
+
+    // RD-12 (K7 round 5, DR-12): the rule is "every field is readonly", so every
+    // field DISCOVERED from the declaration is assigned, one compile each, and each
+    // must fail with TS2540 naming that field. Pinning `payload` alone let
+    // `author` and `at` lose readonly with this test green.
+    const all = fixtures()["appended-fact-members"];
+    expect(all?.members.length, "no AppendedFact members discovered").toBeGreaterThan(0);
+    for (const m of all!.members) {
+      const r = all!.perMember[m];
+      expect(r?.codes, `assigning to AppendedFact.${m} must be refused as read-only`).toEqual([2540]);
+      expect(r?.messages[0]).toContain(`'${m}'`);
+    }
   });
 });
 

@@ -67,8 +67,22 @@ const host: ts.ModuleResolutionHost = {
 const COMPILER_OPTIONS: ts.CompilerOptions = {
   module: ts.ModuleKind.NodeNext,
   moduleResolution: ts.ModuleResolutionKind.NodeNext,
-  allowJs: false,
+  // A .js/.mjs file under src/ is source too (WI-01), so a specifier that lands
+  // on one must resolve as INTERNAL rather than fall through as unresolved.
+  allowJs: true,
 };
+
+/**
+ * Every extension the runtime can load as source (WI-01, K7 rounds 4-5: the
+ * sweep read `*.ts` only, so an external named from a `.mjs` beside it was never
+ * seen). Declaration files carry no runtime imports and are skipped.
+ */
+const SOURCE = /\.(ts|mts|cts|tsx|js|mjs|cjs|jsx)$/;
+const scriptKind = (file: string): ts.ScriptKind =>
+  /\.(js|mjs|cjs)$/.test(file) ? ts.ScriptKind.JS
+    : file.endsWith(".jsx") ? ts.ScriptKind.JSX
+    : file.endsWith(".tsx") ? ts.ScriptKind.TSX
+    : ts.ScriptKind.TS;
 
 /**
  * Resolve one specifier as seen from one file, and classify it.
@@ -89,7 +103,7 @@ export function resolveSpecifier(fromFile: string, specifier: string): Specifier
   return { kind: "internal", resolved: norm(resolved) };
 }
 
-/** Every .ts file beneath `root`, excluding declaration files. */
+/** Every loadable source file beneath `root`, excluding declaration files. */
 function sourceFiles(root: string): string[] {
   const out: string[] = [];
   const walk = (dir: string): void => {
@@ -103,7 +117,7 @@ function sourceFiles(root: string): string[] {
       const full = join(dir, name);
       if (statSync(full).isDirectory()) {
         if (name !== "node_modules") walk(full);
-      } else if (name.endsWith(".ts") && !name.endsWith(".d.ts")) {
+      } else if (SOURCE.test(name) && !/\.d\.(ts|mts|cts)$/.test(name)) {
         out.push(norm(full));
       }
     }
@@ -116,7 +130,7 @@ function sourceFiles(root: string): string[] {
 function specifiersOf(file: string): string[] {
   const text = ts.sys.readFile(file);
   if (text === undefined) return [];
-  const sf = ts.createSourceFile(file, text, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
+  const sf = ts.createSourceFile(file, text, ts.ScriptTarget.ES2022, true, scriptKind(file));
   const found: string[] = [];
   const visit = (node: ts.Node): void => {
     if (
@@ -125,6 +139,24 @@ function specifiersOf(file: string): string[] {
       ts.isStringLiteral(node.moduleSpecifier)
     ) {
       found.push(node.moduleSpecifier.text);
+    } else if (
+      // `import fs = require("node:fs")` (WI-01): a TypeScript import form that is
+      // neither an ImportDeclaration nor a call, and was invisible to this sweep.
+      ts.isImportEqualsDeclaration(node) &&
+      ts.isExternalModuleReference(node.moduleReference) &&
+      ts.isStringLiteral(node.moduleReference.expression)
+    ) {
+      found.push(node.moduleReference.expression.text);
+    } else if (
+      // `require("node:fs")` in a CommonJS source file.
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "require" &&
+      node.arguments.length === 1 &&
+      node.arguments[0] !== undefined &&
+      ts.isStringLiteral(node.arguments[0])
+    ) {
+      found.push(node.arguments[0].text);
     } else if (
       ts.isCallExpression(node) &&
       node.expression.kind === ts.SyntaxKind.ImportKeyword &&

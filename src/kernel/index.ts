@@ -77,9 +77,21 @@ export const uncomputable = (boundary: string): UnknownValue => ({ kind: "uncomp
 export const undetermined = (ae: string): UnknownValue => ({ kind: "undetermined", ae });
 export const latent = (): UnknownValue => ({ kind: "latent" });
 
-const UNKNOWN_KINDS = new Set([
-  "refuse", "no-subject", "uncomputable", "undetermined", "latent",
-]);
+/**
+ * The runtime answer to "is this kind a member?", keyed by the union's own `kind`
+ * (K7 round 5, CC-6 / DR-13). A `Set` of strings was a hand-copied second list:
+ * dropping "refuse" from it compiled, and turned a refusal into a non-Unknown at
+ * runtime. A `Record` over `UnknownValue["kind"]` is checked against the union by
+ * the compiler in both directions - a missing kind and an extra kind are each a
+ * parse error - so the runtime list cannot drift from the type.
+ */
+const UNKNOWN_KINDS: Readonly<Record<UnknownValue["kind"], true>> = {
+  refuse: true,
+  "no-subject": true,
+  uncomputable: true,
+  undetermined: true,
+  latent: true,
+};
 
 /**
  * Answers WHETHER a value is a member - never WHICH. Discriminating the member
@@ -96,7 +108,7 @@ export function isUnknown(v: unknown): v is UnknownValue {
     v !== null &&
     "kind" in v &&
     typeof (v as { kind: unknown }).kind === "string" &&
-    UNKNOWN_KINDS.has((v as { kind: string }).kind)
+    Object.hasOwn(UNKNOWN_KINDS, (v as { kind: string }).kind)
   );
 }
 

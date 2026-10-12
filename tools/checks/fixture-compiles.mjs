@@ -59,4 +59,56 @@ for (const f of fixtures) {
     messages: d.map((x) => ts.flattenDiagnosticMessageText(x.messageText, " ")),
   };
 }
+/*
+ * BC-01-3 over EVERY field (K7 round 5, CC-6 / DR-12). The fixture above assigns
+ * to `payload` only, so dropping `readonly` from `author` or `at` compiled and the
+ * base case stayed green - an instance pinned where the rule ("every field is
+ * readonly") was meant. The members are discovered from the kernel's own
+ * declaration by the type checker, and one assignment per member is compiled from
+ * memory; each must fail with TS2540 and nothing else.
+ */
+const kernelPath = resolve(repo, "src/kernel/index.ts");
+const checker = program.getTypeChecker();
+const kernelSf = program.getSourceFile(kernelPath);
+const kernelMod = kernelSf && checker.getSymbolAtLocation(kernelSf);
+const factSym = kernelMod && checker.getExportsOfModule(kernelMod).find((x) => x.name === "AppendedFact");
+const members = factSym
+  ? checker.getPropertiesOfType(checker.getDeclaredTypeOfSymbol(factSym)).map((p) => p.name)
+  : [];
+
+const virtual = new Map(
+  members.map((m) => [
+    resolve(dir, `__assign-${m}.ts`),
+    [
+      'import type { AppendedFact } from "../../../src/kernel/index.js";',
+      "declare const f: AppendedFact<unknown, unknown>;",
+      `f[${JSON.stringify(m)}] = f[${JSON.stringify(m)}];`,
+      "",
+    ].join("\n"),
+  ]),
+);
+const options = program.getCompilerOptions();
+const host = ts.createCompilerHost(options);
+const realGet = host.getSourceFile.bind(host);
+const realExists = host.fileExists.bind(host);
+const realRead = host.readFile.bind(host);
+const key = (f) => resolve(f);
+host.getSourceFile = (f, lang, ...rest) =>
+  virtual.has(key(f)) ? ts.createSourceFile(f, virtual.get(key(f)), lang) : realGet(f, lang, ...rest);
+host.fileExists = (f) => virtual.has(key(f)) || realExists(f);
+host.readFile = (f) => virtual.get(key(f)) ?? realRead(f);
+
+const memberProgram = ts.createProgram([...virtual.keys()], options, host);
+const perMember = {};
+for (const file of virtual.keys()) {
+  const m = file.slice(file.lastIndexOf("__assign-") + "__assign-".length, -".ts".length);
+  const sf = memberProgram.getSourceFile(file);
+  const d = [...memberProgram.getSemanticDiagnostics(sf), ...memberProgram.getSyntacticDiagnostics(sf)];
+  perMember[m] = {
+    codes: d.map((x) => x.code),
+    messages: d.map((x) => ts.flattenDiagnosticMessageText(x.messageText, " ")),
+  };
+}
+out["appended-fact-members"] = { members, perMember };
+
 process.stdout.write(JSON.stringify(out));

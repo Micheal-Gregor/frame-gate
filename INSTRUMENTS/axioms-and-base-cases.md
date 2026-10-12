@@ -85,6 +85,13 @@ the instance.
 > AST** and rejecting any exported type-predicate asserting the family or a member — not by scanning
 > names, which RD-13 forbids as load-bearing.
 
+*Widened 2026-10-11/12 (R-04, R-06; K7 rounds 4–5).* The check uses the type checker: every
+export form, members at any depth, factory return types and construct signatures. The asserted
+type counts as membership when it carries the brand, is a member-name literal, or has the
+Projection SHAPE (a member callable with a `RecordHeight`). **Registered limit (IR-27):** a plain
+`boolean` function that tests shape cannot be told apart from any other boolean function, and is
+pinned by a `limit-` fixture rather than presented as covered.
+
 OBJ-34 `DifficultyAdvisory` is stateless, pure, and computable at a height. Every property a reader
 might re-derive the family from admits it. If it rejoins, δ becomes consumable wherever a Projection
 is consumed and owner ruling DG-F1 is defeated **without anyone editing a line that mentions
@@ -118,6 +125,14 @@ prevent.
 
 > `compare` is total, antisymmetric and transitive over a discovered sample; `succeeds` is false for
 > equal and earlier heights; the module exports no add/subtract/delta over heights.
+
+*Restated 2026-10-12 (R-09, owner; K7 round 5 / DR-14), so a detector can decide it.* "No
+arithmetic" means: no exported callable at any depth takes a `RecordHeight` and returns a plain
+`number`, and none takes a `RecordHeight` and returns a `RecordHeight` unless every return hands
+back one of its own height parameters unchanged (a SELECTION, such as `latest(a, b)`). Orderings
+(`-1 | 0 | 1`), booleans, other result types, and callables that take no height (`height(n)`)
+are outside the prohibition. The old form, "two heights in, a height out", missed a delta, an
+offset, a successor and a fold.
 
 **Watched failing:** recorded below.
 

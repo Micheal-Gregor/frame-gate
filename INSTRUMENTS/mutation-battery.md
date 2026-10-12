@@ -276,3 +276,45 @@ one of its own inputs. R-09 makes that a legal selection, so reporting them as s
 misdescribe the detector, and so would deleting them quietly. They were re-planted as the
 manufacturing forms they were meant to be, and both died. That is the ruling working as stated:
 the line moved, and the battery found exactly where.
+
+## Round 7 — MOD-03 `catalog/`, before its first K7 gate
+
+Run on committed tree `641baeb` on the Windows gate host, with the round-5 discipline (baseline
+green, declared `test_select`, every restore verified against HEAD). The first pass, on
+`ff52074`, **killed 15 of 19**. The four survivors were the ones predicted before the run,
+behavioural holes rather than equivalent mutants:
+
+- **R9** — the as-of read ignored *which unit*. Every test declared for a single unit.
+- **R10 / R11** — a forged `ENGINE` entry shaped like a catalog act, appended to the SHARED
+  record by any module, was read back as a HUMAN declaration or independence act. That is INV-PROV
+  broken at runtime while HOOK-07 stays green at parse.
+- **R14** — unit features were mutable, and "read-only" was only a comment.
+
+Each was closed by a test (`test_a_declaration_answers_only_for_its_own_unit`,
+`test_an_entry_not_authored_by_a_human_is_never_read_as_a_declaration`,
+`test_independence_answers_only_for_a_human_act_on_its_own_unit`,
+`test_unit_features_are_read_only`), committed, and the whole battery re-run:
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| R1 | `CurrencyOrder` accepts an empty list | KILLED (test) | `test_currency_order_refuses_an_empty_or_tied_order` |
+| R2 | `CurrencyOrder` accepts a tie | KILLED (test) | same |
+| R3 | `predecessors` includes the currency itself | KILLED (test) | `test_currency_order_answers_for_every_size` |
+| R4 | a foreign currency gets `[]`, not a refusal | KILLED (test) | `test_a_currency_from_another_order_is_refused_not_answered` |
+| R5 | `least()` is the most expensive | KILLED (test) | `test_currency_order_answers_for_every_size` |
+| R6 | `declare` skips the level check | KILLED (test) | `test_an_unconfigured_level_is_refused_not_appended` |
+| R7 | `declarationAt` returns the earliest, not the one in force | KILLED (test) | `test_redeclaration_never_rewrites_history` |
+| R8 | `declarationAt` mints the wrong height | KILLED (test) | `test_human_authored_declaration_append_succeeds` |
+| R9 | `declarationAt` ignores which unit | KILLED (test) | `test_a_declaration_answers_only_for_its_own_unit` |
+| R10 | `declarationAt` accepts a non-HUMAN entry | KILLED (test) | `test_an_entry_not_authored_by_a_human_is_never_read_as_a_declaration` |
+| R11 | `independenceAt` accepts a non-HUMAN entry | KILLED (test) | `test_independence_answers_only_for_a_human_act_on_its_own_unit` |
+| R12 | `independenceAt` returns the earliest act | KILLED (test) | `test_independence_is_a_human_act_in_force_as_of_a_height` |
+| R13 | `unit(id)` answers every id | KILLED (test) | `unit answers differently when units differs` (OS-12) |
+| R14 | unit features returned mutable | KILLED (test) | `test_unit_features_are_read_only` |
+| R15 | `declare` appends BEFORE checking the level | KILLED (test) | `test_an_unconfigured_level_is_refused_not_appended` |
+| R16 | the catalog learns there are two | KILLED (test) | `test_the_number_two_appears_nowhere` |
+| R17 | `Declaration` loses its brand | KILLED (test) | `test_declaration_from_derivation_is_malformed` |
+| R18 | `declare` takes any author | KILLED (test) | `test_a_non_human_author_cannot_declare` |
+| R19 | the record slot is not checked at construction (OS-1) | KILLED (test) | `refuses a record that does not offer append and readAsOf` (OS-12) |
+
+**Nineteen of nineteen killed.**

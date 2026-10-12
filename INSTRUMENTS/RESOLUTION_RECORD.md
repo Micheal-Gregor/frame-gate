@@ -19,6 +19,8 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-09 what "height arithmetic" means (BC-01-5, DR-14) | **ACCEPTED 2026-10-12** (owner, in chat) | Height in, plain number out: arithmetic. Height in, height out: arithmetic unless every return hands back one of the callable's own height parameters unchanged. Ordering (-1/0/1), boolean and other results are not arithmetic |
 | R-10 ODG-FG-06 "independent unit" | **ACCEPTED 2026-10-12** (owner, live gate) | HUMAN-declared: an appended, never-inferred act, read as of a height; no act in force → `NoSubject` → not licensed. Owned by MOD-03; F-route proposal SP-2 |
 | R-11 HOOK-07 enforcement shape | **ACCEPTED 2026-10-12** (owner, live gate) | `Declaration` is a nominal type only `declare()` can mint (REF-01 at parse); `declare()` takes only the narrowed `"HUMAN"` author. Limit registered: a holder of a HUMAN author calling `declare()` is not caught at parse (PC-02, K7) |
+| R-12 DR-18: INV-PROV at the catalog's read seam | **ACCEPTED 2026-10-12** (owner, live gate) | Decide statically what is decidable: no code outside `src/catalog` builds or appends a catalog-kind entry (resolved by type), and reads ignore entries at unconfigured levels. The runtime residue is a registered limit discharged by PC-02's port-layer identity binding |
+| R-13 who reviews round 7 | **ACCEPTED 2026-10-12** (owner, live gate) | MOD-03's re-check (round 7) runs on **Fable 5.1** (`--model claude-fable-5-1`), a reviewer that did not prescribe the R-06 closures, with scope covering them as well (RD-6) |
 
 ---
 
@@ -458,3 +460,42 @@ the call chain", with BLOCK "fail at parse". TypeScript can constrain types but 
   may act as HUMAN is bound at the port layer, a deployment fact) and on K7 review. A capability
   token minted at a human-input boundary would close it, at the price of a new work item against
   the closed MOD-02 slice; the owner declined that for now.
+
+---
+
+## R-12 · DR-18: what the catalog's read seam can and cannot guarantee
+
+**Owner, 2026-10-12, live gate.** K7 round 6 (E3) showed `declarationAt` / `independenceAt`
+certifying any shared-record entry whose `author` string is `"HUMAN"`. Every module holds the same
+`RecordPort<unknown>`, so any of them can append one as a plain literal.
+
+**Ruling: fix what is decidable now, and register the rest against PC-02.**
+
+- **Static, at parse/build.** No source outside `src/catalog/` may construct an object whose TYPE
+  carries a catalog kind (`"declaration"`, `"independence"`), directly, through a const, or by
+  spreading. No `append` call outside `src/catalog/` may take an argument whose type carries one,
+  which would be a replay of a genuine entry. Decided by the type checker, with positive-control
+  fixtures.
+- **At read.** An entry whose level is not in the ledger's `levels()` cannot have come from
+  `declare()`, which refuses it, so it is not certified.
+- **Registered limit.** An entry built with a dynamically computed kind (typed `string`), one built
+  from `any`, or one appended by a module the deployment wires to the raw record, is still read
+  as a catalog act. The guarantee then rests on PC-02: who may append as whom is an identity
+  binding at the port layer. Port-level provenance was offered and declined for now, because it
+  changes the closed MOD-02 contract ahead of the deployment decision.
+
+---
+
+## R-13 · Round 7 runs on a different model, and certifies the R-06 closures
+
+**Owner, 2026-10-12, live gate.** K7 round 6 declined to certify the R-06 closures (DR-11..DR-15,
+WI-01) because K7 round 5 prescribed their shapes: "a reviewer cannot certify a closure whose
+shape it specified". Rounds 5 and 6 both ran on `claude-opus-5-5`, the CLI default and also the
+builder's model.
+
+**Ruling.** MOD-03's re-check, round 7, runs on **`claude-fable-5-1`**, under RD-6's "a different
+model … for load-bearing modules". Its scope is the whole tree, which already includes the R-06
+closures, so one run re-checks MOD-03 and falsifies or certifies R-06. The model was probed
+before adoption: `claude -p --model claude-fable-5-1` answered, and `modelUsage` named only
+`claude-fable-5-1`. The flag is added to `reviewer_command` for round 7. **Later rounds' model is
+a separate decision**, recorded when it is made.

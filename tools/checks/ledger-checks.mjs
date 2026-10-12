@@ -35,6 +35,8 @@
  *   ledgers  DECIDES: every `AppendedFact<_, P>` alias in src/ has its payload kind in
  *            LEDGERS, owned by the root it is declared in, and its brand in BRANDS -
  *            so a new ledger kind cannot skate past every rule above unlisted (RD-12).
+ *            Fixtures under tests/fixtures/ledger-discovery/src/<root>/ are judged at
+ *            the path they mirror, so each verdict is pinned non-empty too.
  *   sc3      DECIDES: a numeric 2 in any source file of any extension; a comparison of
  *            a Currency collection's length or size to a numeric literal.
  *            LIMITS: cardinality asked by index (limit-cardinality-by-index.ts).
@@ -154,12 +156,16 @@ const SC3 = walk(fx("sc3"), SOURCE);
 const REACH_DIR = fx("features-reach");
 const REACH = walk(REACH_DIR, /\.ts$/);
 const reachMirrored = (f) => relative(REACH_DIR, f).split(sep).join("/");
+/** Ledger-discovery fixtures, judged AS IF at the src/ path they mirror (battery 11). */
+const DISCOVERY_DIR = fx("ledger-discovery");
+const DISCOVERY = walk(DISCOVERY_DIR, /\.ts$/);
+const discoveryMirrored = (f) => relative(DISCOVERY_DIR, f).split(sep).join("/");
 const SURFACE_CASES = existsSync(fx("catalog-surface"))
   ? readdirSync(fx("catalog-surface")).filter((d) => existsSync(join(fx("catalog-surface"), d, "index.ts"))).sort()
   : [];
 const SURFACE = SURFACE_CASES.flatMap((c) => walk(join(fx("catalog-surface"), c), /\.ts$/));
 
-const program = ts.createProgram([...SRC, ...SRC_DTS, ...FIXTURES, ...MINT, ...MINT_DTS, ...FORGE, ...OWNERS, ...REACH, ...SC3, ...SURFACE], {
+const program = ts.createProgram([...SRC, ...SRC_DTS, ...FIXTURES, ...MINT, ...MINT_DTS, ...FORGE, ...OWNERS, ...REACH, ...DISCOVERY, ...SC3, ...SURFACE], {
   strict: true,
   allowJs: true,
   checkJs: false,
@@ -587,9 +593,9 @@ function reachFindings(file, here) {
 }
 
 // ---- ledgers: every AppendedFact alias in src/ is listed (RD-12) -----------------------
-function discoveredLedgers() {
+function discoveredLedgers(files, judgedAt) {
   const out = [];
-  for (const f of SRC) {
+  for (const f of files) {
     const sf = program.getSourceFile(f);
     const visit = (n) => {
       if (ts.isTypeReferenceNode(n) && n.typeArguments?.length === 2) {
@@ -600,7 +606,7 @@ function discoveredLedgers() {
           const kt = k && checker.getTypeOfSymbol(k);
           let alias = n.parent;
           while (alias && !ts.isTypeAliasDeclaration(alias)) alias = alias.parent;
-          if (kt?.isStringLiteral()) out.push({ file: rel(f), kind: kt.value, brand: alias?.name.text ?? null });
+          if (kt?.isStringLiteral()) out.push({ file: judgedAt(f), kind: kt.value, brand: alias?.name.text ?? null });
         }
       }
       ts.forEachChild(n, visit);
@@ -609,7 +615,13 @@ function discoveredLedgers() {
   }
   return out;
 }
-const LEDGER_FACTS = discoveredLedgers();
+/** What the discovery says about a set of facts: kinds no list protects, owned elsewhere, or unbranded. */
+const ledgerVerdict = (facts) => ({
+  unlisted: facts.filter((x) => !KINDS.has(x.kind)),
+  misowned: facts.filter((x) => KINDS.has(x.kind) && !x.file.startsWith(KIND_OWNER.get(x.kind) + "/")),
+  unbranded: facts.filter((x) => !BRANDS.some((b) => b.name === x.brand && b.owner === x.file)),
+});
+const LEDGER_FACTS = discoveredLedgers(SRC, rel);
 
 process.stdout.write(JSON.stringify({
   fixtures,
@@ -634,8 +646,7 @@ process.stdout.write(JSON.stringify({
   },
   ledgers: {
     discovered: LEDGER_FACTS,
-    unlisted: LEDGER_FACTS.filter((x) => !KINDS.has(x.kind)),
-    misowned: LEDGER_FACTS.filter((x) => KINDS.has(x.kind) && !x.file.startsWith(KIND_OWNER.get(x.kind) + "/")),
-    unbranded: LEDGER_FACTS.filter((x) => !BRANDS.some((b) => b.name === x.brand && b.owner === x.file)),
+    ...ledgerVerdict(LEDGER_FACTS),
+    fixtures: Object.fromEntries(DISCOVERY.map((f) => [discoveryMirrored(f), ledgerVerdict(discoveredLedgers([f], discoveryMirrored))])),
   },
 }));

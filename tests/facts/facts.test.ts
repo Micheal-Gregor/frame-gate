@@ -144,13 +144,20 @@ describe("BC-05-6 - every ledger is listed, so every ledger rule reaches it (RD-
     type Fact = { file: string; kind: string; brand: string | null };
     const out = JSON.parse(
       execFileSync(process.execPath, [resolve(repo, "tools/checks/ledger-checks.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }),
-    ) as { ledgers: { discovered: Fact[]; unlisted: Fact[]; misowned: Fact[]; unbranded: Fact[] } };
+    ) as { ledgers: { discovered: Fact[]; unlisted: Fact[]; misowned: Fact[]; unbranded: Fact[]; fixtures: Record<string, Record<string, Fact[]>> } };
     // Discovered from every AppendedFact<_, P> alias in src/, never listed here; these are
     // only kinds that must be among them, so a discovery that finds none fails.
     expect(out.ledgers.discovered.map((x) => x.kind)).toEqual(expect.arrayContaining(["declaration", "commitment", "draw-context", "resolution-label"]));
     expect(out.ledgers.unlisted, "a ledger kind no rule protects").toEqual([]);
     expect(out.ledgers.misowned, "a ledger kind owned by another root").toEqual([]);
     expect(out.ledgers.unbranded, "a ledger fact whose brand no mint rule knows").toEqual([]);
+    // Each verdict is pinned NON-empty as well, judged at the src/ path each fixture mirrors -
+    // a discovery that silently answers "nothing" fails here, not only in src/.
+    const kinds = (v: Record<string, Fact[]>) => Object.fromEntries(Object.entries(v).map(([k, f]) => [k, f.map((x) => x.kind)]));
+    expect(Object.fromEntries(Object.entries(out.ledgers.fixtures).map(([k, v]) => [k, kinds(v)]))).toEqual({
+      "src/catalog/violating-misowned-kind.ts": { unlisted: [], misowned: ["commitment"], unbranded: ["commitment"] },
+      "src/facts/violating-unlisted-kind.ts": { unlisted: ["ghost"], misowned: [], unbranded: ["ghost"] },
+    });
   });
 });
 
@@ -292,6 +299,7 @@ describe("BC-05-10 - draw-time features are given and recorded as given (R-22)",
       "src/facts/violating-destructures-features.ts": ["features-reference"],
       "src/facts/violating-reads-features-by-key.ts": ["features-read"],
       "src/facts/violating-reads-features.ts": ["features-read"],
+      "src/facts/violating-references-features-by-key.ts": ["features-reference"],
       "src/facts/violating-references-features.ts": ["features-reference"],
     });
   });

@@ -360,3 +360,34 @@ named test that rule exists to keep red.
 | S22 | the catalog learns how many currencies there are (planted) | KILLED (test) | `test_the_number_two_appears_nowhere` |
 
 **Twenty-two of twenty-two killed on the first pass.**
+
+## Round 9 — the R-14 fix pass, after MOD-03's gate closed
+
+Run on committed tree `d60b999` on the Windows gate host, with the round-5 discipline. Two
+fixtures were added before the run, because the wrapper read was caught by two rules at once and
+disabling either rule alone would have survived: `wrapper-read-plain/` isolates the wrapper rule,
+and `module-cache-human/` isolates the HUMAN-needs-an-append rule.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| T1 | mint: overload signatures not flagged | KILLED (test) | `test_declaration_from_derivation_is_malformed` |
+| T2 | mint: ambient declarations and `.d.ts` files not flagged | KILLED (test) | same |
+| T3 | forge: the `kind` key decided by TEXT again (RD-13) | KILLED (test) | `test_only_the_catalog_builds_or_appends_a_catalog_entry` |
+| T4 | forge: class fields / getters carrying a kind not flagged | KILLED (test) | same |
+| T5 | surface: reads no longer followed through wrappers | KILLED (test) | `test_no_operation_answers_the_current_declaration` |
+| T6 | surface: a HUMAN parameter admits without an append again | KILLED (test) | same |
+| T7 | surface: field writability judged by mutator methods only | KILLED (test) | same |
+| T8 | height: collection parameters not counted | KILLED (test) | `test_the_height_detector_sees_every_export_form` |
+| T9 | height: object parameters not counted | KILLED (test) | same |
+| T10 | height: Promise returns not unwrapped | KILLED (test) | same |
+| T11 | height/shape: `undefined` not stripped (optional forms) | KILLED (test) | same |
+| T12 | selection: an `undefined` branch no longer admitted (R-09) | KILLED (test) | `test_the_membership_detector_sees_every_export_form` (the conforming-selections control) |
+| T13 | spawn: `.cts/.tsx/.jsx` dropped from the sweep | KILLED (test) | `test_every_loadable_extension_is_swept` |
+| T14 | python: `import *` no longer binds launchers | KILLED (test) | `test_python_launches_are_resolved_through_bindings` |
+| T15 | isolation: backtick specifiers no longer read | KILLED (test) | `test_external_import_outside_ports_is_malformed` |
+| T16 | isolation: a computed specifier no longer refused | KILLED (test) | same |
+| T17 | **a REGISTERED LIMIT closed silently** (forge treats a `string` kind as a catalog kind) | KILLED (test) | `test_only_the_catalog_builds_or_appends_a_catalog_entry` (the `limit-dynamic-kind` pin) |
+
+**Seventeen of seventeen killed on the first pass.** T17 is the R-15 mechanism proving itself: a
+change to what a detector claims to decide cannot happen silently, because the limit's pin turns
+red and the scope statement has to be re-registered.

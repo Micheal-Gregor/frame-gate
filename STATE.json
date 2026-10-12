@@ -10,8 +10,8 @@
   "k7_round": 6,
   "last_gate_tag": "closed-by-owner-5",
   "seal_tag": "",
-  "next_action": "MOD-03 fix round done (DR-18..DR-22 + IR-40; 79/79; battery round 8 22/22 on 8242fd1). Next: K7 round 7 - MOD-03's re-check, on Fable 5.1 (R-13), also certifying the R-06 closures. Not PASS -> owner triage closes MOD-03's gate.",
+  "next_action": "MOD-03's gate closed by owner triage (R-14); R-14 fixes + R-15 scopes committed; battery round 9 17/17 on d60b999. WAITING ON OWNER: place closed-by-owner-7 on 9ecad50 (the runner refuses the next K7 round until then) and push master. Then R-16's lift is in effect: build MOD-04 reachability (the concept) under OS-1..OS-12.",
   "blocked_on": null,
-  "updated_at": "2026-10-12T20:31:00+00:00",
-  "updated_by": "session-start:startup"
+  "updated_at": "2026-10-12T21:10:08+00:00",
+  "updated_by": "manual"
 }

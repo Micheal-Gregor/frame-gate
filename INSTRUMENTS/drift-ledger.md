@@ -25,6 +25,11 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | DR-16 | Harness · reviewer grant (R-05) | The allowlist refuses all writes, scratch included, so no mutation experiment can be staged by the gate: CC-6 reasoned, not run, for the third consecutive round. R-05 recorded this as needing its own ruling | **5** (K7 round 5, CC-6, deduction 1) | CLOSED — R-07 applied and probed live (scratch worktree; dirty-after verdict refused) |
 | DR-17 | `INSTRUMENTS/drift-ledger.md` | Round 4's new work item against the closed MOD-02 slice was never transcribed. Builder's cause: the verdict's rationale text was read truncated at 600 characters. Transcribed below as WI-01 | **5** (K7 round 5, CC-7, deduction 1) | CLOSED — WI-01 recorded; verdicts now read in full |
 | WI-01 | MOD-02 · `tools/checks/external-isolation.ts:106` | **New work item, not a reopened gate** (RD-11; the MOD-02 slice closed at `k7-pass-2` stays closed). The sweep reads `*.ts` only and does not see `import x = require("node:fs")` (ImportEqualsDeclaration). Named failing tests: an ImportEqualsDeclaration fixture and a non-`.ts` source fixture under `src/` must each turn `test_external_import_outside_ports_is_malformed` red. Severity medium (K7 round 4 CC-7; restated round 5) | (K7 round 4, CC-7, no deduction; round 5 CC-7) | REMEDIATED — sweep reads every loadable source extension; ImportEquals and `require()` seen; named REF-02 test covers both. Awaiting MOD-03's gate |
+| DR-18 | MOD-03 · `declaration-ledger.ts:77-99`, `independence-ledger.ts:55-76` | **INV-PROV's second direction is not held at the read seam.** `declarationAt` / `independenceAt` certify ANY shared-record entry whose `author` string is `"HUMAN"` and whose `kind` matches, including one at a level outside `levels()`. `SharedRecord` is `RecordPort<unknown, RecordHeight>`, so any module can append that entry as a plain literal: no brand, no `as`, no `declare()`. **Reproduced by K7 (E3):** a difficulty-derived write from `src/advisory/` read back as a Declaration at an unconfigured level, `tsc` clean, 72/72 green. Battery round 7's R10/R11 fix rejects only an entry that honestly says `ENGINE` | **5** (K7 round 6, CC-2, deduction 4) | OPEN — fix round (round 6 is MOD-03's first gate round) |
+| DR-19 | MOD-03 · `tools/checks/catalog-checks.mjs:115-130` (REF-01) | The assertion detector misses a Declaration minted through a value typed `any` (E1a) and through a generic `cast<T>(x) { return x as T }` (E1b). Both compiled with `test_declaration_from_derivation_is_malformed` green; a positive control (`as unknown as Declaration`) turned it red, so the detector did read the copy | **5** (K7 round 6, CC-6, deduction 3) | OPEN — fix round |
+| DR-20 | MOD-03 · `catalog-checks.mjs:133-158` (BC-03-4) | The current-declaration surface check sees only class methods whose return carries the brand: a `currentLevel(unit): string` read (E2a), a read taking a `'HUMAN'`-typed parameter but no height (E2b), and exported free functions all pass | **5** (K7 round 6, CC-6, deduction 2) | OPEN — fix round |
+| DR-21 | MOD-03 · `catalog.test.ts:256-278` (BC-03-6, SC-3) | The "number two" scan reads `.ts` only (the extension gap WI-01 closed for MOD-02) and literals only; a cardinality branch (`currencies.length > 1`) is not seen | **5** (K7 round 6, CC-7, deduction 1) | OPEN — fix round |
+| DR-22 | `INSTRUMENTS/drift-ledger.md` (IR-30), `catalog-checks.mjs:9-11` | IR-30 and the checker's header state that an `as` assertion is "the ONLY way" to mint a branded catalog act elsewhere, which DR-19 shows is false. The provenance-by-author-string read mechanism is registered nowhere. Also noted, not blocking: HOOK-07's author half is met by the LITERAL `"HUMAN"` at any call site, so it refuses only a wide `Author` variable (R-11, owner-accepted) | **5** (K7 round 6, CC-3, deduction 1) | OPEN — fix round; IR-30 superseded, never edited (rule 6) |
 
 ## Interpretation Register (decisions the handoff did not make)
 
@@ -151,3 +156,21 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   - **Checks:** `phase4-checks objects` passes.
   - **The declaration comparison** now passes against `ui/interface-contract.md`, after IR-34
     gave it a parser that can read TypeScript at all.
+
+- **2026-10-12 — K7 round 6 (MOD-03's first gate) RETURN, drift 5. The first round whose
+  mutation experiments were run BY THE GATE.** Reviewed `e4b8bfb`. R-07 held: experiments ran in
+  `.k7/wt`, and the repository was clean before and after. CC-4 was mechanical (71/71), CC-5
+  N/A by absence.
+  - **Every guard deletion was killed** (M1–M7). The divergence injection that turned
+    `declarationAt` into a "current" read was killed too.
+  - **What survived was REACH** (E1, E2) and **one carried rule** (E3, DR-18): the read seam
+    trusts an author string that any module can write. The builder's R10/R11 note in battery
+    round 7 says that breach is closed, and it is not. That note is corrected by supersession
+    below, not edited.
+  - **K7 also declined to certify the R-06 closures** (DR-11..DR-15, WI-01): their shapes were
+    prescribed by K7 round 5, and "a reviewer cannot certify a closure whose shape it
+    specified". They are green but uncertified until a party that did not design them
+    falsifies them (RD-6).
+
+  **Cap position.** Round 6 is MOD-03's first gate round. One builder fix round is allowed, then
+  one re-check (round 7), then owner triage.

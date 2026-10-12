@@ -1,0 +1,134 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 6,
+  "reviewed": {
+    "tree_sha": "028666033519106e32be554041fed1bf3a6aba7f",
+    "commit_sha": "e4b8bfb7475721a4d88cc7260f7907ef1fe25b0e",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "(all)"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-12T19:23:00+00:00",
+    "completed_at": "2026-10-12T19:31:28+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 5,
+    "prior_tree_sha": "4f0a5c9f580fe34969e2c2b79b6ae75d309a042c",
+    "prior_failing_checks": [
+      "CC-6",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked by reading; nothing was executed for this check. Every source file traces to a row in INSTRUMENTS/object-model-and-parameters.md:11-13 and :24-27, and each row traces to an admitted S3 node. src/catalog/currency-order.ts traces to OBJ-05, unit-registry.ts to OBJ-06 and declaration-ledger.ts to OBJ-13 (S3 \u00c2\u00a73:101-103). independence-ledger.ts traces to ODG-FG-06 (S3 \u00c2\u00a79:287) through owner ruling R-10 (RESOLUTION_RECORD.md:417-439). That ruling was recorded in commit 46757b9, before the code in ff52074, so RC-3 order holds, and it is registered as IR-29 with an AE-link (drift-ledger.md:62). Each new tool has a register entry: tools/checks/catalog-checks.mjs (IR-30) and ts-signatures.mjs (IR-34). ui/interface-contract.md is the 2.3.0 template's required contract location (seal.py:301), not a module source. There is no orphan file. Every operation in the F1 MOD-03 interface (F1-kernel-ports.md:250-260) has a destination. No NOT_STARTED module has a stray file."
+    },
+    "CC-2": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Reasoned from the code, then reproduced by running the declared commands against .k7/wt. Carried rules that hold: SEAM-01 (currency-order.ts:31-36 refuses an empty or tied order; least() at :48). SEAM-26 (currencies() is never counted). SEAM-27 (features frozen at unit-registry.ts:30). OBJ-13's 'no current_declaration()' holds in the running code today. The F1 OBJ-13 rule that fails is INV-PROV's second direction, 'an inferred classification may never be written' (F1-kernel-ports.md:299-302). declarationAt (declaration-ledger.ts:77-88) certifies as a Declaration ANY entry on the shared record that has author === 'HUMAN' and kind 'declaration' (:91-99). SharedRecord is RecordPort<unknown, RecordHeight> (:42), so any module holding the port can write that entry as a plain object literal. That needs no brand, no `as`, and no call to declare(). The read also never checks the level against levels(). Reproduced (experiment E3): I added `record.append({author:'HUMAN', payload:{kind:'declaration', unit, level: difficulty > 1 ? 'hard' : 'easy'}})` in .k7/wt/src/advisory/classify.ts, which is a difficulty-derived classification written from MOD-13's directory. A probe test showed declarationAt returning it as a Declaration at level 'hard', which is not in levels(). `npx tsc --noEmit -p .k7/wt` was clean and `npx vitest run --root .k7/wt` passed 72/72. IndependenceLedger.independenceAt (independence-ledger.ts:55-76) has the same shape, so any module can write an entry that licenses a null lineage (R-10). Battery round 7's R10/R11 fix (mutation-battery.md:288-290) filters only entries that honestly say 'ENGINE'. The author field is a string anyone can write, so the runtime INV-PROV breach that note describes is still open. Not HALT: the reviewed tree contains no code that writes an inferred declaration. The breach is that nothing enforces the rule. Error paths: the constructors throw TypeError/RangeError, a foreign currency gets refuse(), and absence gets noSubject(). No Unknown member is dropped."
+    },
+    "CC-3": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Checked by reading drift-ledger.md:62-67 against the code. IR-29 (linked to ODG-FG-06), IR-31, IR-32, IR-33 and IR-34 are registered, and IR-29 is correctly linked to its open body. Two problems remain. (1) Provenance is decided by an author string on an untyped shared record (declaration-ledger.ts:91-99; independence-ledger.ts:67-76). That is a mechanism the S3 never specified: the S3 places HOOK-07 at parse and author identity at the port (PC-02). It is registered nowhere, and the suite depends on it for test_an_entry_not_authored_by_a_human_is_never_read_as_a_declaration. (2) IR-30 and catalog-checks.mjs:9-11 state that an explicit assertion is 'the ONLY way to mint one elsewhere'. That is false (CC-6 E1a/E1b): a value typed `any`, or a generic `cast<T>` helper whose `as` node has type T, mints a Declaration with no assertion to a branded type. A registered statement that is untrue is a CC-3 failure even though the code works. Separately, IR-30(a) says a function must 'already hold a narrowed \"HUMAN\"'. The literal \"HUMAN\" satisfies declare()'s parameter at any call site, so the author half at parse refuses only a wide `Author` variable. The owner accepted this (R-11), and it is noted rather than blocking."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit ; npx vitest run  (the declared `npx tsc --noEmit && npx vitest run`, run as its two declared commands in sequence because Windows PowerShell 5.1 has no &&. tsc printed no diagnostics; vitest reported 9 files and 71/71 passed. The S3 \u00c2\u00a75 rows for built modules resolve to real cases: REF-01 test_declaration_from_derivation_is_malformed (catalog.test.ts:91) and REF-02 test_external_import_outside_ports_is_malformed. MOD-01 has no \u00c2\u00a75 row, N/A-by-absence (\u00c2\u00a711:312). The other 17 rows belong to NOT_STARTED modules and are pending, not passing.)",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all  (stderr: 'rederive: no vectors found in ...\\vectors'. N/A-by-absence: S3 \u00c2\u00a76:216-217 and \u00c2\u00a711:312-314 give MOD-01, MOD-02 and MOD-03 no vector, and F1 \u00c2\u00a75 forbids one. vectors/ holds only README.md, so there was nothing to re-derive by hand)",
+        "exit_code": 2
+      }
+    },
+    "CC-6": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Mutation experiments were run in the R-07 runner worktree .k7/wt (the location this ruling assigns, not the system temp path), with the declared single-test and suite commands pointed at it. HOOK-07 is the only \u00c2\u00a77 hook in scope. GUARD DELETIONS, all killed: M1, the author check dropped from #isDeclarationOf, was killed by test_an_entry_not_authored_by_a_human_is_never_read_as_a_declaration. M4, declare's level check dropped, was killed by test_an_unconfigured_level_is_refused_not_appended. M5, declare's author widened to string, was killed by test_a_non_human_author_cannot_declare. M6, predecessors including itself, was killed by test_currency_order_answers_for_every_size. M7, the independence author check dropped, was killed by test_independence_answers_only_for_a_human_act_on_its_own_unit. Those five ran as one batch, with 7 failures, each attributable. M2, the unit check dropped, was killed by test_a_declaration_answers_only_for_its_own_unit. DIVERGENCE INJECTION: M3 made declarationAt read the whole record and ignore `at` (the 'current declaration' behaviour). test_redeclaration_never_rewrites_history caught it. DETECTOR REACH, survivors: E1a, a derivation in src/advisory/ returning a Declaration through a value typed `any`, and E1b, the same through a generic `cast<T>(x){return x as T}`, both compiled and left test_declaration_from_derivation_is_malformed green. A positive control, `as unknown as Declaration` in the same file, turned the test red, which proves the detector read the worktree. REF-01's load-bearing detector (catalog-checks.mjs:115-130) inspects only assertion nodes whose written type carries the brand. E2a, a `currentLevel(unit): string` method reading the latest declaration, and E2b, a `latest(unit, _: 'HUMAN'): Declaration` read with no height, both left test_no_operation_answers_the_current_declaration green. The surface check (catalog-checks.mjs:133-158) examines only class methods whose return carries a brand, accepts any 'HUMAN'-typed parameter as an append, and skips exported functions (:138). With E1-E3 planted, the full suite was 72/72 green. Not certified by this gate: the R-06 closures for DR-11..DR-15 and WI-01 follow shapes that K7 round 5 prescribed (k7-verdict-5.json blocking[0..4], [6]). They are green in the suite, but this gate cannot certify a closure whose shape it specified. They need falsification by a party that did not design them."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form, because the drift ledger scores per entry and has no D1-D6. Object-model fidelity 7: the four classes trace and the interpretations are registered. The Currency brand is shared across orders, and currency-order.isolation.test.ts:26 names a non-last element `lastOf`, which is cosmetic. Axiom coverage 5 (WORST): INV-PROV's second direction is not held at the read seam (CC-2 E3), and IR-30's 'only way' statement is false (CC-3). Base-case support / verification strength 5: two load-bearing detectors have reachable gaps (CC-6 E1, E2). BC-03-6's SC-3 scan (catalog.test.ts:256-278) reads only `.ts` under src/ and only literal 2. That is the same file-extension gap WI-01 just closed for MOD-02, and a cardinality branch such as `currencies.length > 1` is not seen. Extensibility 6: every module's facts share one RecordPort<unknown>, and catalog entries are recognised by bare `kind` strings ('declaration', 'independence'), so later modules inherit both the forgery path and a possible kind collision. MIN = 5. Drift block: MOD-03 is scored 5, below 7, so new work on MOD-03 is blocked until a fresh verdict. For MOD-01, this gate does not raise its standing 5, because its R-06 closures follow shapes this gate prescribed (CC-6). Owner lift R-08 governs, and the block stands as recorded. Tree integrity: `git status --porcelain` showed only ' M STATE.json' both before and after the battery. All experiments ran in .k7/wt. Experiment files there were restored by edit or neutralised (src/advisory/classify.ts reduced to `export {}`; tests/k7-probe.test.ts reduced to one skipped case) for the runner to delete."
+    }
+  },
+  "drift_score": {
+    "value": 5,
+    "basis": [
+      {
+        "check_id": "CC-2",
+        "finding": "Worst dimension: axiom coverage (INV-PROV). declarationAt and independenceAt (declaration-ledger.ts:77-99; independence-ledger.ts:55-76) certify any shared-record entry whose author string is 'HUMAN' as a Declaration or IndependenceAct, including one at a level outside levels(). Demonstrated: a difficulty-derived write from src/advisory/ read back as a Declaration, with tsc clean and 72/72 green.",
+        "deduction": 4
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "REF-01's assertion detector (catalog-checks.mjs:115-130) misses a Declaration minted through a value typed `any` and through a generic cast<T> helper. test_declaration_from_derivation_is_malformed stays green. IR-30's 'an assertion is the only way' is false.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "The current-declaration surface detector (catalog-checks.mjs:133-158) misses a read returning a non-branded projection (currentLevel: string), a read taking a 'HUMAN'-typed parameter instead of a height, and exported free functions. test_no_operation_answers_the_current_declaration stays green.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "BC-03-6's SC-3 scan is `.ts`-only and literal-only (catalog.test.ts:256-278), the same extension gap WI-01 closed for MOD-02, and it does not see cardinality branches.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "HOOK-07's author half at parse is satisfied by the literal \"HUMAN\" at any call site. IR-30(a) understates this as 'a holder of a narrowed HUMAN'. Owner-accepted (R-11); noted, not blocking.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-2",
+      "module": "MOD-03 catalog (DeclarationLedger, IndependenceLedger)",
+      "required_change": "Make a Declaration or IndependenceAct returned by declarationAt or independenceAt mean that the ledger's own HUMAN-only append produced it. An entry another module appended directly to the shared record, labelled author 'HUMAN' and kind 'declaration' or 'independence', must not come back as a catalog act, and neither may a declaration at a level outside levels(). A test that appends such an entry through the record port must turn red against the current code. If this layer cannot decide the property (it may need record-port provenance, PC-02), the owner must rule on it and register it as a limit, and the battery-7 R10/R11 record must be corrected by supersession, because it says the runtime INV-PROV breach is closed."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-03 catalog (REF-01 / tools/checks/catalog-checks.mjs)",
+      "required_change": "REF-01's property is that no definition outside the ledger produces a Declaration. A derivation that returns one through a value typed `any`, and one that returns it through a generic identity-cast helper, must each turn test_declaration_from_derivation_is_malformed red, each with a positive-control fixture. Whatever part of this the checker cannot decide must be registered as a limit, and IR-30's claim that an explicit assertion is the only escape must be corrected."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-03 catalog (BC-03-4 surface check)",
+      "required_change": "BC-03-4's 'no exported operation answers the current declaration' must be decided over every exported callable that can reveal a declaration's content, not only class methods whose return carries the brand. A method returning the current level as a plain string, a read that takes a 'HUMAN'-typed parameter but no RecordHeight, and an exported free function doing either must each turn test_no_operation_answers_the_current_declaration red, with positive-control fixtures."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "INSTRUMENTS/drift-ledger.md (Interpretation Register)",
+      "required_change": "Register the provenance-by-author-string read mechanism (declaration-ledger.ts:91-99, independence-ledger.ts:67-76) as an interpretation, with its class and route. Also correct IR-30 and the catalog-checks.mjs header so neither claims that an `as` assertion is the only way to mint a branded catalog act."
+    }
+  ],
+  "next_action": "Route this RETURN to the builder to close the four blocking items, then relaunch tools/k7-run.py so a fresh gate reproduces the E1-E3 escapes on the new tree rather than trusting the diff."
+}

@@ -318,3 +318,12 @@ Each was closed by a test (`test_a_declaration_answers_only_for_its_own_unit`,
 | R19 | the record slot is not checked at construction (OS-1) | KILLED (test) | `refuses a record that does not offer append and readAsOf` (OS-12) |
 
 **Nineteen of nineteen killed.**
+
+
+### Supersession of round 7's R10 / R11 claim (2026-10-12, after K7 round 6)
+
+Round 7 records R10/R11 as closing "INV-PROV broken at runtime". **That is not true, and the record
+above is left as written.** The tests added there reject an entry that says `author: "ENGINE"`. K7
+round 6 (E3) showed that an entry which simply says `author: "HUMAN"`, appended to the shared
+record by any module, is still read back as a catalog act. The breach is open as **DR-18**. The two
+tests remain correct for what they test: an honest non-HUMAN entry is rejected.

@@ -3,15 +3,15 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "9eab61ab3d606055b1b63646d260b7169194dbfa",
-  "tree": "b4dbce8d4e9381c3a500be8ef032476a1647ef45",
-  "dirty": true,
+  "head": "e4b8bfb7475721a4d88cc7260f7907ef1fe25b0e",
+  "tree": "028666033519106e32be554041fed1bf3a6aba7f",
+  "dirty": false,
   "current_module": "MOD-03",
   "k7_round": 5,
   "last_gate_tag": "closed-by-owner-5",
   "seal_tag": "",
   "next_action": "MOD-03 BUILT; battery round 7 19/19 on 641baeb. Next: MOD-03's K7 gate - python tools/k7-run.py (whole tree, incl. the R-06 fixes; first gate where the reviewer can run mutations, R-07).",
   "blocked_on": null,
-  "updated_at": "2026-10-12T19:22:50+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-10-12T19:23:11+00:00",
+  "updated_by": "session-start:startup"
 }

@@ -25,6 +25,9 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-15 detector reach is governed by a stated scope | **ACCEPTED 2026-10-12** (owner, live gate) | Each detector states the forms it decides and the limits it registers, each pinned by a fixture. K7 scores a detector against that statement; an evasion outside it is triaged as a known issue unless the owner promotes it |
 | R-16 MOD-04 opens with MOD-03 at drift 5 | **ACCEPTED 2026-10-12** (owner, live gate) | Explicit owner lift of the teeth rule, effective when the R-14 fix-now items are committed with their battery |
 | R-17 the next module is MOD-05, not MOD-04 (supersedes R-16's wording) | **ACCEPTED 2026-10-12** (owner, live gate) | S3 §10 mandates MOD-05 `facts/` before MOD-04 `reachability/` (MOD-04 hard-depends on MOD-05's effective-commitment fold). R-16's lift applies to MOD-05 as the next module; MOD-04 follows it against the real fold |
+| R-18 O-5 / O-6: MOD-04 ↔ MOD-05 and MOD-05 ↔ MOD-12 cycles | **ACCEPTED 2026-10-12** (owner, live gate) | Broken by INJECTION: MOD-05 receives MOD-04's admission and MOD-12's signature check as constructor-declared deciders (OS-1, OS-3); MOD-04 later receives MOD-05's fold the same way; a composition root wires them (OS-11). No module imports another's decider |
+| R-19 supersession before MOD-12 exists | **ACCEPTED 2026-10-12** (owner, live gate) | The effective-commitment fold takes a declared invalidation reader ("was this commitment invalidated as of h?"); MOD-12 supplies it; nothing of MOD-12's fact shape is defined in MOD-05 |
+| R-20 two effective commitments for one (unit, currency) | **ACCEPTED 2026-10-12** (owner, live gate) | The fold answers `uncomputable("two-effective-commitments")` — neither a commitment nor BOTTOM — so reachability refuses rather than guesses; prevention at the source stays PC-03 |
 
 ---
 
@@ -573,3 +576,44 @@ name was the builder's error: S3 §10 mandates the order catalog → **facts** �
 F2 records a hard MOD-04 → MOD-05 dependency (`effective_commitment(u, c')` or BOTTOM; C0 seam
 Q-1). R-16 is left as written. **The lift applies to MOD-05, the next module in the mandated
 order**, and MOD-04 follows it, built against the real fold rather than a stub.
+
+---
+
+## R-18 · O-5 and O-6 are broken by injection, not by merging
+
+**Owner, 2026-10-12, live gate.** F2 records two module-level cycles: O-5, MOD-04 reads MOD-05's
+fold while MOD-05's append is guarded by MOD-04; and O-6, MOD-05 supplies commitments and digests
+to MOD-12 while MOD-12 supplies the verified signature back. S2 §6 obligation 2 forbids the
+obvious merge, and F2 itself suggests the resolution: "MOD-04 depending on a fold interface
+rather than on the append path".
+
+**Ruling.** Every cross-module DECIDER is handed in at construction (OS-1, OS-3) and wired at a
+composition root (OS-11).
+
+- MOD-05's candidate append takes MOD-04's admission (`Admitted`, or `Refuse(unreachable)`) and
+  MOD-12's signature check (`Refuse(malformed-signature)` on failure) as declared inputs.
+- MOD-04 takes MOD-05's effective-commitment fold the same way.
+- MOD-05 is built and tested now against stand-ins honouring those interfaces. The interfaces are
+  declared in MOD-05 by the operations it calls, and are satisfied by MOD-04 and MOD-12 when
+  they are built.
+
+The S3's "hard dependency" rows stand: the dependency is hard, and the binding is INJECTED.
+
+## R-19 · Supersession is read through a declared invalidation reader
+
+**Owner, 2026-10-12, live gate.** A commitment is superseded only through MOD-12's invalidation,
+appended after its scope is derived and displayed (RC-4). MOD-12 is not built. MOD-05's fold
+therefore takes a declared input that answers one question: "was this commitment invalidated as
+of height h?". MOD-12 supplies the answer; MOD-05 defines nothing of MOD-12's fact shape. The
+effective commitment for `(unit, currency)` at `h` is the commitment that is not invalidated
+at `h`.
+
+## R-20 · Two effective commitments is a named defect, answered as `uncomputable`
+
+**Owner, 2026-10-12, live gate.** F2: "two effective commitments for one `(unit, currency)` is
+malformed — a defect in the fold or in the record, not a case to be resolved by preference".
+
+**Ruling.** The fold answers `uncomputable("two-effective-commitments")`, which is neither a
+commitment nor BOTTOM, so reachability (MOD-04) refuses rather than guessing. The defect stays
+inside the closed Unknown family as a typed, testable answer. Preventing it at the source (two
+simultaneous commitments) remains PC-03's claim-or-collide primitive at the record port.

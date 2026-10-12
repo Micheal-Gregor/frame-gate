@@ -24,6 +24,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-14 K7 round 7 triage; MOD-03's gate closed | **ACCEPTED 2026-10-12** (owner, live gate) | Gate closes as `closed-by-owner-7` (tag placed by the owner). Fix now: DR-24; DR-23 and DR-25 (decidable parts; array/property covariance registered); WI-02..WI-05; DR-26 (truthful limits, every limit pinned) |
 | R-15 detector reach is governed by a stated scope | **ACCEPTED 2026-10-12** (owner, live gate) | Each detector states the forms it decides and the limits it registers, each pinned by a fixture. K7 scores a detector against that statement; an evasion outside it is triaged as a known issue unless the owner promotes it |
 | R-16 MOD-04 opens with MOD-03 at drift 5 | **ACCEPTED 2026-10-12** (owner, live gate) | Explicit owner lift of the teeth rule, effective when the R-14 fix-now items are committed with their battery |
+| R-17 the next module is MOD-05, not MOD-04 (supersedes R-16's wording) | **ACCEPTED 2026-10-12** (owner, live gate) | S3 §10 mandates MOD-05 `facts/` before MOD-04 `reachability/` (MOD-04 hard-depends on MOD-05's effective-commitment fold). R-16's lift applies to MOD-05 as the next module; MOD-04 follows it against the real fold |
 
 ---
 
@@ -562,3 +563,13 @@ The teeth rule blocks new work on a module scoring under 7 until a fresh score o
 owner lift. **Lifted, explicitly, by the owner** (the R-15 choice: "MOD-04 opens on your lift"),
 effective once the R-14 fix-now items are committed with their mutation battery. MOD-04's first
 gate reviews the whole tree.
+
+---
+
+## R-17 · The next module is MOD-05 (supersedes R-16's wording)
+
+**Owner, 2026-10-12, live gate.** R-16 lifted the teeth rule so that "MOD-04" could open. That
+name was the builder's error: S3 §10 mandates the order catalog → **facts** → reachability, and
+F2 records a hard MOD-04 → MOD-05 dependency (`effective_commitment(u, c')` or BOTTOM; C0 seam
+Q-1). R-16 is left as written. **The lift applies to MOD-05, the next module in the mandated
+order**, and MOD-04 follows it, built against the real fold rather than a stub.

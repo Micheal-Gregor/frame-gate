@@ -75,6 +75,7 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-37 | **"No current declaration" (BC-03-4) is decided structurally.** (1) Every exported operation, class method or free function, that returns a branded act takes a RecordHeight or is the HUMAN-only append. (2) Every RecordHeight handed to a read (`RecordPort.readAsOf`, `declarationAt`, `independenceAt`) inside a catalog root is a parameter of the enclosing function, so a height made up there is "now". (3) No class field is non-`readonly`, or of a type with mutator methods, except the record port. A cache of what was declared is a current read. The caller's choice of height is the caller's responsibility (as-of semantics). Module-level mutable state is OS-2's, checked by `phase4-checks objects` | benign | local (DR-20) |
 | IR-38 | **R-12's static guard and its registered residue.** Outside `src/catalog/`, no object whose type carries a catalog kind is built (a `kind` property directly, through a const or shorthand, or by spreading a typed payload), and no `RecordPort.append` takes one (a replay). The kinds come from `DeclarationPayload.kind` / `IndependencePayload.kind`. **Residue, registered and pinned by `tests/fixtures/catalog-forge/limit-dynamic-kind.ts`:** a kind computed as a plain `string`, an entry built from `any`, or a module the deployment wires to the raw record. These rest on PC-02 | latent | local; R-12 (DR-18); PC-02 |
 | IR-39 | **SC-3 is checked over every source extension, and over cardinality.** No numeric 2 (any spelling, `.mjs` included), and no comparison of a Currency collection's `length` / `size` to a numeric literal. **Limit:** cardinality asked another way (`currencies().at(1) !== undefined`, a counting loop) is not seen; "no `if cheap … else expensive`" stays partly a review question for K7 (OI-4) | benign | local (DR-21) |
+| IR-40 | **OS-1 for TypeScript is PARSED, and the `objects` check sees untracked source.** The 2.3.0 `_js_os1` in `phase4-checks.py` used line regexes and brace counting: `if (x === null) {` read as a method named `if`, and the third `=` of `===` as a default argument, giving six false OS-1 violations on correct MOD-03 code. `os1_findings` now routes TS/JS to `tools/checks/ts-os1.mjs`, which decides OS-1's four shapes over the AST. Module constants are resolved by symbol, so a same-named parameter is not a read. Fixtures and `tests/checks/os1.test.ts` pin every rule plus a conforming class built from exactly the shapes the regex got wrong, and they caught one bug in the new checker on first run (`arguments.length`). The check's file list now includes untracked, non-ignored files, because `ls-files` alone made a pre-commit run pass vacuously. **`phase4-checks.py` now carries three local rulings (IR-34, IR-40 ×2): a future migration PORTS it** | benign | local; framework trial MF-26, MF-27 |
 
 ## Log
 
@@ -188,3 +189,11 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   (`catalog-checks.mjs`, `kernel-exports.mjs`). One reach gap was found beyond K7's list and
   closed: a generic that returns its type parameter WRAPPED (`wrap<T>(x).v`) launders a
   Declaration that no call-site rule sees (`type-parameter-cast`).
+
+- **2026-10-12 — Supersession of this ledger's MOD-03 entry, which says "`phase4-checks objects`
+  passes".** That pass was **vacuous.** The check scanned only `git ls-files`, and the catalog
+  files were not yet tracked when it ran, so it read nothing. The entry above is left as written.
+  Once the files were committed, the template's regex check reported six OS-1 violations, all
+  false (`===` read as a default argument). After IR-40 the check parses TypeScript and sees
+  untracked files, and MOD-03 passes it on the merits: every catalog class parsed, no OS-1 shape
+  present.

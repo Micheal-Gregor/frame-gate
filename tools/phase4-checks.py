@@ -396,11 +396,31 @@ def _js_os1(text: str) -> list[tuple[str, int, str]]:
     return out
 
 
+def _ts_os1(rel: str, text: str) -> list[tuple[str, int, str]]:
+    """IR-40 (framework trial MF-26): OS-1 for TS/JS, PARSED. `_js_os1` above is the
+    template's line-regex version, kept for reference and no longer called: it read
+    `if (x === null) {` as a method named `if` with a default argument."""
+    import json as _json
+    import subprocess as _sp
+    import tempfile as _tf
+    with _tf.NamedTemporaryFile("w", suffix=Path(rel).suffix, delete=False, encoding="utf-8") as tf:
+        tf.write(text)
+        tmp = tf.name
+    try:
+        tool = Path(__file__).resolve().parent / "checks" / "ts-os1.mjs"
+        r = _sp.run(["node", str(tool), tmp], capture_output=True, text=True)
+    finally:
+        Path(tmp).unlink(missing_ok=True)
+    if r.returncode != 0:
+        raise RuntimeError(f"ts-os1 failed on {rel}: {r.stderr.strip()[:200]}")
+    return [tuple(x) for x in _json.loads(r.stdout or "[]")]
+
+
 def os1_findings(rel: str, text: str) -> list[tuple[str, int, str]]:
     if rel.endswith(".py"):
         return _py_os1(text)
     if rel.endswith((".js", ".mjs", ".ts", ".jsx", ".tsx")):
-        return _js_os1(text)
+        return _ts_os1(rel, text)
     return []
 
 # --------------------------------------------------------- signature extraction
@@ -547,7 +567,11 @@ def check_objects(root: Path, cfg: dict) -> list[dict]:
     buckets = std.get("bucket_names") or BUCKETS
     allow = std.get("allow") or {}          # {path_prefix: [rule, ...]}
     src_rx = glob_to_regex(cfg.get("source_glob") or "src/**")
-    files = [f for f in git(root, "ls-files").splitlines() if src_rx.match(f)]
+    # IR-40: tracked AND untracked (not ignored) source. `ls-files` alone saw only
+    # tracked files, so a builder running this before committing a new class got a
+    # vacuous pass - MOD-03's first "objects: pass" was exactly that.
+    files = [f for f in git(root, "ls-files", "--cached", "--others", "--exclude-standard").splitlines()
+             if src_rx.match(f)]
     out = []
 
     def allowed(rel, rule):

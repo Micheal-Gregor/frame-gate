@@ -251,12 +251,16 @@ describe("BC-05-8 - REF-05: a draw with no declaration in force is refused (R-21
 
 describe("BC-05-9 - the recorded declaration is the one in force at the draw height (R-21, S-08)", () => {
   it("test_the_recorded_declaration_is_the_one_in_force_at_draw_time", () => {
-    const { declarations, draws, scope } = drawWorld();
+    const { record, declarations, draws, scope } = drawWorld();
     const d1 = declarations.declare(u, "easy", "HUMAN");
+    const h1 = record.noise();
     const d2 = declarations.declare(u, "hard", "HUMAN");
+    const h2 = record.noise();
     if (isUnknown(d1) || isUnknown(d2)) throw new Error("setup");
-    expect(drawn(draws.recordDraw(u, features, scope, "cond", d1.at, "ENGINE")).payload.declaration).toBe(d1.at);
-    expect(drawn(draws.recordDraw(u, features, scope, "cond", d2.at, "ENGINE")).payload.declaration).toBe(d2.at);
+    // Drawn strictly ABOVE each declaration, so the draw height and the declaration's height
+    // differ: recording the one for the other is visible (battery 11, D4 survived without it).
+    expect(drawn(draws.recordDraw(u, features, scope, "cond", h1, "ENGINE")).payload.declaration).toBe(d1.at);
+    expect(drawn(draws.recordDraw(u, features, scope, "cond", h2, "ENGINE")).payload.declaration).toBe(d2.at);
   });
 
   it("test_a_redeclaration_does_not_rewrite_a_recorded_draw", () => {

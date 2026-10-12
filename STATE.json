@@ -10,8 +10,8 @@
   "k7_round": 5,
   "last_gate_tag": "closed-by-owner-5",
   "seal_tag": "",
-  "next_action": "MOD-03 BUILT; battery round 7 19/19 on 641baeb. Next: MOD-03's K7 gate - python tools/k7-run.py (whole tree, incl. the R-06 fixes; first gate where the reviewer can run mutations, R-07).",
+  "next_action": "MOD-03 fix round done (DR-18..DR-22 + IR-40; 79/79; battery round 8 22/22 on 8242fd1). Next: K7 round 7 - MOD-03's re-check, on Fable 5.1 (R-13), also certifying the R-06 closures. Not PASS -> owner triage closes MOD-03's gate.",
   "blocked_on": null,
-  "updated_at": "2026-10-12T19:23:11+00:00",
-  "updated_by": "session-start:startup"
+  "updated_at": "2026-10-12T20:30:17+00:00",
+  "updated_by": "manual"
 }

@@ -327,3 +327,36 @@ above is left as written.** The tests added there reject an entry that says `aut
 round 6 (E3) showed that an entry which simply says `author: "HUMAN"`, appended to the shared
 record by any module, is still read back as a catalog act. The breach is open as **DR-18**. The two
 tests remain correct for what they test: an honest non-HUMAN entry is rejected.
+
+## Round 8 — MOD-03's fix round, after K7 round 6 RETURN (drift 5)
+
+Run on committed tree `8242fd1` on the Windows gate host, with the round-5 discipline. Each
+mutation disables one rule of one new checker, or plants a real violation in `src/`, and runs the
+named test that rule exists to keep red.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| S1 | reads certify an entry at an unconfigured level again (R-12) | KILLED (test) | `test_an_entry_at_an_unconfigured_level_is_never_certified` |
+| S2 | mint: any-flow rule off | KILLED (test) | `test_declaration_from_derivation_is_malformed` |
+| S3 | mint: generic-launder rule off | KILLED (test) | same |
+| S4 | mint: type-parameter-cast rule off (wrapped generics) | KILLED (test) | same |
+| S5 | mint: type-guard rule off | KILLED (test) | same |
+| S6 | mint: ts-directive rule off | KILLED (test) | same |
+| S7 | forge: spread rule off | KILLED (test) | `test_only_the_catalog_builds_or_appends_a_catalog_entry` |
+| S8 | forge: replay (append) rule off | KILLED (test) | same |
+| S9 | forge: shorthand-kind rule off | KILLED (test) | same |
+| S10 | surface: fabricated-height rule off | KILLED (test) | `test_no_operation_answers_the_current_declaration` |
+| S11 | surface: held-state rule off | KILLED (test) | same |
+| S12 | surface: free functions excluded from the returns rule | KILLED (test) | same (the module-cache fixture, added before this run because the free-function fixture was caught twice) |
+| S13 | sc3: cardinality rule off | KILLED (test) | `test_the_number_two_appears_nowhere` |
+| S14 | sc3: back to `.ts` only | KILLED (test) | same |
+| S15 | brand lookup regresses to the first computed key (`[Symbol.iterator]`) | KILLED (test) | same (the conforming fixture goes red) |
+| S16 | OS-1: default-argument rule off | KILLED (test) | `test_a_default_argument_is_flagged_on_a_parameter_and_in_a_destructuring` |
+| S17 | OS-1: module constants matched by NAME, not symbol | KILLED (test) | `test_a_module_constant_read_is_resolved_by_symbol_not_name` |
+| S18 | `src/` outside the catalog forges a catalog entry (planted) | KILLED (test) | `test_only_the_catalog_builds_or_appends_a_catalog_entry` |
+| S19 | `src/` mints a Declaration by double assertion (planted) | KILLED (test) | `test_declaration_from_derivation_is_malformed` |
+| S20 | the catalog exports a free function reading "now" (planted) | KILLED (test) | `test_no_operation_answers_the_current_declaration` |
+| S21 | a catalog class gains a mutable cache (planted) | KILLED (test) | same |
+| S22 | the catalog learns how many currencies there are (planted) | KILLED (test) | `test_the_number_two_appears_nowhere` |
+
+**Twenty-two of twenty-two killed on the first pass.**

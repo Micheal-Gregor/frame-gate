@@ -499,3 +499,11 @@ closures, so one run re-checks MOD-03 and falsifies or certifies R-06. The model
 before adoption: `claude -p --model claude-fable-5-1` answered, and `modelUsage` named only
 `claude-fable-5-1`. The flag is added to `reviewer_command` for round 7. **Later rounds' model is
 a separate decision**, recorded when it is made.
+
+---
+
+## Implementation record — 2026-10-12 (R-13)
+
+`reviewer_command` gains `--model claude-fable-5-1`, probed before adoption (the CLI answered and
+`modelUsage` named only `claude-fable-5-1`). It applies from K7 round 7. Whether later rounds keep
+it is a separate ruling, still to be made.

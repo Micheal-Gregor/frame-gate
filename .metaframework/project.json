@@ -10,7 +10,7 @@
   "source_glob": "src/**/*.ts",
   "s2_document": "governance/S3/CLAUDE_FrameGate_Phase2.md",
   "s3_document": "governance/S3/CLAUDE_FrameGate_Phase3.md",
-  "reviewer_command": "claude -p --agent k7-reviewer --output-format text --allowedTools \"Bash(npx tsc:*)\" \"Bash(npx vitest:*)\" \"Bash(python3 tools/rederive.py:*)\" \"PowerShell(npx tsc:*)\" \"PowerShell(npx vitest:*)\" \"PowerShell(python3 tools/rederive.py:*)\" \"Write(.k7/**)\" \"Edit(.k7/**)\"",
+  "reviewer_command": "claude -p --agent k7-reviewer --model claude-fable-5-1 --output-format text --allowedTools \"Bash(npx tsc:*)\" \"Bash(npx vitest:*)\" \"Bash(python3 tools/rederive.py:*)\" \"PowerShell(npx tsc:*)\" \"PowerShell(npx vitest:*)\" \"PowerShell(python3 tools/rederive.py:*)\" \"Write(.k7/**)\" \"Edit(.k7/**)\"",
   "scaffold_exempt": [
     ".metaframework/",
     "tools/",

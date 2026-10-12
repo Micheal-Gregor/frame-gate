@@ -13,6 +13,8 @@
  *            `kind` - keyed by any spelling, via const, shorthand, spread, class field
  *            or getter - has a ledger-kind literal type; and an append whose argument's
  *            type carries one.
+ *            OWNERSHIP is pinned at each root by tests/fixtures/ledger-owners/src/<root>/,
+ *            judged at the path it mirrors: each root may build its own kinds, not another's.
  *            LIMITS: a kind typed plain `string` (limit-dynamic-kind.ts); an entry typed
  *            `any` (limit-any-entry.ts). BOUNDARY: runtime wiring is PC-02's.
  *   surface  DECIDES, per ledger root: an exported act-returning operation that takes
@@ -125,13 +127,17 @@ function declarationFiles(dir) {
 const SRC_DTS = declarationFiles(resolve(repo, "src"));
 const MINT_DTS = declarationFiles(fx("catalog-mint"));
 const FORGE = walk(fx("catalog-forge"), /\.ts$/);
+/** Ownership fixtures, judged AS IF at the path under src/ they mirror (battery 10, C23). */
+const OWNERS_DIR = fx("ledger-owners");
+const OWNERS = walk(OWNERS_DIR, /\.ts$/);
+const mirrored = (f) => relative(OWNERS_DIR, f).split(sep).join("/");
 const SC3 = walk(fx("sc3"), SOURCE);
 const SURFACE_CASES = existsSync(fx("catalog-surface"))
   ? readdirSync(fx("catalog-surface")).filter((d) => existsSync(join(fx("catalog-surface"), d, "index.ts"))).sort()
   : [];
 const SURFACE = SURFACE_CASES.flatMap((c) => walk(join(fx("catalog-surface"), c), /\.ts$/));
 
-const program = ts.createProgram([...SRC, ...SRC_DTS, ...FIXTURES, ...MINT, ...MINT_DTS, ...FORGE, ...SC3, ...SURFACE], {
+const program = ts.createProgram([...SRC, ...SRC_DTS, ...FIXTURES, ...MINT, ...MINT_DTS, ...FORGE, ...OWNERS, ...SC3, ...SURFACE], {
   strict: true,
   allowJs: true,
   checkJs: false,
@@ -304,9 +310,9 @@ function keyName(name) {
   return undefined;
 }
 const KIND_KEY = "kind"; // DeclarationPayload / IndependencePayload's discriminant (anchor)
-function forgeFindings(file) {
+/** `here` is explicit: the path the file is judged AT (its own, or the one an ownership fixture mirrors). */
+function forgeFindings(file, here) {
   const sf = program.getSourceFile(file);
-  const here = rel(file);
   const found = [];
   // A kind is forged only OUTSIDE the module that owns it: the catalog may build
   // declarations, the facts module commitments, and neither the other's.
@@ -519,8 +525,9 @@ process.stdout.write(JSON.stringify({
     fixtures: Object.fromEntries([...MINT, ...MINT_DTS].map((f) => [rel(f), mintFindings(f)])),
   },
   forge: {
-    src: SRC.flatMap(forgeFindings),
-    fixtures: Object.fromEntries(FORGE.map((f) => [rel(f), forgeFindings(f)])),
+    src: SRC.flatMap((f) => forgeFindings(f, rel(f))),
+    fixtures: Object.fromEntries(FORGE.map((f) => [rel(f), forgeFindings(f, rel(f))])),
+    owners: Object.fromEntries(OWNERS.map((f) => [mirrored(f), forgeFindings(f, mirrored(f))])),
   },
   surface: {
     src: surfaceOf(CATALOG_DIR, resolve(CATALOG_DIR, "index.ts")),

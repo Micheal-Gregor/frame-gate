@@ -41,7 +41,7 @@ interface Surface {
 interface CatalogChecks {
   fixtures: Record<string, { codes: number[]; messages: string[] }>;
   mint: { src: Finding[]; fixtures: Record<string, Finding[]> };
-  forge: { src: Finding[]; fixtures: Record<string, Finding[]> };
+  forge: { src: Finding[]; fixtures: Record<string, Finding[]>; owners: Record<string, Finding[]> };
   surface: { src: Surface; ledgers: Record<string, Surface>; fixtures: Record<string, Surface> };
   sc3: { src: Finding[]; fixtures: Record<string, Finding[]> };
 }
@@ -230,12 +230,21 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
   });
 
   it("test_only_the_catalog_builds_or_appends_a_catalog_entry", () => {
-    // R-12, the static half of INV-PROV at the read seam: outside src/catalog/, no
-    // object whose type carries a catalog kind is built (literal, const, spread) and
-    // no RecordPort.append takes one (a replay). The runtime residue - a kind computed
-    // as a plain string - is a REGISTERED LIMIT (IR-38) pinned by its own fixture.
+    // R-12, the static half of INV-PROV at the read seam, made every ledger's by BC-05-6:
+    // outside the root that owns a kind, no object whose type carries it is built
+    // (literal, const, spread, field) and no RecordPort.append takes one (a replay). The
+    // runtime residue - a kind computed as a plain string - is a REGISTERED LIMIT (IR-38)
+    // pinned by its own fixture.
     const { forge } = catalogChecks();
-    expect(forge.src, "src/ outside the catalog builds a catalog entry").toEqual([]);
+    expect(forge.src, "src/ builds a ledger entry outside the root that owns its kind").toEqual([]);
+    // OWNERSHIP, pinned in both directions (battery 10, C23 survived without this):
+    // each fixture is judged at the src/ path it mirrors.
+    expect(Object.fromEntries(Object.entries(forge.owners).map(([k, v]) => [k, v.map((x) => x.how)]))).toEqual({
+      "src/catalog/conforming-builds-declaration.ts": [],
+      "src/catalog/violating-builds-commitment.ts": ["catalog-kind-literal"],
+      "src/facts/conforming-builds-commitment.ts": [],
+      "src/facts/violating-builds-declaration.ts": ["catalog-kind-literal"],
+    });
     const { flagged, conforming, limits } = byIntent(forge.fixtures);
     expect(new Set(flagged.flatMap(([, v]) => v.map((x) => x.how)))).toEqual(
       new Set(["catalog-kind-literal", "catalog-kind-spread", "catalog-kind-append", "catalog-kind-field"]),

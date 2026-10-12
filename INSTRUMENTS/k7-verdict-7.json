@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 7,
+  "reviewed": {
+    "tree_sha": "e7a5742b9f0213f153d69d372bfc81577d7efb0e",
+    "commit_sha": "4c4ef5a33d79242ba8da2bb364daf8d3e0346ad7",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "(all)"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-12T20:30:38+00:00",
+    "completed_at": "2026-10-12T20:48:57+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 6,
+    "prior_tree_sha": "028666033519106e32be554041fed1bf3a6aba7f",
+    "prior_failing_checks": [
+      "CC-2",
+      "CC-3",
+      "CC-6",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked by reading; nothing executed for this check. src/ holds ports/index.ts, kernel/index.ts and catalog/{index,currency-order,unit-registry,declaration-ledger,independence-ledger}.ts; every file has a row in INSTRUMENTS/object-model-and-parameters.md:11-13 and :24-27 and each row traces to an admitted S3 node (OBJ-05/06/13 at S3 section 3:101-103; IndependenceLedger to ODG-FG-06 via R-10, RESOLUTION_RECORD.md:419-441, registered as IR-29 with its AE-link and filed upstream as SP-2 at F-supersession-proposals.md:153). The new tools have register entries: catalog-checks.mjs (IR-36..IR-39), ts-os1.mjs (IR-40), ts-signatures.mjs (IR-34). No orphan file; no NOT_STARTED module has a stray file; every F1 MOD-03 interface operation (F1-kernel-ports.md:250-260) has a destination."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Read, then reproduced by mutation in .k7/wt with the declared commands. SEAM-01 (currency-order.ts:31-36 refuses empty/tied; least() at :48; predecessors() at :53-57 refuses a foreign currency with refuse(), never answers []). SEAM-05/OBJ-13: declarationAt (declaration-ledger.ts:77-88) is the only read and takes a height; divergence E8 (readAsOf ignoring `at`) was killed by test_redeclaration_never_rewrites_history. R-12's runtime half holds: #isDeclarationOf:109-110 refuses an unconfigured level; deleting it (E4) was killed by test_an_entry_at_an_unconfigured_level_is_never_certified. HOOK-07's author half: widening declare() to `string` (E7) was killed by test_a_non_human_author_cannot_declare. R-10: independenceAt:63 returns NoSubject when no act is in force (not licensed). Error paths: constructors throw TypeError/RangeError, nothing is appended on refuse (declare:68 returns before append). The author-string residue K7 round 6 found (DR-18) is now an owner ruling (R-12) with a registered limit (IR-35/IR-38) resting on PC-02; the code does what the ruling says. Rules absent by structure (reachability, thresholds, populations) are N/A-by-absence for this slice."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked drift-ledger.md:62-78 against the code. Every mechanism the S3 did not specify is registered: NoSubject for none-in-force (IR-29, AE-linked), height = 1-based position (IR-31), levels and units as loaded configuration (IR-32), the author-string read seam (IR-35, the item round 6 required), the mint/forge/surface/sc3 checkers (IR-36..IR-39), the parsed OS-1 (IR-40). IR-36 correctly supersedes IR-30's 'only way' claim and the catalog-checks.mjs header (:21) says so. Not a fail, but recorded for CC-7: the registered LIMITS of IR-36, IR-37 and IR-38 are understated. Each lists what its checker cannot decide, and CC-6 below shows forms that are decidable, unregistered and unseen (an overload signature, a `.d.ts` inside src/, a quoted or computed `kind` key, a class field, a read through a private wrapper, a readonly field holding a writable object). A register entry that presents two limits as the residue when the residue is larger is the milder form of round 6's IR-30 defect."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit ; npx vitest run   (the declared full suite as its two commands in sequence, Windows PowerShell 5.1 has no &&; tsc printed no diagnostics, vitest 10 files 79/79 passed. Join checked with the declared single-test command on the repo: npx vitest run -t \"test_declaration_from_derivation_is_malformed\" selected exactly 1 case (catalog.test.ts:114, REF-01) and npx vitest run -t \"test_external_import_outside_ports_is_malformed\" selected exactly 1 case (external-isolation.test.ts:25, REF-02). MOD-01 has no section-5 row: N/A-by-absence (S3 section 11:312). The other 17 rows belong to NOT_STARTED modules and are pending, not passing.)",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (stderr: 'rederive: no vectors found in ...\\vectors'. N/A-by-absence: S3 section 6:216-217 and section 11:312-314 give MOD-01, MOD-02 and MOD-03 no vector and F1 section 5 forbids one; vectors/ holds only README.md, so there was nothing to re-derive by hand and no impl_sha to check.)",
+        "exit_code": 2
+      }
+    },
+    "CC-6": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "All experiments ran in the runner's R-07 worktree .k7/wt at 4c4ef5a (git worktree list), with `npx tsc --noEmit -p .k7/wt` and `npx vitest run --root .k7/wt [-t ...]`; the repository was never written. KILLS, all by test with the mutant compiling (except D2, killed at tsc as designed): E1 kernel-exports.mjs:111 shape arm removed -> test_the_membership_detector_sees_every_export_form red (membership-structural-shape.ts unseen). E2 spawn-resolve.mjs:145 shellOn forced false -> test_shell_true_hands_any_command_to_a_shell red. E3 external-isolation.ts:145 ImportEquals arm removed -> test_external_import_outside_ports_is_malformed red (viaImportEquals length 0). E4 declaration-ledger.ts:110 level filter dropped -> test_an_entry_at_an_unconfigured_level_is_never_certified red, via the single-test command. E5 catalog-checks.mjs:219 replay rule off -> test_only_the_catalog_builds_or_appends_a_catalog_entry red (routes set lost catalog-kind-append). E6 catalog-checks.mjs:186 generic-launder off -> test_declaration_from_derivation_is_malformed red. E7 DIVERGENCE on HOOK-07's real path (tsc over the fixtures): declare() author widened to string -> test_a_non_human_author_cannot_declare red (declare-as-engine.ts compiled, codes []). E8 DIVERGENCE on the as-of read: readAsOf(height(MAX)) ignoring `at` -> test_redeclaration_never_rewrites_history red. D1 AppendedFact.author loses readonly -> test_assigning_to_an_appended_fact_field_does_not_compile red (DR-12 closure holds). D2 `refuse` dropped from UNKNOWN_KINDS -> TS2741 at kernel/index.ts:88 (DR-13 closure holds). POSITIVE CONTROLS, each flagged ALONE with the escapes below planted beside it, proving every detector read the worktree: `raw as unknown as Declaration` (mint, 'assertion'); a literal `kind: \"declaration\"` (forge, 'catalog-kind-literal'); a direct declarationAt(unit, height(MAX)) method (surface 'fabricated', :106); `delta(a,b): number` (height arithmetic). ESCAPES, tsc clean and the named test GREEN: (1) REF-01 mint, src/advisory: an OVERLOAD `classify(raw: object): Declaration; classify(raw: object): object { return raw }`; ARRAY COVARIANCE `const slot: Declaration[] = []; const wide: object[] = slot; wide.push(raw); return slot[0]`; and a `.d.ts` declaring `mint(raw): Declaration` beside a `.js` identity (catalog-checks.mjs:62 skips .d.ts; tsc resolves `./mint-ambient.js` to the .d.ts). None of the six IR-36 routes fires and neither registered limit covers them. (2) forge, src/advisory: `{ \"kind\": \"declaration\" }` (quoted key) and `{ [\"kind\"]: ... }` (computed key) both escape because catalog-checks.mjs:210 decides the key by `n.name.getText(sf) === \"kind\"`, a TEXT comparison in a load-bearing detector (RD-13); a class with `readonly kind = \"declaration\"` (a PropertyDeclaration, :210 inspects PropertyAssignment only) widened to `unknown` before append also escapes. (3) surface, src/catalog: `current(unit, _: \"HUMAN\")` reading through a private `#read` wrapper is unseen, because `fabricated` inspects only direct calls to the three named reads (:233-236) and `returns` admits any operation carrying a \"HUMAN\" parameter (:248); a `readonly #memo: { last?: Declaration }` written in declarationAt is unseen, because `held` (:280-284) accepts a readonly field whose type has no mutator METHOD. R-06 CLOSURES (R-13 put them in scope; their gate is closed, so these are NEW WORK ITEMS, not a retroactive RETURN): DR-14 FALSIFIED beyond its named forms: `foldAll(hs: readonly RecordHeight[]): RecordHeight`, `spanOf(p: {a: RecordHeight; b: RecordHeight}): number`, `after(h): RecordHeight | undefined`, `later(h): Promise<RecordHeight>` all unflagged (kernel-exports.mjs:197-216 counts a height only when the parameter's own type is one and a return only when every constituent is one), test_kernel_exposes_no_height_arithmetic green. DR-11 falsified at one form: `x is { compute(at?: RecordHeight): unknown }` unflagged (:93 requires every constituent branded; an optional parameter is RecordHeight | undefined); the type-parameter form `isMember<T extends Projection<unknown>>` WAS caught. DR-15 falsified at two forms: tools/probe-spawn.cts spawning `npx` unflagged (spawn-resolve.mjs:66 sweeps ts|mts|mjs|cjs|js, not cts|tsx|jsx, the WI-01 extension class again); Python `from subprocess import *` then `run([\"npx\", ...])` unflagged (spawn-portability.py:72-74 binds the literal name `*`), shown by test_python_launches_are_resolved_through_bindings going red on the planted violating-star-import.py ('launched past the sweep'). WI-01 falsified at one form: `import(`node:crypto`)` with a template-literal specifier unflagged (external-isolation.ts:165 requires ts.isStringLiteral), test_the_real_src_tree_has_no_external_isolation_violation green; new work item against the closed MOD-02 slice. CERTIFIED by this gate's own kills: DR-11 shape arm (E1), DR-12 (D1), DR-13 (D2), DR-15 shell option (E2), WI-01 ImportEquals and non-.ts (E3). Trace citations: R-10, R-11, R-12, IR-29..IR-40 cited in code and ledgers all exist and are live."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form (the drift ledger scores per entry, not D1-D6). Object-model fidelity 8: four classes, each tracing, each to OS-1..OS-12 and OS-1-clean by the parsed check; cosmetic: `lastOf` at currency-order.isolation.test.ts:26 selects a non-last element. Axiom coverage 7: every carried rule in scope is held by the running code and the R-12 residue is registered rather than silent. Verification strength 5 (WORST): REF-01's parse-level claim is falsified by a plain overload signature; the forge guard decides its key by text (RD-13); the surface rules stop at the three named reads and at a field's own readonly; the R-06 height detector does not see heights inside composite parameter or return types; sc3's registered limit (IR-39) has no `limit-` fixture, unlike kernel-exports and forge, against the build's own rule that each widened detector ships its limits. Extensibility 6: every module shares one RecordPort<unknown> and catalog entries are recognised by bare kind strings (registered, IR-35); `isRead` hard-codes three function names (catalog-checks.mjs:233-236), so each later module's reads are invisible until listed; the per-module `*-checks.mjs` pattern will carry the same key-by-text and composite-type gaps forward unless the rules move to resolved properties and recursive types. MIN = 5. Drift block: MOD-03 scores 5, below 7, so new work on MOD-03 stays blocked; this is MOD-03's re-check (round 7), so owner triage closes its gate. MOD-01: its R-06 closures are certified for the forms they name (E1, D1, D2, E2) and falsified for the composite forms above; this gate does not raise MOD-01's standing 5, and R-08's owner lift continues to govern. MOD-02: WI-01 certified for its named forms (E3); WI-02 is a new work item, the k7-pass-2 gate is not reopened. Tree integrity: `git status --porcelain` showed only ' M STATE.json' before and after the battery; all writes were inside .k7/wt (R-07's assigned location, not the system temp path), which the runner deletes; the probes and mutations were left planted there, with the positive controls neutralised to `export {}`."
+    }
+  },
+  "drift_score": {
+    "value": 5,
+    "basis": [
+      {
+        "check_id": "CC-6",
+        "finding": "Worst dimension: verification strength. REF-01's parse-level refusal is falsified by an overload signature (src/advisory/mint-overload.ts), by array covariance, and by a `.d.ts` inside src/ that catalog-checks.mjs:62 skips; test_declaration_from_derivation_is_malformed stayed green with tsc clean while a double-assertion control was flagged alone. IR-36's two registered limits do not cover any of the three.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "The forge guard (R-12 static half) decides the `kind` key by `n.name.getText(sf) === \"kind\"` (catalog-checks.mjs:210): a quoted key, a computed key and a class-field kind each escape with test_only_the_catalog_builds_or_appends_a_catalog_entry green. A text comparison in a load-bearing detector is the RD-13 failure.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "The surface rules (IR-37) stop at direct calls to three named reads (:233-236) and at the field's own readonly (:280-284): a `current(unit, _: \"HUMAN\")` through a private wrapper and a readonly field holding a writable `{ last?: Declaration }` cache both pass test_no_operation_answers_the_current_declaration while a direct made-up-height read is flagged alone.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "R-06 residues (new work items, closed gates): the height detector sees no height inside an array or object parameter nor inside an optional or Promise return (four forms, test_kernel_exposes_no_height_arithmetic green); the spawn sweep omits .cts/.tsx/.jsx and the Python half misses a star import; the isolation sweep misses a template-literal dynamic import specifier.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "IR-36, IR-37 and IR-38 present their registered limits as the residue when the residue demonstrably includes decidable, unregistered forms; sc3's registered limit (IR-39) has no limit- fixture pinning it.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Extensibility: `isRead` hard-codes three read names and every module shares one untyped RecordPort<unknown>, so each later module inherits both the wrapper blind spot and the kind-string recognition.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-6",
+      "module": "MOD-03 catalog (REF-01 / tools/checks/catalog-checks.mjs mint)",
+      "required_change": "REF-01's property is that no definition outside the ledger produces a value of a branded catalog type, or the form is a registered limit. An overload signature whose declared return carries the brand while its implementation signature does not, and a `.d.ts` under src/ declaring a brand-returning function, must each turn test_declaration_from_derivation_is_malformed red with a positive-control fixture. Array (and property) covariance is a TypeScript soundness hole: either the test turns red on it or IR-36 registers it, pinned by a limit- fixture. IR-36's limit list must then be true of the checker."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-03 catalog (R-12 static guard / catalog-checks.mjs forge)",
+      "required_change": "The `kind` key must be decided by the resolved property name, not by the text of the name node: `{ \"kind\": ... }`, `{ [\"kind\"]: ... }` and a class field `readonly kind = \"declaration\"` (then widened to unknown and appended) must each turn test_only_the_catalog_builds_or_appends_a_catalog_entry red, each with a positive-control fixture. IR-38's residue must be restated to what remains after that."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-03 catalog (BC-03-4 / catalog-checks.mjs surface)",
+      "required_change": "'No current declaration' must hold for a read reached through any catalog-internal callable, not only direct calls to the three named reads, and the \"HUMAN\"-parameter admission must not excuse a made-up height; and `held` must decide writability of the field's TYPE (a readonly field whose type has writable members is a cache). A `current(unit, _: \"HUMAN\")` via a private wrapper and a `readonly #memo: { last?: Declaration }` written on read must each turn test_no_operation_answers_the_current_declaration red, with positive-control fixtures. IR-37 corrected to match."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "INSTRUMENTS/drift-ledger.md (IR-36, IR-37, IR-38, IR-39)",
+      "required_change": "Each widened detector's register entry must state its limits truthfully after the three items above close, and every registered limit must be pinned by a limit- fixture (sc3 has none). Record the R-06 residues this round falsified as new work items with their named failing tests: DR-14 composite height forms (array/object parameters, optional and Promise returns), DR-11 optional-parameter shape, DR-15 .cts/.tsx/.jsx sweep and Python star import, WI-02 template-literal import specifier."
+    }
+  ],
+  "next_action": "Take this RETURN to owner triage to close MOD-03's gate, dispositioning the three MOD-03 detector-reach items as fix-now or registered limits and recording the falsified R-06 residues as new work items against their closed slices."
+}

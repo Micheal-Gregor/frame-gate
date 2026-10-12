@@ -169,3 +169,72 @@ offset, a successor and a fold.
   The fixture compile runs in **its own process**. TypeScript builds the 61-file type graph in
   ~370ms standalone and exhausts the heap inside a vitest worker; the work is identical, the host is
   not. Spawning it keeps the check inside `test_command`, so it stays a gate.
+
+## MOD-03 `catalog/` — currency order, units, declarations (OBJ-05, OBJ-06, OBJ-13; R-10, R-11)
+
+**Axioms carried:** SC-3 / SC-5 (the currency set is data; the number two appears nowhere; one code
+path quantified over the order), INV-PROV (a declared classification is never produced by a
+derivation, and an inferred one is never written), RFD-04 (the order is configuration, not a
+fact), and OBJ-13's as-of rule (read the declaration in force at a height, never "the current
+one").
+
+Written **before** the classes, and watched failing against typed stubs.
+
+**BC-03-1 — the currency order is total, finite, and has a least element, for any size.**
+> A `CurrencyOrder` over N distinct currencies, for every N in a discovered sample (1, 3, 5, never
+> a hard-coded pair): `least()` is the first; `predecessors(c)` is exactly the currencies cheaper
+> than `c`; the least has none. An empty list, or a repeated currency (a tie), is refused at
+> construction. A currency from another order is refused, not answered.
+
+**BC-03-2 — REF-01: a derivation producing a Declaration is malformed at parse.**
+> A fixture that computes a classification and returns it as a `Declaration` fails to compile,
+> with the pinned diagnostic. No source file outside the ledger asserts a value TO a declaration
+> type (`as`), decided by resolving the asserted type, not by its spelling.
+
+**BC-03-3 — HOOK-07 (author half, R-11): only a HUMAN author can declare.**
+> `declare(..., "ENGINE")` and `declare(..., author: Author)` each fail to compile with the pinned
+> diagnostic. A caller that narrows through ports' `mayDecide` compiles (positive control).
+
+**BC-03-4 — REF-01+: a HUMAN declaration is appended and read as of a height.**
+> After `declare(u, L, "HUMAN")` at height h, `declarationAt(u, h')` returns it for every h' ≥ h,
+> and `NoSubject` for every h' < h. A re-declaration at h2 is returned from h2 on, while heights
+> in [h, h2) still return the first. **History is never rewritten.** No exported operation answers
+> "the current declaration": every operation returning a declaration either takes a
+> `RecordHeight` or is the HUMAN-only append.
+
+**BC-03-5 — R-10: independence is a HUMAN act read as of a height.**
+> No act in force means `NoSubject` (not licensed). An act asserting independence is returned
+> from its height on, and a later act withdrawing it (`false`) is returned from its own height.
+> HOOK-07's author half guards it exactly as it guards `declare`.
+
+**BC-03-6 — SC-3: the number two appears nowhere.**
+> No numeric literal equal to 2 in `src/` (OI-4's mechanical review check), decided over the AST.
+
+**BC-03-7 — OS-12, every class in isolation.** Each class is constructed from its declared
+inputs only, every public operation is called, and for each declared input two calls that
+differ only in that input give different answers.
+
+**Watched failing, 2026-10-12.**
+
+- **Against typed stubs** (final signatures, operations throwing, constructors validating
+  nothing): **24 failed / 30**, `tsc` clean. Every behavioural base case and every isolation test
+  was red on its own subject.
+- **The 6 that stayed green were the parse-level and structural ones.** The stub's TYPES are their
+  deliverable, which is the MOD-01 lesson: "a base case green at stub time proves only that it was
+  written after the thing it checks." So each was watched failing against a deliberately WRONG
+  stub, applied and restored from in-memory copies (the tree was uncommitted), with the sources
+  verified byte-identical afterwards:
+
+| Wrong stub | Base case | Result |
+|---|---|---|
+| W1 `Declaration` not nominal (brand removed) | BC-03-2 `test_declaration_from_derivation_is_malformed` | RED |
+| W2 `declare` / `declareIndependence` take any author string | BC-03-3 `test_a_non_human_author_cannot_declare` | RED |
+| W3 the ledger offers `currentDeclaration(unit)` | BC-03-4 `test_no_operation_answers_the_current_declaration` | RED |
+| W4 `export const PAIR = 2` in the currency order | BC-03-6 `test_the_number_two_appears_nowhere` | RED |
+| W5 the catalog imports `src/advisory/` | REF-01a `test_no_write_path_from_difficulty_to_declaration_or_gate_condition` | RED |
+
+- **An isolation-test defect found while counting.** The first count showed the two ledger
+  isolation suites with **0 tests**, not red. They built their `Unit` through `UnitRegistry` at
+  load time, so the registry's stub threw before collection. That was also an OS-12 defect: an
+  isolation test that needs a second class is not testing one class. Fixed by naming the `Unit`
+  (an operation input) directly.

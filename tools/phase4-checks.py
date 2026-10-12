@@ -424,22 +424,26 @@ def signatures(rel: str, text: str) -> dict:
             out[cls.name] = ops
         return out
     if rel.endswith((".js", ".mjs", ".ts", ".jsx", ".tsx")):
-        cls = re.search(r"\bclass\s+([A-Za-z_$][\w$]*)", text)
-        if not cls:
-            return out
-        ops = {}
-        for m in re.finditer(r"^\s{2,}(?:async\s+)?([A-Za-z_$][\w$]*)\s*\(([^)]*)\)\s*\{",
-                             text, re.M):
-            name, params = m.group(1), m.group(2)
-            if name in ("if", "for", "while", "switch", "catch"):
-                continue
-            names = []
-            for part in re.sub(r"[{}]", "", params).split(","):
-                part = part.strip().split("=")[0].strip().lstrip(".")
-                if re.match(r"^[A-Za-z_$][\w$]*$", part):
-                    names.append(part)
-            ops[name] = names
-        out[cls.group(1)] = ops
+        # IR-34 (framework trial MF-24): PARSED by the TypeScript compiler, not guessed.
+        # The template's regex took the first "class <word>" anywhere (comments
+        # included), read one class per file, and could not see a method with a
+        # return-type annotation or a typed / destructured constructor parameter -
+        # so for TypeScript the declaration comparison was blind.
+        import json as _json
+        import subprocess as _sp
+        import tempfile as _tf
+        with _tf.NamedTemporaryFile("w", suffix=Path(rel).suffix, delete=False,
+                                    encoding="utf-8") as tf:
+            tf.write(text)
+            tmp = tf.name
+        try:
+            tool = Path(__file__).resolve().parent / "checks" / "ts-signatures.mjs"
+            r = _sp.run(["node", str(tool), tmp], capture_output=True, text=True)
+        finally:
+            Path(tmp).unlink(missing_ok=True)
+        if r.returncode != 0:
+            raise RuntimeError(f"ts-signatures failed on {rel}: {r.stderr.strip()[:200]}")
+        return _json.loads(r.stdout or "{}")
     return out
 
 def _public_ops(rel: str, text: str) -> dict:

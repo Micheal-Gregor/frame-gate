@@ -23,6 +23,8 @@ The marker above stays until the seal writes the whole page. MOD-01 and MOD-02 e
 | CommitGate (OBJ-31) | The gate a commitment passes: closed by a HUMAN act; a diagnostic or an observation may propose, never close | yes — a fixed descriptor |
 | DrawContext (OBJ-16) | What held at a draw: the given features, the declaration in force at the draw height (by its height), the governing scope (by its height) and the condition's identity | yes, once appended — a re-declaration never changes it |
 | ResolutionLabel (OBJ-16) | `DRAW` or `REVISION`, attached to a draw context after the fact | yes, once appended |
+| Candidate (OBJ-11) | A drawn candidate: unit, currency, condition identity, seed, signature, and `from` (the commitment immediately below it derives from, by height, or BOTTOM) | yes, once appended — never updated, never deleted |
+| BOTTOM | The `from` of a candidate at the least currency of an independent unit; `NoSubject` in the Unknown family (IR-42) | yes — a fixed value |
 
 ## Actions
 
@@ -49,6 +51,10 @@ operation legitimately ignores — the only way an OS-12 two-call test may retur
 | DrawContextLog.label | MOD-05 | Appends a resolution label (`DRAW` / `REVISION`) to a draw context, after the fact | context, resolution, author | ResolutionLabel | none — a second label is appended and the read answers `uncomputable` (R-24) | appends exactly one entry to the record | the returned height is assigned by the record; otherwise deterministic | declarations |
 | DrawContextLog.drawsAsOf | MOD-05 | The draw contexts for a unit appended at or below a height, in append order | unit, at | readonly DrawContext[] | none — no draws is an empty list | none — reads the record | deterministic for a given record prefix | declarations |
 | DrawContextLog.resolutionAt | MOD-05 | A draw context's resolution as of a height | context, at | Resolution, or Unknown | Unknown `NoSubject` when no label yet (not a refusal); Unknown `uncomputable("two-resolution-labels")` when more than one (R-24) | none — reads the record | deterministic for a given record prefix | declarations |
+| CandidateLedger.appendCandidate | MOD-05 | The ONE way a candidate enters the record (S-01): asks admission, checks `from`, asks the signature check, asks the scope ceiling — in that order (R-28) | proposal, signature, at, author | Candidate, or Unknown | MOD-04's Unknown (e.g. `refuse("unreachable")`) unchanged, nothing else asked; `refuse("malformed-from")` when `from` is not the effective commitment immediately below, or is BOTTOM without an independence license at the least currency (R-26); MOD-12's Unknown unchanged; MOD-11's Unknown unchanged (e.g. `refuse("scope-exceeded")`); in every case nothing appended | appends exactly one entry to the record, unless refused | the returned height is assigned by the record; otherwise deterministic for a given record prefix and deciders | none |
+| CandidateLedger.candidatesAsOf | MOD-05 | The candidates for a unit and currency under one condition identity, at or below a height (S-09) | unit, currency, condition, at | readonly Candidate[] | none — none is an empty list | none — reads the record | deterministic for a given record prefix | commitments, currencies, independence, admission, signatures, ceiling |
+| CandidateLedger.derivedFrom | MOD-05 | The candidates whose `from` is a given commitment, at or below a height (MOD-12's lineage) | commitment, at | readonly Candidate[] | none — none is an empty list | none — reads the record | deterministic for a given record prefix | commitments, currencies, independence, admission, signatures, ceiling |
+| CandidateLedger.countsAsOf | MOD-05 | One candidate count per currency for a unit, in currency order, zeros included (SEAM-22) — never summed, never divided | unit, at | readonly CurrencyCount[] | none | none — reads the record | deterministic for a given record prefix and currency order | commitments, independence, admission, signatures, ceiling |
 
 ## Error states
 
@@ -62,3 +68,4 @@ operation legitimately ignores — the only way an OS-12 two-call test may retur
 | TypeError "DeclarationLedger requires levels" | DeclarationLedger constructor | configuration is missing the classification levels |
 | TypeError "CommitmentLedger requires invalidations" / "invalidations must offer isInvalidated" | CommitmentLedger constructor | the invalidation reader (MOD-12, R-19) is missing or does not answer isInvalidated |
 | TypeError "DrawContextLog requires declarations" / "declarations must offer declarationAt" | DrawContextLog constructor | the declaration reader (MOD-03, R-21) is missing or does not answer declarationAt |
+| TypeError "CandidateLedger requires <input>" / "<input> must offer <operations>" | CandidateLedger constructor | one of its seven inputs is missing, or does not offer the operation MOD-05 asks of it (R-18, R-25) |

@@ -37,6 +37,14 @@
  *            so a new ledger kind cannot skate past every rule above unlisted (RD-12).
  *            Fixtures under tests/fixtures/ledger-discovery/src/<root>/ are judged at
  *            the path they mirror, so each verdict is pinned non-empty too.
+ *   paths    DECIDES, per ledger kind, every function in src/ whose RecordPort.append
+ *            argument's TYPE carries it - outward through inline closures to the member
+ *            (S-01: "exactly one entry point; no alternate, bulk, administrative,
+ *            backfill or test path"); the test pins one per kind, for every ledger.
+ *            Fixtures under tests/fixtures/ledger-paths/src/<root>/ are judged at the
+ *            path they mirror.
+ *            LIMITS: an entry whose type carries no kind - typed `unknown` or `any`
+ *            (limit-untyped-entry.ts; forge registers the same residue).
  *   sc3      DECIDES: a numeric 2 in any source file of any extension; a comparison of
  *            a Currency collection's length or size to a numeric literal.
  *            LIMITS: cardinality asked by index (limit-cardinality-by-index.ts).
@@ -127,6 +135,7 @@ const LEDGERS = [
     ["src/facts/commitment-ledger.ts", "CommitmentPayload"],
     ["src/facts/draw-context-log.ts", "DrawContextPayload"],
     ["src/facts/draw-context-log.ts", "ResolutionLabelPayload"],
+    ["src/facts/candidate-ledger.ts", "CandidatePayload"],
   ] },
 ];
 const MINT = walk(fx("catalog-mint"), /\.ts$/);
@@ -160,12 +169,16 @@ const reachMirrored = (f) => relative(REACH_DIR, f).split(sep).join("/");
 const DISCOVERY_DIR = fx("ledger-discovery");
 const DISCOVERY = walk(DISCOVERY_DIR, /\.ts$/);
 const discoveryMirrored = (f) => relative(DISCOVERY_DIR, f).split(sep).join("/");
+/** Append-path fixtures (S-01), judged AS IF at the src/ path they mirror. */
+const PATHS_DIR = fx("ledger-paths");
+const PATHS = walk(PATHS_DIR, /\.ts$/);
+const pathsMirrored = (f) => relative(PATHS_DIR, f).split(sep).join("/");
 const SURFACE_CASES = existsSync(fx("catalog-surface"))
   ? readdirSync(fx("catalog-surface")).filter((d) => existsSync(join(fx("catalog-surface"), d, "index.ts"))).sort()
   : [];
 const SURFACE = SURFACE_CASES.flatMap((c) => walk(join(fx("catalog-surface"), c), /\.ts$/));
 
-const program = ts.createProgram([...SRC, ...SRC_DTS, ...FIXTURES, ...MINT, ...MINT_DTS, ...FORGE, ...OWNERS, ...REACH, ...DISCOVERY, ...SC3, ...SURFACE], {
+const program = ts.createProgram([...SRC, ...SRC_DTS, ...FIXTURES, ...MINT, ...MINT_DTS, ...FORGE, ...OWNERS, ...REACH, ...DISCOVERY, ...PATHS, ...SC3, ...SURFACE], {
   strict: true,
   allowJs: true,
   checkJs: false,
@@ -206,6 +219,7 @@ const BRANDS = [
   { owner: "src/facts/commitment-ledger.ts", name: "Commitment", key: brandKey("src/facts/commitment-ledger.ts", "Commitment") },
   { owner: "src/facts/draw-context-log.ts", name: "DrawContext", key: brandKey("src/facts/draw-context-log.ts", "DrawContext") },
   { owner: "src/facts/draw-context-log.ts", name: "ResolutionLabel", key: brandKey("src/facts/draw-context-log.ts", "ResolutionLabel") },
+  { owner: "src/facts/candidate-ledger.ts", name: "Candidate", key: brandKey("src/facts/candidate-ledger.ts", "Candidate") },
 ];
 const HEIGHT = brandKey("src/kernel/index.ts", "RecordHeight");
 const CURRENCY = brandKey("src/catalog/currency-order.ts", "Currency");
@@ -387,14 +401,23 @@ const isBaseRead = (d) =>
   declaredAs(d, "src/facts/commitment-ledger.ts", "isInvalidated", "InvalidationReader") ||
   declaredAs(d, "src/facts/draw-context-log.ts", "declarationAt", "DeclarationReader") ||
   declaredAs(d, "src/facts/draw-context-log.ts", "drawsAsOf") ||
-  declaredAs(d, "src/facts/draw-context-log.ts", "resolutionAt");
+  declaredAs(d, "src/facts/draw-context-log.ts", "resolutionAt") ||
+  declaredAs(d, "src/facts/candidate-ledger.ts", "effectiveCommitment", "CommitmentFold") ||
+  declaredAs(d, "src/facts/candidate-ledger.ts", "independenceAt", "IndependenceReader") ||
+  declaredAs(d, "src/facts/candidate-ledger.ts", "admit", "AdmissionDecider") ||
+  declaredAs(d, "src/facts/candidate-ledger.ts", "check", "SignatureCheck") ||
+  declaredAs(d, "src/facts/candidate-ledger.ts", "admitsDraw", "ScopeCeiling") ||
+  declaredAs(d, "src/facts/candidate-ledger.ts", "candidatesAsOf") ||
+  declaredAs(d, "src/facts/candidate-ledger.ts", "derivedFrom") ||
+  declaredAs(d, "src/facts/candidate-ledger.ts", "countsAsOf");
 const isAppend = (d) =>
   declaredAs(d, "src/ports/index.ts", "append", "RecordPort") ||
   declaredAs(d, "src/catalog/declaration-ledger.ts", "declare") ||
   declaredAs(d, "src/catalog/independence-ledger.ts", "declareIndependence") ||
   declaredAs(d, "src/facts/commitment-ledger.ts", "commit") ||
   declaredAs(d, "src/facts/draw-context-log.ts", "recordDraw") ||
-  declaredAs(d, "src/facts/draw-context-log.ts", "label");
+  declaredAs(d, "src/facts/draw-context-log.ts", "label") ||
+  declaredAs(d, "src/facts/candidate-ledger.ts", "appendCandidate");
 const enclosingFunction = (n) => {
   let fn = n.parent;
   while (fn && !ts.isFunctionLike(fn)) fn = fn.parent;
@@ -623,6 +646,50 @@ const ledgerVerdict = (facts) => ({
 });
 const LEDGER_FACTS = discoveredLedgers(SRC, rel);
 
+// ---- paths: S-01, exactly one append path per ledger kind ------------------------------
+const isPortAppend = (d) => declaredAs(d, "src/ports/index.ts", "append", "RecordPort");
+/** The member or function a call belongs to: outward through inline closures (as IR-49). */
+function memberOf(n) {
+  let fn = enclosingFunction(n);
+  while (fn && isInlineClosure(fn) && enclosingFunction(fn)) fn = enclosingFunction(fn);
+  return fn;
+}
+function nameOfFn(fn, sf) {
+  if (!fn) return "<module>";
+  const classOf = (x) => {
+    let q = x.parent;
+    while (q && !ts.isClassLike(q)) q = q.parent;
+    return q?.name?.text ?? "<class>";
+  };
+  if (ts.isConstructorDeclaration(fn)) return `${classOf(fn)}.constructor`;
+  if ((ts.isMethodDeclaration(fn) || ts.isGetAccessor(fn) || ts.isSetAccessor(fn)) && fn.name) return `${classOf(fn)}.${fn.name.getText(sf)}`;
+  if (ts.isFunctionDeclaration(fn)) return fn.name?.text ?? "<default>";
+  if (fn.parent && ts.isPropertyDeclaration(fn.parent)) return `${classOf(fn.parent)}.${fn.parent.name.getText(sf)}`;
+  if (fn.parent && ts.isVariableDeclaration(fn.parent) && ts.isIdentifier(fn.parent.name)) return fn.parent.name.text;
+  return `<closure:${lineOf(sf, fn)}>`;
+}
+/** Every RecordPort.append in `file` whose argument's TYPE carries a ledger kind: {kind, fn}. */
+function pathFindings(file, here) {
+  const sf = program.getSourceFile(file);
+  const out = [];
+  const visit = (n) => {
+    if (ts.isCallExpression(n) && n.arguments[0] && isPortAppend(declOf(checker.getResolvedSignature(n)))) {
+      for (const kind of new Set(kindsCarried(checker.getTypeAtLocation(n.arguments[0])))) {
+        out.push({ kind, fn: nameOfFn(memberOf(n), sf), file: here });
+      }
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return out;
+}
+/** kind -> the distinct functions in src/ that append it, sorted. S-01 wants one each. */
+const SRC_PATHS = (() => {
+  const by = new Map();
+  for (const x of SRC.flatMap((f) => pathFindings(f, rel(f)))) by.set(x.kind, new Set([...(by.get(x.kind) ?? []), x.fn]));
+  return Object.fromEntries([...by.keys()].sort().map((k) => [k, [...by.get(k)].sort()]));
+})();
+
 process.stdout.write(JSON.stringify({
   fixtures,
   mint: {
@@ -643,6 +710,10 @@ process.stdout.write(JSON.stringify({
   reach: {
     src: SRC.flatMap((f) => reachFindings(f, rel(f))),
     fixtures: Object.fromEntries(REACH.map((f) => [reachMirrored(f), reachFindings(f, reachMirrored(f))])),
+  },
+  paths: {
+    src: SRC_PATHS,
+    fixtures: Object.fromEntries(PATHS.map((f) => [pathsMirrored(f), pathFindings(f, pathsMirrored(f))])),
   },
   ledgers: {
     discovered: LEDGER_FACTS,

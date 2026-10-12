@@ -332,3 +332,53 @@ height (R-21, S-08, SEAM-10).**
 BC-05-5 (REF-06) and BC-05-6 (the ledger rules) apply to the draw context and the label as they
 do to commitments: their kinds are owned by `src/facts`, their brands are minted only by
 `DrawContextLog`, and every operation returning one takes a height or appends.
+
+### MOD-05 slice 3 — candidates (OBJ-11), under R-18 and R-25..R-28
+
+Written before the class, and watched failing against typed stubs. Every cross-module decider
+is injected (R-18, R-25): admission (MOD-04), the signature check (MOD-12), the scope ceiling
+(MOD-11), plus MOD-03's currency order and independence reader. MOD-05's own commitment fold
+is injected too, so that `from` is checked against the same answer MOD-04 reads.
+
+**BC-05-15 — one guarded append, and an unreachable draw costs nothing (S-01, REF-03).**
+> `appendCandidate` is the only operation that appends a candidate. Outside `src/facts`, no
+> candidate-kind entry is built or appended (BC-05-6). When admission answers an Unknown, that
+> answer is returned unchanged (MOD-04 names the cheapest BOTTOM predecessor), NOTHING is
+> appended, and no later decider is asked.
+
+**BC-05-16 — `from` is the effective commitment immediately below, as of the append height
+(R-26).**
+> Above the least currency, `from` must be the commitment the fold answers for `(unit, the
+> currency immediately below)` at the append height. A superseded one, another unit's, one two
+> currencies below, or BOTTOM all answer `Refuse(malformed-from)`, with nothing appended. At
+> the least currency, `from` must be BOTTOM, and only when an independence act asserting
+> independence is in force at that height (R-10). No act, a withdrawn license, or a Commitment
+> `from` answers `Refuse(malformed-from)`. BOTTOM is `NoSubject` (IR-42), so a `from` of any
+> other Unknown member does not compile.
+
+**BC-05-17 — the signature is checked by MOD-12, over the whole proposal (R-27, HOOK-04).**
+> The injected check receives the proposal, `from` included, and the signature as an opaque
+> value. Its Unknown answer is returned unchanged, and nothing is appended. MOD-05 computes no
+> digest.
+
+**BC-05-18 — the scope ceiling is asked on the same path (R-25, REF-16, SEAM-04).**
+> The injected ceiling's Unknown answer is returned unchanged, and nothing is appended.
+
+**BC-05-19 — refusal order (R-28).**
+> Admission, then `from`, then signature, then ceiling. The first failure answers, and each
+> decider after it is not asked.
+
+**BC-05-20 — an admitted, well-formed, signed, within-ceiling candidate is appended once.**
+> Exactly one entry. It carries the unit, the currency, the condition identity, the seed, the
+> signature, and `from` by its height, or `NoSubject` for BOTTOM.
+
+**BC-05-21 — candidates are read as of a height (S-09, SEAM-22, MOD-12's lineage).**
+> `candidatesAsOf(u, c, condition, h)` answers by condition IDENTITY, never a window: only that
+> unit, currency and condition, at or below `h`, in append order. `derivedFrom(k, h)` answers
+> the candidates whose `from` is commitment `k`. `countsAsOf(u, h)` answers one count per
+> currency, in currency order, zeros included: counts only, never summed and never divided.
+
+**BC-05-22 — OS-12, the class in isolation.**
+> `CandidateLedger` is constructed with its declared inputs (`record`, `commitments`,
+> `currencies`, `independence`, `admission`, `signatures`, `ceiling`) and nothing else. Every
+> operation is called, and each input it reads is varied with the answers asserted to differ.

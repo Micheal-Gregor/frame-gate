@@ -6,7 +6,8 @@
  * drawn (slice 3). Every cross-module decider is handed in at construction (R-18).
  *
  * Deliberately NOT exported: a "current commitment" or "current declaration" read, any
- * way to build a Commitment, DrawContext or ResolutionLabel except through its ledger,
+ * way to build a Commitment, DrawContext, ResolutionLabel or Candidate except through its
+ * ledger, any second candidate append path (S-01),
  * and any stored effective commitment or resolution.
  */
 export {
@@ -26,3 +27,19 @@ export {
   type ResolutionLabel,
   type ResolutionLabelPayload,
 } from "./draw-context-log.js";
+export {
+  BOTTOM,
+  CandidateLedger,
+  type AdmissionDecider,
+  type Bottom,
+  type Candidate,
+  type CandidateLedgerInputs,
+  type CandidatePayload,
+  type CandidateProposal,
+  type CommitmentFold,
+  type CurrencyCount,
+  type CurrencyLadder,
+  type IndependenceReader,
+  type ScopeCeiling,
+  type SignatureCheck,
+} from "./candidate-ledger.js";

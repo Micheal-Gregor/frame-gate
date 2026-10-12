@@ -174,3 +174,26 @@ MOD-03 builds two operations the S3 does not name, registered as IR-29 and linke
   when `independence_at` is `NoSubject` or asserts `false`, with its positive case.
 
 **Status:** OPEN, awaiting the owner's Phase 3 revision run. Never patched in `governance/S3/`.
+
+---
+
+## SP-3 · S-04 names MOD-05 as the source of a digest that MOD-12 computes
+
+**Where.** F2 seam S-04 (MOD-05 → MOD-12): "The digest of the Commitment a derived candidate
+binds, obtained via OBJ-39 through MOD-02". VEC-05 (a signature with and without the lineage
+digest) is owned by MOD-12, and the digest's encoding is the open pin of IR-06 / C4-F2.
+
+**Resolved locally (R-27, owner, 2026-10-12).** MOD-05 passes MOD-12's injected signature
+check the whole candidate proposal, `from` included. MOD-12 computes the digest of `from`
+through OBJ-39 under its own encoding. MOD-05 names no `DigestPort` and chooses no encoding
+(IR-54).
+
+**Proposed superseding edit (for the owner's Phase 3 project):**
+
+- F2 S-04, "What crosses": *the Commitment a derived candidate binds (MOD-12 takes its digest via
+  OBJ-39 through MOD-02)*.
+- F2 OBJ-32: state that the SignatureGate computes the lineage digest itself, which is where
+  VEC-05 already places it.
+
+**Status:** OPEN, awaiting the owner's Phase 3 revision run. Never patched in `governance/S3/`.
+

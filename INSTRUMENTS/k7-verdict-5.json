@@ -1,0 +1,156 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 5,
+  "reviewed": {
+    "tree_sha": "4f0a5c9f580fe34969e2c2b79b6ae75d309a042c",
+    "commit_sha": "e0dd0ccc8c5a438fcd9d384bad5edd92658b5540",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "(all)"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-12T06:52:16+00:00",
+    "completed_at": "2026-10-12T06:56:56+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 4,
+    "prior_tree_sha": "140d7125bd7bc6691656433b4b9433bee5c327f3",
+    "prior_failing_checks": [
+      "CC-2",
+      "CC-4",
+      "CC-6",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked by reading; nothing was executed for this check. Only two source files exist under src/: src/kernel/index.ts and src/ports/index.ts. The kernel's declarations each trace to an admitted node in S3 \u00c2\u00a72:65 and \u00c2\u00a73:91-95: RecordHeight at :28-49 (OBJ-10), UnknownValue and its constructors at :67-106 (OBJ-04), PROJECTION_MEMBERS and Projection at :130-161 (OBJ-02), AppendedFact at :179-183 (OBJ-01), and Gate at :198-204 (OBJ-03). Ports (OBJ-35..39) are unchanged from the slice closed at k7-pass-2. There is no orphan source file. All the new machinery is test or harness code with a register entry: tools/checks/kernel-exports.mjs (IR-24), spawn-resolve.mjs, spawn-portability.py and spawn-exceptions.json (IR-25), and the local restriction in tools/rederive.py (IR-26). No NOT_STARTED module has a stray file."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked by reading the running code paths. OBJ-02: the kernel exports the ten-name list (:130-141) and no Projection predicate. Its only exported predicate is isUnknown (:93), which is over UnknownValue. OBJ-03: onFail is required and typed as the whole Unknown union (:203), which respects ODG-FG-07. OBJ-04: the union is closed at five (:67-72) and Absent is not a member. SEAM-06 ('append-only; no update, no delete', S3:143): every AppendedFact field is readonly (:180-182), and no mutator exists on the base type. The subtype half was withdrawn and its scope registered as IR-23 under R-04, so it is now an accurately stated, registered scope rather than a false claim. Error paths: height() throws RangeError on a non-integer or negative argument (:32-34). That is a constructor precondition, not a domain halt, so no Unknown member is dropped. PC-04 (no memoisation) is N/A-by-absence, because the kernel computes no projection. One defect is reported under CC-6 rather than here, because the running code is correct today: isUnknown decides membership from a second, hand-copied list (UNKNOWN_KINDS, :80-82), and only two of its five entries are tested."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked by reading drift-ledger.md:48-51 against the tree. Every mechanism added this round has a register entry: the base-view-only scope of append-only (IR-23); type-checker export answers, including their stated depth-2 member reach and the brand-or-member-literal definition of membership (IR-24); resolution-based spawn detection and the single python3 exception, at tools/checks/spawn-exceptions.json and spawn-portability.ts:104 (IR-25); and rederive.py's node-only, split-then-fill invoke (IR-26). The R-04 dispositions (RESOLUTION_RECORD.md:177-190) were recorded before the fixes, which is the required RC-3 order. I found no unregistered mechanism that the suite depends on. No interpretation in this slice implements an open AE body."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit ; npx vitest run  (the declared `npx tsc --noEmit && npx vitest run`, run as its two declared commands in sequence because Windows PowerShell 5.1 has no &&; tsc printed no diagnostics; vitest reported 4 files, 33/33 passed)",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all  (stderr: 'rederive: no vectors found in ...\\vectors'; N/A-by-absence: S3 \u00c2\u00a711:312-313 assigns no vector to MOD-01 or MOD-02, and vectors/ holds only README.md, so there was nothing to re-derive by hand)",
+        "exit_code": 2
+      }
+    },
+    "CC-6": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Hooks are N/A-by-absence: \u00c2\u00a711:312-313 assigns no \u00c2\u00a77 hook to MOD-01 or MOD-02, so this check covers the parse-level guards and the detectors behind them. NOT MECHANICAL: the reviewer allowlist refused every write, including New-Item and Copy-Item into the session scratchpad, which R-05 (RESOLUTION_RECORD.md:213-215) records as unresolved. So no mutation could be staged in a throwaway copy. The named guards were confirmed to resolve and pass on the clean tree under the declared single-test command: `npx vitest run -t \"test_kernel_exports_no_projection_membership_predicate\"` gave 1 passed and 32 skipped, and `-t \"test_external_import_outside_ports_is_malformed\"` gave 1 passed and 32 skipped. Survival of the mutations below is therefore established by reading, and every one follows directly from the code. Round 4's K7 prescribed the closure shape for DR-06 (the list of export forms), DR-07 (aliased and element-access fixtures) and DR-09 (pinning the diagnostic). I do not certify those closures; I tried to falsify them. Findings: (1) BC-01-3 pins one instance instead of the rule. kernel:166 claims 'every field is readonly', but tests/fixtures/kernel/mutate-fact.ts:6 assigns only `payload`, and test_assigning_to_an_appended_fact_field_does_not_compile requires only TS2540 on 'payload' (kernel.test.ts:186-187). Deleting `readonly` from `author` (:180) or `at` (:181) leaves the whole suite green. (2) isUnknown (kernel:93-101) decides membership from UNKNOWN_KINDS (:80-82), a second hand-written copy of the family. test_is_unknown_answers_whether_not_which (kernel.test.ts:126-132) exercises only 'latent' and 'undetermined'. Deleting 'refuse', 'no-subject' or 'uncomputable' from the set survives, and a real refusal then reads as not-Unknown, which is the collapse OBJ-04 forbids. (3) BC-01-2's detector still has reach gaps at the self-reliance point. kernel-exports.mjs:90-91 recognises Projection only by its brand or a ProjectionMember literal, so an exported predicate asserting the derivation S3 \u00c2\u00a711:333 names ('anything taking a record height', e.g. a type predicate to an object type with a compute(at: RecordHeight) member) is not flagged. callables() (:105-118) stops at depth 2 and never inspects return types, so a predicate three object levels down, or one returned by an exported factory, is invisible. Only type-predicate signatures count (:136), so a boolean-returning shape test, which is a membership predicate in the S3 \u00c2\u00a73:92 sense, passes. (4) The height-arithmetic detector cannot decide BC-01-5's own 'no add/subtract/delta' (axioms-and-base-cases.md:120). It requires a RecordHeight return and all-RecordHeight parameters (:139-143), so a delta(a,b) returning number, an offset(h, n: number) returning RecordHeight, a one-argument successor and a rest-parameter max/sum all pass. A delta has exactly the signature shape of the conforming `order` fixture (conforming-other-predicates.ts:8), so the property is not decidable from signature shape alone. (5) The IR-20 spawn rule, which is load-bearing for portability, is incomplete in the TypeScript half. spawn-resolve.mjs:158-161 never reads the options argument, so execFile, execFileSync, spawn or spawnSync with process.execPath and `shell: true` passes, although that hands a command string to a shell, which IR-20 refuses. The Python half checks `shell=` (spawn-portability.py:154-156) and the TypeScript half does not. Calling a child_process function through `.call`/`.apply` or Reflect.apply resolves to Function.prototype and passes. In Python, LAUNCHERS (:41-48) is a name list that omits asyncio.create_subprocess_exec and create_subprocess_shell, and module rebinding (`sp = subprocess`) is not followed (:73-87, :135-139). (6) Minor: height()'s RangeError guard (kernel:32-34) has no test, so removing it survives."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Scored in the four-dimension CC-7 form; the drift ledger scores per entry and has no D1-D6. Object-model fidelity 8: the types follow S3 \u00c2\u00a73, and IR-23 accurately registers the narrowed scope of SEAM-06. RecordHeight = number & brand still lets `h2 - h1` compile in any module, so 'no arithmetic is exposed' (kernel:24-26) only covers named exports. That is cosmetic against S3, which does not forbid it. Axiom coverage 6: BC-01-3 covers one of three fields, isUnknown's runtime family has two of five members tested, and BC-01-5's 'no delta' clause is undecided by its detector. Base-case support / verification strength 5 (WORST): the load-bearing detectors leave reachable evasions at the self-reliance point (structural Projection-shaped predicate, depth-3 and higher-order exports), the IR-20 TypeScript resolver ignores `shell: true`, and the gate still cannot run a single mutation because the allowlist refuses all writes (third consecutive round with CC-6 reasoned, not measured). Extensibility 7: the Python launcher set is a name list, and a record-keeping hole means the next rung inherits an untracked defect (below). Record hygiene: round 4's new work item against the MOD-02 slice closed at k7-pass-2 is transcribed nowhere. Grep for ImportEquals or 'new work item' across INSTRUMENTS/ finds only k7-verdict-4.json:72. That item is tools/checks/external-isolation.ts:106 sweeping only *.ts and not seeing `import x = require(...)`. The defect is still present in the code, as a NEW WORK ITEM (severity medium) and not a retroactive RETURN on the closed MOD-02 gate. Its named failing tests: fixtures for an ImportEqualsDeclaration and a non-.ts source file in test_external_import_outside_ports_is_malformed's suite must turn it red. MIN = 5. The drift block on MOD-01 stands and does not lift. Tree integrity: `git status --porcelain` before and after showed only ` M STATE.json`, and `git diff --stat` after showed only STATE.json. No experiment copy was created, because writes to the system temp path were refused."
+    }
+  },
+  "drift_score": {
+    "value": 5,
+    "basis": [
+      {
+        "check_id": "CC-6",
+        "finding": "Worst dimension: verification strength. The BC-01-2 detector (tools/checks/kernel-exports.mjs:90-91, :105-118, :136) recognises the family only by brand or member literal, at depth 2 or less, and only through type-predicate signatures. A predicate asserting the record-height-taking shape S3 \u00c2\u00a711:333 forbids, a predicate nested three levels deep or returned by an exported factory, and a boolean shape test all pass with the test green.",
+        "deduction": 4
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "Base cases pin instances, not rules: BC-01-3 (mutate-fact.ts:6; kernel.test.ts:186-187) tests readonly on `payload` only, so dropping readonly from `author`/`at` survives, and isUnknown's hand-copied UNKNOWN_KINDS (kernel:80-82) is tested on 2 of 5 kinds, so removing 'refuse' survives and collapses a refusal into a non-Unknown.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "IR-20 TS resolver (spawn-resolve.mjs:158-161) ignores the `shell: true` option and `.call`/`.apply` indirection; the Python half's LAUNCHERS (spawn-portability.py:41-48) is a name list missing asyncio subprocess launchers and module rebinding.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "The height-arithmetic detector (kernel-exports.mjs:139-143) cannot decide BC-01-5's 'no delta': a number-returning delta, a mixed-parameter offset, a successor and a rest-parameter fold all pass. Delta and the conforming `order` share a signature shape.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "No mutation experiment could be run by the gate: the reviewer allowlist refuses all writes, scratch included (R-05, RESOLUTION_RECORD.md:213-215), so CC-6 is reasoned for the third consecutive round.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Round 4's new work item against closed MOD-02 (external-isolation.ts:106: *.ts-only sweep, ImportEqualsDeclaration unseen) was dropped from the drift ledger; the defect persists untracked.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-6",
+      "module": "MOD-01 kernel",
+      "required_change": "The detector must decide the S3 \u00c2\u00a73:92 / \u00c2\u00a711:331-335 property, 'no exported callable answers Projection membership from shape', not just its branded spelling. An exported predicate asserting the record-height-taking structural shape, a predicate reachable at any member depth or through an exported function's return type, and a boolean-returning shape test must each turn test_kernel_exports_no_projection_membership_predicate red, with a positive-control fixture for each in test_the_membership_detector_sees_every_export_form. If part of this cannot be decided by the type checker, the undecidable part must be registered as a limit and not presented as covered."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-01 kernel",
+      "required_change": "BC-01-3 must pin the rule stated at kernel:166 ('every field is readonly') over every AppendedFact member discovered from source, not over `payload` alone. Removing `readonly` from `author` or from `at` must turn test_assigning_to_an_appended_fact_field_does_not_compile red."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-01 kernel",
+      "required_change": "isUnknown must answer true for exactly the five members of UnknownValue as discovered from the type declaration, and the test must check every discovered member. Removing any one kind from UNKNOWN_KINDS (or adding a sixth union member without updating the runtime answer) must turn test_is_unknown_answers_whether_not_which red."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-01 kernel",
+      "required_change": "BC-01-5's 'no add/subtract/delta over heights' must be decided as stated or narrowed and registered. A number-returning two-height delta, an offset taking a RecordHeight and a number, a one-argument successor and a rest-parameter fold over heights must each turn test_kernel_exposes_no_height_arithmetic red, while the conforming `order` stays green. Because delta and order share a signature shape, the property must be expressed in terms the detector can actually separate."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "tools/checks (IR-20 / IR-25)",
+      "required_change": "Any launch that hands a command string to a shell must be refused whatever its first argument, so a child_process call with process.execPath and `shell: true` must turn the spawn-portability suite red, as `shell=` already does in the Python half. A child_process function invoked through `.call`/`.apply`/Reflect.apply must resolve as a spawn. In the Python half, asyncio subprocess launchers and a module rebound to a local name must be flagged by test_python_launches_are_resolved_through_bindings."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "harness (reviewer grant)",
+      "required_change": "The owner must rule on whether the gate may stage mutations in a throwaway directory outside the repo (R-05 left this open). Until then, every CC-6 mutation experiment remains reasoned rather than run, and each verdict must say so."
+    },
+    {
+      "check_id": "CC-7",
+      "module": "INSTRUMENTS/drift-ledger.md (MOD-02 new work item)",
+      "required_change": "Record round 4's new work item against the closed MOD-02 slice with its severity (medium) and named failing tests: an ImportEqualsDeclaration fixture and a non-.ts source fixture under src/ must each turn test_external_import_outside_ports_is_malformed red. Record it as a new work item, not a reopened gate."
+    }
+  ],
+  "next_action": "Route this RETURN to owner triage under R-04, which closes the round-5 gate as closed-by-owner-5, carrying the seven blocking items as dispositioned work and leaving the MOD-01 drift block (5) in force until a fresh verdict lifts it."
+}

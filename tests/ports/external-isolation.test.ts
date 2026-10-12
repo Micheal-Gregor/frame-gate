@@ -42,6 +42,15 @@ describe("REF-02 - external isolation", () => {
     expect(viaNonTs).toHaveLength(1);
     expect(viaNonTs[0]!.specifier).toBe("node:crypto");
     expect(viaNonTs[0]!.file.endsWith("src/facts/digest.mjs")).toBe(true);
+
+    // WI-05 (K7 round 7): a dynamic import whose specifier is a backtick template
+    // names a module as surely as a quoted string - and one computed at runtime
+    // cannot be resolved at all, so it is refused rather than assumed internal.
+    const viaTemplate = findExternalIsolationViolations(fixture("template-specifier"));
+    expect(viaTemplate.map((v) => v.specifier)).toEqual(["node:crypto"]);
+    const viaComputed = findExternalIsolationViolations(fixture("computed-specifier"));
+    expect(viaComputed).toHaveLength(1);
+    expect(viaComputed[0]!.specifier).toBe("<computed specifier>");
   });
 
   it("test_external_reached_through_ports_module_succeeds", () => {

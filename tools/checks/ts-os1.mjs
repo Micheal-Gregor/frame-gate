@@ -1,4 +1,8 @@
 /**
+ *
+ * SCOPE (R-15). DECIDES the four OS-1 shapes above over every class in the file.
+ * Module-level state that is not a literal constant is OS-2's (the objects check's
+ * ambient patterns), not this tool's. No limits registered beyond that boundary.
  * OS-1's illegal shapes in one TS/JS source file, PARSED - the TS/JS half of
  * `phase4-checks.py objects` (gate.py runs it at every commit; the seal sweep runs it).
  *

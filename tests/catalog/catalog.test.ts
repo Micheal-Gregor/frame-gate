@@ -124,13 +124,19 @@ describe("BC-03-2 - REF-01: a derivation producing a Declaration is malformed at
     // has a fixture that must be flagged; passing a genuine act on must not be.
     const { mint } = catalogChecks();
     expect(mint.src, "a catalog act is minted outside its ledger in src/").toEqual([]);
-    const { flagged, conforming } = byIntent(mint.fixtures);
+    const { flagged, conforming, limits } = byIntent(mint.fixtures);
     const routes = new Set(flagged.flatMap(([, v]) => v.map((x) => x.how)));
     expect(routes).toEqual(
-      new Set(["assertion", "any-flow", "generic-launder", "type-parameter-cast", "type-guard", "ts-directive"]),
+      new Set([
+        "assertion", "any-flow", "generic-launder", "type-parameter-cast", "type-guard", "ts-directive",
+        "overload", "ambient-declaration", // K7 round 7, DR-23
+      ]),
     );
     for (const [n, v] of flagged) expect(v.length, `${n} minted a Declaration unseen`).toBeGreaterThan(0);
     for (const [n, v] of conforming) expect(v, `${n} passes a genuine act on`).toEqual([]);
+    // R-15: a registered limit is pinned UNflagged - closing it silently turns this red.
+    expect(limits.length, "the registered mint limit has no fixture").toBeGreaterThan(0);
+    for (const [n, v] of limits) expect(v, `${n} is a registered limit (IR-41)`).toEqual([]);
   });
 });
 
@@ -232,7 +238,7 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
     expect(forge.src, "src/ outside the catalog builds a catalog entry").toEqual([]);
     const { flagged, conforming, limits } = byIntent(forge.fixtures);
     expect(new Set(flagged.flatMap(([, v]) => v.map((x) => x.how)))).toEqual(
-      new Set(["catalog-kind-literal", "catalog-kind-spread", "catalog-kind-append"]),
+      new Set(["catalog-kind-literal", "catalog-kind-spread", "catalog-kind-append", "catalog-kind-field"]),
     );
     for (const [n, v] of flagged) expect(v.length, `${n} forged a catalog entry unseen`).toBeGreaterThan(0);
     for (const [n, v] of conforming) expect(v, `${n} is another module's own fact`).toEqual([]);
@@ -267,7 +273,8 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
     expect(cases.length).toBeGreaterThan(1);
     for (const [name, v] of cases) {
       const caught = v.returns.some((r) => !r.ok) || v.fabricated.length > 0 || v.held.length > 0;
-      expect(caught, `${name}: a current read went unseen`).toBe(name !== "conforming");
+      // conforming: not caught. limit-*: a REGISTERED limit (IR-41), pinned not caught.
+      expect(caught, `${name}: a current read went unseen`).toBe(name !== "conforming" && !name.startsWith("limit-"));
     }
   });
 });
@@ -340,6 +347,9 @@ describe("BC-03-6 - SC-3: the number two appears nowhere", () => {
       new Set(["the-number-two", "cardinality-branch"]),
     );
     for (const [n, v] of conforming) expect(v, `${n} is not a currency count`).toEqual([]);
+    const { limits } = byIntent(sc3.fixtures);
+    expect(limits.length, "SC-3's registered limit has no fixture (DR-26)").toBeGreaterThan(0);
+    for (const [n, v] of limits) expect(v, `${n} is a registered limit (IR-41)`).toEqual([]);
   });
 });
 

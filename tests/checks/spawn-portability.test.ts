@@ -27,6 +27,7 @@ const FIXTURES = [
   "violating", "other-name", "shell", "conforming",
   "aliased", "element-access", "destructured", "process-module",
   "shell-option", "shell-option-variable", "call", "apply", "reflect-apply", "conforming-call",
+  "cts", "tsx", "limit-create-require",
 ] as const;
 const realTree: SpawnScope = {
   roots: [resolve(repo, "tools"), resolve(repo, "tests"), resolve(repo, "src")],
@@ -129,6 +130,19 @@ describe("spawn portability", () => {
     expect(violationsIn("conforming-call")).toEqual([]);
   });
 
+  it("test_every_loadable_extension_is_swept", () => {
+    // K7 round 7 (WI-04): .cts and .tsx are source the runtime loads; the sweep's
+    // extension list skipped them - the WI-01 extension class again.
+    expect(violationsIn("cts").map((v) => v.callee)).toEqual(["execFileSync"]);
+    expect(violationsIn("tsx").map((v) => v.callee)).toEqual(["spawnSync"]);
+  });
+
+  it("test_the_registered_limits_of_the_spawn_resolver_hold", () => {
+    // R-15 (IR-41): a module loaded through createRequire is any-typed; no call on it
+    // resolves to child_process. Pinned NOT flagged, so closing it is never silent.
+    expect(violationsIn("limit-create-require")).toEqual([]);
+  });
+
   it("test_the_real_tools_and_tests_trees_spawn_only_node", () => {
     // The tree that actually runs. tests/fixtures/ is subject matter, not code.
     // The one registered exception (IR-25) is admitted by the resolver itself.
@@ -148,6 +162,10 @@ describe("spawn portability - the Python the declared commands reach", () => {
     for (const f of files.filter((x) => x.startsWith("conforming"))) {
       expect(flagged.has(f), `${f} must not be flagged`).toBe(false);
     }
+    // R-15 (IR-41): a computed module name is a registered limit, pinned NOT flagged.
+    const limits = files.filter((x) => x.startsWith("limit-"));
+    expect(limits.length, "the Python sweep's registered limit has no fixture").toBeGreaterThan(0);
+    for (const f of limits) expect(flagged.has(f), `${f} is a registered limit`).toBe(false);
   });
 
   it("test_the_declared_rederive_invoke_launches_node", () => {

@@ -186,6 +186,14 @@ repository. Run the declared commands against it by pointing them at it:
 The runner deletes it after this round. The repository itself must be left
 byte-identical: a verdict that leaves it dirty is refused, not recorded.
 
+Detectors are scored against their stated scope (R-15). Each load-bearing
+detector's header carries a SCOPE (R-15) block: the forms it DECIDES and the
+LIMITS it registers, each limit pinned by a limit- fixture it must not flag.
+An evasion inside a stated DECIDES rule is a defect of that detector. An
+evasion of a form the statement does not claim is reported as a known-issue
+candidate and does not by itself fail CC-6. A statement that claims a form
+the detector does not decide, or omits a limit it has, is a CC-3 defect.
+
 Return ONE JSON object and nothing else, with exactly these keys:
   checks       object; one entry per check id. Each: {{"status": "pass"|"fail"|
                "not_applicable", "mechanical": bool, and either "evidence":

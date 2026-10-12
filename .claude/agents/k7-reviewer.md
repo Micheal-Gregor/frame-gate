@@ -67,7 +67,9 @@ immediately, mid-battery, if a halt-class breach appears:
   divergence-injection — force the guarded component to misbehave and prove the hook catches
   it on the real orchestrated path; (b) mutation — in the scratch worktree, delete the guarded calls /
   invert guarded ordering: named tests MUST fail, invoked by the declared single-test command.
-  Presence + green is not proof. Also verify trace citations naming a resolution are
+  Presence + green is not proof. Score a detector against its SCOPE (R-15) block: an evasion inside a stated
+  DECIDES rule fails CC-6; an evasion outside it is a known-issue candidate you report, not a
+  CC-6 failure by itself; a scope statement that is untrue is a CC-3 defect. Also verify trace citations naming a resolution are
   conditional on that resolution's live register status — a false citation in an append-only
   trace is a blocking defect.
 - **CC-7 Drift-score:** score four dimensions 1–10 (object-model fidelity, axiom coverage,

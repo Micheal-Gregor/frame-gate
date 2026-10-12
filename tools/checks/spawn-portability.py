@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 """
+
+SCOPE (R-15). DECIDES, in the .py files the declared commands reach: a call that
+resolves - through import bindings, `import *`, aliases, getattr, module rebinding,
+`__import__("subprocess")` / `importlib.import_module("subprocess")` - to a launcher of
+subprocess, os or asyncio, refused unless shell is off and the program is
+shutil.which("node"). LIMITS: a module whose NAME is computed
+(spawn-portability-py/limit-computed-import.py).
 spawn-portability (Python half) - IR-20 for the .py files the declared commands reach.
 
 The rule is the TypeScript half's (tools/checks/spawn-resolve.mjs), restated for
@@ -71,6 +78,12 @@ class Bindings(ast.NodeVisitor):
 
     def visit_ImportFrom(self, node):
         for a in node.names:
+            if a.name == "*":
+                # `from subprocess import *` (K7 round 7, WI-04) binds every public name
+                # of the module - so every launcher it defines is now callable bare.
+                for fn in LAUNCHERS.get(node.module or "", ()):
+                    self.functions[fn] = (node.module, fn)
+                continue
             self.functions[a.asname or a.name] = (node.module or "", a.name)
 
     def module_of(self, expr):

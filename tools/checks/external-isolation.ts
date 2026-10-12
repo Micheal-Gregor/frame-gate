@@ -18,6 +18,11 @@
  * has no notion of which module is allowed to name what. That is precisely why this
  * check exists as an AST pass and why it runs inside the test command rather than
  * beside it (ADR-001).
+ *
+ * SCOPE (R-15). DECIDES, in every loadable source file under src/ (.ts/.mts/.cts/.tsx/
+ * .js/.mjs/.cjs/.jsx): import, re-export, `import x = require`, `require()` and dynamic
+ * `import()` specifiers - quoted or backtick - resolved and tested for containment;
+ * a computed specifier is refused as unresolvable. No registered limits.
  */
 import ts from "typescript";
 import { readdirSync, statSync } from "node:fs";
@@ -58,6 +63,9 @@ export function contains(parent: string, child: string): boolean {
   const c = norm(child);
   return c === p || c.startsWith(p.endsWith(sep) ? p : p + sep);
 }
+
+/** A specifier this sweep cannot read; never resolves, so it is reported as external. */
+const UNRESOLVABLE = "<computed specifier>";
 
 const host: ts.ModuleResolutionHost = {
   fileExists: (f) => ts.sys.fileExists(f),
@@ -162,9 +170,19 @@ function specifiersOf(file: string): string[] {
       node.expression.kind === ts.SyntaxKind.ImportKeyword &&
       node.arguments.length > 0 &&
       node.arguments[0] !== undefined &&
-      ts.isStringLiteral(node.arguments[0])
+      ts.isStringLiteralLike(node.arguments[0])
     ) {
-      found.push((node.arguments[0] as ts.StringLiteral).text);
+      // A no-substitution template (`node:crypto` in backticks) names a module exactly as
+      // a quoted string does (K7 round 7, WI-05); isStringLiteral alone missed it.
+      found.push(node.arguments[0].text);
+    } else if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      node.arguments[0] !== undefined
+    ) {
+      // A specifier computed at runtime cannot be resolved here, so it is refused rather
+      // than assumed internal: the rule must be checkable.
+      found.push(UNRESOLVABLE);
     }
     ts.forEachChild(node, visit);
   };

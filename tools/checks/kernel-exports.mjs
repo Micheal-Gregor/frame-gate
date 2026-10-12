@@ -1,4 +1,13 @@
 /**
+ *
+ * SCOPE (R-15). DECIDES, over every export reachable at any depth (members, factory
+ * returns, construct signatures): membership - a type predicate or assertion whose
+ * asserted type carries the Projection brand, is a member-name literal, or has a
+ * member callable with a (possibly optional) RecordHeight; height arithmetic (R-09) -
+ * a callable taking a height (bare, optional, inside an array, tuple, rest or object
+ * parameter) that returns a plain number, or returns a height (optional or Promised)
+ * other than one of its own inputs.
+ * LIMITS: a plain boolean shape test (limit-boolean-shape-test.ts).
  * What a module's EXPORTS can answer, decided by the type checker.
  *
  * Two questions, both about MOD-01's self-reliance (BC-01-2, BC-01-5):
@@ -90,7 +99,15 @@ const constituents = (t) => (t.isUnion() ? t.types : [t]);
 // everything. Found by this file's own positive fixtures on first run.
 const carries = (t, brand) => checker.getPropertiesOfType(t).some((p) => p.escapedName === brand);
 
-const isHeightType = (t) => constituents(t).every((c) => carries(c, HEIGHT_BRAND));
+/** Undefined, null and void stripped: `RecordHeight | undefined` is still a height (WI-03). */
+const NULLISH = ts.TypeFlags.Undefined | ts.TypeFlags.Null | ts.TypeFlags.Void;
+const present = (t) => constituents(t).filter((c) => (c.flags & NULLISH) === 0);
+const isHeightType = (t) => {
+  const p = present(t);
+  return p.length > 0 && p.every((c) => carries(c, HEIGHT_BRAND));
+};
+/** A Promise's settled type, or the type itself (K7 round 7, WI-02). */
+const settled = (t) => (typeof checker.getAwaitedType === "function" ? checker.getAwaitedType(t) ?? t : t);
 
 /**
  * The Projection SHAPE (K7 round 5, DR-11): a member that is callable with a
@@ -102,7 +119,7 @@ const takesAHeight = (t) =>
   checker.getPropertiesOfType(t).some((p) => {
     const pt = checker.getTypeOfSymbol(p);
     return pt.getCallSignatures().some((sig) =>
-      sig.getParameters().some((q) => isHeightType(checker.getTypeOfSymbol(q))),
+      sig.getParameters().some((q) => isHeightType(checker.getTypeOfSymbol(q))), // optional too (WI-03)
     );
   });
 
@@ -142,11 +159,33 @@ function collect(name, type, out, seen) {
 
 /** -1 | 0 | 1, or any subset: the answer of an ORDER, not a quantity. */
 const isOrdering = (t) =>
-  constituents(t).every((c) => c.isNumberLiteral() && [-1, 0, 1].includes(c.value));
+  present(t).length > 0 && present(t).every((c) => c.isNumberLiteral() && [-1, 0, 1].includes(c.value));
 const isBooleanish = (t) =>
-  constituents(t).every((c) => (c.flags & ts.TypeFlags.BooleanLike) !== 0);
+  present(t).length > 0 && present(t).every((c) => (c.flags & ts.TypeFlags.BooleanLike) !== 0);
 const isNumberish = (t) =>
-  constituents(t).every((c) => (c.flags & ts.TypeFlags.NumberLike) !== 0);
+  present(t).length > 0 && present(t).every((c) => (c.flags & ts.TypeFlags.NumberLike) !== 0);
+
+/**
+ * How many heights one parameter carries (K7 round 7, WI-02). A height: 1. A
+ * collection of heights - array, tuple, rest - can carry any number: 2, it is a fold.
+ * An object: one per height-typed property, so `{ a: RecordHeight; b: RecordHeight }`
+ * is a pair. Anything else: 0.
+ */
+function heightsIn(t) {
+  if (isHeightType(t)) return 1;
+  for (const c of present(t)) {
+    const element = checker.getIndexTypeOfType(c, ts.IndexKind.Number);
+    if (element && isHeightType(element)) return 2;
+  }
+  let n = 0;
+  for (const c of present(t)) {
+    if (!(c.flags & ts.TypeFlags.Object)) continue;
+    for (const prop of checker.getPropertiesOfType(c)) {
+      if (isHeightType(checker.getTypeOfSymbol(prop))) n += 1;
+    }
+  }
+  return n;
+}
 
 /**
  * True when every value this declaration can return is one of its OWN height
@@ -166,7 +205,10 @@ function returnsOnlyAnInput(decl) {
   );
   if (params.size === 0) return false;
   const isInput = (e) => {
-    while (ts.isParenthesizedExpression(e) || ts.isNonNullExpression(e)) e = e.expression;
+    while (ts.isParenthesizedExpression(e) || ts.isNonNullExpression(e) || ts.isAwaitExpression(e)) e = e.expression;
+    // "Nothing" manufactures no height: a selection may return no answer on a branch.
+    if (e.kind === ts.SyntaxKind.NullKeyword || ts.isVoidExpression(e)) return true;
+    if (ts.isIdentifier(e) && e.text === "undefined") return true;
     if (ts.isIdentifier(e)) return params.has(checker.getSymbolAtLocation(e));
     if (ts.isConditionalExpression(e)) return isInput(e.whenTrue) && isInput(e.whenFalse);
     if (
@@ -198,15 +240,13 @@ function heightShape(sig) {
   let heightParams = 0;
   let otherParams = 0;
   for (const p of sig.getParameters()) {
-    const decl = p.valueDeclaration;
-    const t = checker.getTypeOfSymbol(p);
-    const isRest = decl !== undefined && ts.isParameter(decl) && decl.dotDotDotToken !== undefined;
-    const element = isRest ? checker.getIndexTypeOfType(t, ts.IndexKind.Number) : undefined;
-    if (isRest && element && isHeightType(element)) heightParams += 2;
-    else if (isHeightType(t)) heightParams += 1;
+    const n = heightsIn(checker.getTypeOfSymbol(p)); // a rest parameter is an array: 2
+    if (n > 0) heightParams += Math.min(n, 2);
     else otherParams += 1;
   }
-  const r = checker.getReturnTypeOfSignature(sig);
+  // A Promise is classified by what it settles to, and an optional return by what it
+  // returns when it returns something (WI-02).
+  const r = settled(checker.getReturnTypeOfSignature(sig));
   const returns = isHeightType(r) ? "height"
     : isOrdering(r) ? "ordering"
     : isBooleanish(r) ? "boolean"

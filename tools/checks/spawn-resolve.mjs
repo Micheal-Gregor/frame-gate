@@ -1,4 +1,12 @@
 /**
+ *
+ * SCOPE (R-15). DECIDES, in every .ts/.mts/.cts/.tsx/.js/.mjs/.cjs/.jsx file of a scope:
+ * a call that RESOLVES (directly, renamed, element-access, destructured, or via
+ * .call/.apply/Reflect.apply) to a child_process launcher, refused unless its command
+ * resolves to process.execPath and no `shell` option is on; fork admitted; one
+ * registered exception (spawn-exceptions.json).
+ * LIMITS: a module loaded through createRequire is `any` and resolves nowhere
+ * (spawn-portability/limit-create-require/).
  * Resolves every call in a set of TS/JS files to the declaration it invokes, and
  * reports each one that starts a child process with anything but the Node binary.
  *
@@ -63,7 +71,7 @@ function sourceFiles(root, exclude) {
       const full = join(dir, name);
       if (statSync(full).isDirectory()) {
         if (name !== "node_modules") walk(full);
-      } else if (/\.(ts|mts|mjs|cjs|js)$/.test(name) && !name.endsWith(".d.ts")) {
+      } else if (/\.(ts|mts|cts|tsx|js|mjs|cjs|jsx)$/.test(name) && !/\.d\.(ts|mts|cts)$/.test(name)) {
         if (!exclude.some((e) => contained(e, full))) out.push(resolve(full));
       }
     }

@@ -36,6 +36,8 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-26 how a candidate's `from` is checked | **ACCEPTED 2026-10-12** (owner, live gate) | Against MOD-05's own fold: `from` must be the effective commitment at the currency immediately below, as of the append height; BOTTOM only at the least currency of a unit an independence act licenses at that height (R-10); else `Refuse(malformed-from)`, nothing appended |
 | R-27 who computes the lineage digest (S-04, VEC-05, IR-06) | **ACCEPTED 2026-10-12** (owner, live gate) | MOD-12, from the commitment: MOD-05 passes the injected signature check the whole proposal (`from` included) and the signature as an opaque value; MOD-05 chooses no encoding and computes no digest. S-04 is a registered interpretation |
 | R-28 which refusal answers when several guards fail | **ACCEPTED 2026-10-12** (owner, live gate) | Admission (MOD-04), then `from` (MOD-05), then the signature (MOD-12), then the scope ceiling (MOD-11); the first failure answers and nothing is appended |
+| R-29 the reviewer model for K7 round 8 (MOD-05) | **ACCEPTED 2026-10-12** (owner, live gate) | Fable 5.1, as round 7 (R-13): a different model from the builder (Opus 5.5) keeps the review distinct in model as well as process. `reviewer_command` unchanged |
+| R-30 IR-53: a unit with no independence act cannot draw at the least currency | **ACCEPTED 2026-10-12** (owner, live gate) | Keep the built behaviour (the S3 and R-10 read literally) and route the question upstream as an addendum to SP-2; no code change |
 
 ---
 
@@ -699,4 +701,21 @@ interpretation: MOD-05 supplies the commitment the digest is taken of.
 Admission (MOD-04) is checked first, so an unreachable draw answers `unreachable` and costs
 nothing (REF-03, S-01). Then come `from` (MOD-05), the signature (MOD-12, HOOK-04) and the
 scope ceiling (MOD-11, REF-16). The first failure answers, and nothing is appended.
+
+## R-29 · K7 round 8 reviews on Fable 5.1
+
+**Owner, 2026-10-12, live gate.** R-13 put round 7 on a different model from the builder, so that
+the R-06 closures were certified by a reviewer that had not designed them. Later rounds were
+never ruled. **Ruling.** Round 8, MOD-05's gate, runs on Fable 5.1. The builder is Opus 5.5, so
+the review stays distinct in model as well as in process. The `reviewer_command` in
+`.metaframework/project.json` already names it and is unchanged.
+
+## R-30 · IR-53 stands as built and goes upstream
+
+**Owner, 2026-10-12, live gate.** Under F2 OBJ-11 and R-10, a unit with no independence act can
+never draw at the least currency. Every unit's first draw therefore needs a HUMAN independence
+declaration, and the S3 never says what a non-independent unit derives from there. **Ruling.**
+Keep the behaviour as built, which reads the S3 and R-10 literally. The question goes to the
+owner's Phase 3 revision run as an addendum to SP-2. No code changes. IR-53 stays latent until
+Phase 3 answers it.
 

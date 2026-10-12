@@ -197,3 +197,22 @@ through OBJ-39 under its own encoding. MOD-05 names no `DigestPort` and chooses 
 
 **Status:** OPEN, awaiting the owner's Phase 3 revision run. Never patched in `governance/S3/`.
 
+---
+
+## SP-2 addendum (R-30, 2026-10-12) · what does a non-independent unit derive from at the least currency?
+
+**Where.** F2 OBJ-11: `from = BOTTOM` is legal "only for the least currency of an independent unit".
+At the least currency nothing lies below, so a unit with no independence act has no legal `from`
+there at all (IR-53). As built (R-26, R-30), its first draw is refused `malformed-from` until a
+HUMAN declares it independent.
+
+**Question for the owner's Phase 3 run.** Is that the intent ("independence is the license to
+start from nothing")? Or does a non-independent unit derive its first draw from something else,
+such as another unit's commitment, which no S3 object names?
+
+**Proposed superseding edit, if the built reading is right:** in F2 OBJ-11, state it outright:
+*a unit's first draw at the least currency requires an independence act in force; without one,
+the append is `Refuse(malformed-from)`*. Add the matching REF row beside SP-2's.
+
+**Status:** OPEN, with SP-2. Never patched in `governance/S3/`.
+

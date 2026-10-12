@@ -321,3 +321,9 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   (round 8) is next. The reviewer model for round 8 is undecided (R-13 put round 7 on
   Fable 5.1). IR-53 awaits the owner.
 
+- **2026-10-12 — Owner rulings before K7 round 8.** R-29: round 8 runs on Fable 5.1. R-30: IR-53
+  stands as built and goes upstream as an addendum to SP-2; it stays latent until Phase 3
+  answers it. Mechanical checks before the round: `phase4-checks` (all) clean apart from the
+  nine `module_file_absent` entries; `structure-check` pass; `rederive --all` (no vectors yet;
+  every vector is deferred).
+

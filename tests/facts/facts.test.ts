@@ -505,10 +505,32 @@ describe("BC-05-16 - from is the effective commitment immediately below, as of t
     const licensed = independence.declareIndependence(u, true, "HUMAN");
     expect(malformed(ledger.appendCandidate(proposal(c0, BOTTOM), "sig", h, "ENGINE")), "a license made after the height counted").toBe(true);
     expect(candidate(ledger.appendCandidate(proposal(c0, BOTTOM), "sig", licensed.at, "ENGINE")).payload.from).toEqual(noSubject());
+    // While LICENSED: a Commitment is still no `from` at the least currency - nothing lies below
+    // it, and the license must not mask that (battery 12, before the run).
+    const k0 = commitments.commit(u, c0, "HUMAN");
+    expect(malformed(ledger.appendCandidate(proposal(c0, k0), "sig", k0.at, "ENGINE")), "a commitment as from at the least currency, licensed").toBe(true);
     const withdrawn = independence.declareIndependence(u, false, "HUMAN");
     expect(malformed(ledger.appendCandidate(proposal(c0, BOTTOM), "sig", withdrawn.at, "ENGINE")), "a withdrawn license counted").toBe(true);
+  });
+
+  it("test_an_unanswerable_from_check_passes_the_unknown_through", () => {
+    // IR-55: only "none" is the malformation; R-20's uncomputable is passed through, not
+    // collapsed into malformed-from.
+    const { record, commitments, ledger } = candidateWorld();
     const k0 = commitments.commit(u, c0, "HUMAN");
-    expect(malformed(ledger.appendCandidate(proposal(c0, k0), "sig", k0.at, "ENGINE")), "a commitment as from at the least currency").toBe(true);
+    commitments.commit(u, c0, "HUMAN");
+    const h = record.noise();
+    expect(ledger.appendCandidate(proposal(c1, k0), "sig", h, "ENGINE")).toEqual(uncomputable("two-effective-commitments"));
+    nothingAppendedSince(record, h);
+  });
+
+  it("test_a_bottom_from_is_recorded_as_a_fresh_value", () => {
+    const { independence, ledger } = candidateWorld();
+    const licensed = independence.declareIndependence(u, true, "HUMAN");
+    const mine: { kind: "no-subject" } = { kind: "no-subject" };
+    const k = candidate(ledger.appendCandidate(proposal(c0, mine), "sig", licensed.at, "ENGINE"));
+    (mine as { kind: string }).kind = "latent";
+    expect(ledger.candidatesAsOf(u, c0, "cond", k.at)[0]?.payload.from, "the caller's later change reached the record").toEqual(noSubject());
   });
 });
 

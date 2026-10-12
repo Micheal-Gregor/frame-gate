@@ -11,6 +11,12 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | DR-02 | MOD-02 · `INSTRUMENTS/drift-ledger.md` | A handoff conflict (S3 §5 vs facet F1 on REF-02's test name) was resolved in code with no Interpretation Register entry and no F-supersession proposal | **6** (K7 round 1, CC-3, deduction 2) | CLOSED — IR-12 registers the governing rule; SP-1 filed for the class |
 | DR-03 | MOD-02 · `src/ports/index.ts:108` | `mayOnlyPropose` is exported, unused, untested, and named nowhere in S3 OBJ-38 | **6** (K7 round 1, CC-7, deduction 1) | CLOSED — `mayOnlyPropose` removed; IR-14 |
 | DR-04 | `.metaframework/project.json` | `rederive_all` names `tools/rederive-impl.ts`, which does not exist; the repo's driver is `tools/rederive.py`. Not blocking at MOD-02 (no vectors) but blocks MOD-04 | (K7 round 1, CC-5, no deduction — out of MOD-02 scope) | CLOSED — `rederive_all` corrected; IR-13 |
+| DR-05 | Harness · reviewer launch (`.claude/agents/k7-reviewer.md` `tools:`; `project.json` `reviewer_command`) | The reviewer process received Read, Grep and Glob only, so the declared full suite, single-test and re-derive commands were not run, and CC-4/CC-5/CC-6 were scored by reading. Builder diagnosis (probe, 2026-10-11, not K7's): under `claude -p` on this Windows host, Claude Code 2.1.296 exposes **PowerShell** as its shell tool and no tool named `Bash`. The agent's `tools:` line and R-01's `--allowedTools` both name `Bash` only, so both grant nothing. Round 3 executed because the CLI then still had Bash | **5** (K7 round 4, CC-4, deduction 2) | OPEN — owner triage (RD-9 cap) |
+| DR-06 | MOD-01 · `tests/kernel/kernel.test.ts:103-125` (BC-01-2), `:181-193` | The no-membership-predicate detector inspects exported `FunctionDeclaration` nodes only and text-matches the asserted type. An arrow-const predicate, a local predicate re-exported through `export {}`, or a predicate on a type alias re-admits shape-based Projection membership (defeating DG-F1) with the test green. The height-arithmetic detector has the same form gap | **5** (K7 round 4, CC-6, deduction 5) | OPEN — owner triage (RD-9 cap) |
+| DR-07 | `tools/checks/spawn-portability.ts:86-90`; `tools/rederive.py:108-111` | IR-20's detector matches callee names as text (import aliasing and element access get past it) and never sweeps `.py`. `rederive.py` launches `rederive_invoke` (`npx tsx`) by name without a shell, which fails on Windows at MOD-04, the first vector-bearing rung. IR-20's "the rule, not the call site" is false in the repo's own CC-5 driver | **5** (K7 round 4, CC-6, deduction 3) | OPEN — owner triage (RD-9 cap) |
+| DR-08 | MOD-01 · `src/kernel/index.ts:165-167`; BC-01-3 | Claims no subclass can introduce a mutator. `AppendedFact` is an interface; `readonly` on an interface member binds neither an implementing class nor an extending interface. SEAM-06 is enforced only through the base-type view, and the subclass half has no test | **5** (K7 round 4, CC-2, deduction 3) | OPEN — owner triage (RD-9 cap) |
+| DR-09 | MOD-01 · `tests/kernel/kernel.test.ts:142,149` (BC-01-3, BC-01-4) | Assert diagnostic count > 0 instead of the specific readonly-assignment and missing-property diagnostics, so an unrelated compile error satisfies them | **5** (K7 round 4, CC-6, deduction 2) | OPEN — owner triage (RD-9 cap) |
+| DR-10 | `tests/checks/reported-path.test.ts:30-31` | `:30` is tautological (compares `reported()` with its own implementation); `:31` is a ternary with identical arms | **5** (K7 round 4, CC-7, deduction 1) | OPEN — owner triage (RD-9 cap) |
 
 ## Interpretation Register (decisions the handoff did not make)
 
@@ -68,3 +74,21 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   killed, two disclosed as the constructor's self-reliance point and unfalsifiable on this host by
   construction). Status stays BUILT — **only K7 raises a drift score**, and drift 4 is below the
   floor of 7, so no new module opens until a fresh verdict lifts it.
+
+- **2026-10-11 — K7 round 4 RETURN (drift 5). The gate was read-only again.** Reviewed `4b6a37e`
+  (tree `140d712`). The reviewer reported that it held Read, Grep and Glob only, so the suite
+  the builder reported green on this host (tsc clean, 24/24) is still a builder claim, and the
+  round-4 mutation kills are unreproduced by the gate. Reading alone found five defects in the
+  slice (DR-06..DR-10). The worst is DR-06: the guard for the build's most fragile point is
+  limited to one declaration form, which is the RD-12 failure this build was supposed to have
+  learned.
+
+  DR-05's cause was found by the builder, not the gate. Under `claude -p` on Windows, Claude Code
+  2.1.296 exposes PowerShell and no tool named `Bash`, so a charter and an allowlist written in
+  Bash's name grant nothing. This is round 3's lesson one level up: "the reviewer can execute" was
+  also a claim about a host. It failed open, into a read-only review that still produced a
+  verdict, rather than closed.
+
+  **Cap position.** Round 3 RETURN, one fix round, round 4 RETURN. Under RD-9 as the owner adopted
+  it on 2026-10-11 (roster v0.4), this is the end of the loop: DR-05..DR-10 go to owner triage
+  (fix now / known issue / won't-fix), recorded in `RESOLUTION_RECORD.md`. Status stays BUILT.

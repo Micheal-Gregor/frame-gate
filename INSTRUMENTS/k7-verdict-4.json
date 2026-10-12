@@ -1,0 +1,144 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 4,
+  "reviewed": {
+    "tree_sha": "140d7125bd7bc6691656433b4b9433bee5c327f3",
+    "commit_sha": "4b6a37e89c3bc5937e94b4edb65b6292861f4e73",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "(all)"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-12T03:51:50+00:00",
+    "completed_at": "2026-10-12T03:54:58+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 3,
+    "prior_tree_sha": "b83e6d7e13bbaa81b0ae87bf21b61c7e83671d76",
+    "prior_failing_checks": [
+      "CC-4",
+      "CC-6",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked by reading the code; nothing was executed. The admitted nodes in S3 \u00c2\u00a72:65 and \u00c2\u00a73:91-95 (OBJ-01, 02, 03, 04, 10 \u00e2\u2020\u2019 MOD-01) each map to a declaration in src/kernel/index.ts: RecordHeight :28-36, UnknownValue :67-72, Projection plus PROJECTION_MEMBERS :130-161, AppendedFact :172-176, Gate :191-197. src/ports/index.ts maps OBJ-35..39 to :41, :60, :81-85, :100-106 and :119. Both files resolve in INSTRUMENTS/object-model-and-parameters.md:11-12. Glob shows no other src/ files, so no source file lacks a trace, and no NOT_STARTED module has a stray file. Every file under tools/checks/ is test machinery registered as IR-19, IR-20 or IR-21."
+    },
+    "CC-2": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Checked by reading only. Holds: Gate.onFail is required (kernel:196), RecordPort has no mutator (ports:41-44), and DISPATCH_SEMANTICS is quoted verbatim (ports:81). Fails: SEAM-06 (S3:143, 'append-only; no update, no delete'). Base case BC-01-3 (axioms-and-base-cases.md:93) says 'a subclass cannot introduce one', and kernel:165-167 says 'no update or delete exists on the base or on any subclass'. The code does not enforce that. AppendedFact is an interface (kernel:172), and readonly on an interface member does not bind an implementer. A class that implements AppendedFact<A,P> can declare `payload` as mutable, and an interface that extends it can add a `correct()` method; TypeScript accepts both. So 'the fact was corrected' can be expressed through any subtype, and no test checks the subclass half. tsc --noEmit could not be run to confirm the rest of the parse-level rules. Error paths: N/A-by-absence, because these modules contain only declarative types and interfaces."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked by reading only. Each non-obvious mechanism has an Interpretation Register entry in drift-ledger.md: parameterised bases (IR-17 :30), the nominal Projection brand (IR-18 :31), the ReportedPath brand (IR-19 :38), the spawn rule (IR-20 :39), the plain-JS fixture compiler (IR-21 :40) and the runner change (IR-22 :41). The kernel exports the ten-name list and no membership predicate (kernel:121,130-141), as S3 \u00c2\u00a711:331-335 requires. ODG-FG-07 is respected: Gate.onFail is the whole union and no particular member is chosen for \u00ce\u00b8=\u00e2\u0160\u00a5. I found no unregistered mechanism that the suite relies on."
+    },
+    "CC-4": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Not executed. This reviewer process received only Read, Grep and Glob. The agent file lists Bash (.claude/agents/k7-reviewer.md:4), and R-01 (RESOLUTION_RECORD.md:11) makes Bash available through reviewer_command (project.json:13), but neither took effect, so `npx tsc --noEmit && npx vitest run` could not be run. The builder's '24/24 green on Windows' (STATE.json NEXT ACTION; drift-ledger:67) is therefore a claim the gate has not tested. Round 3 found exactly this kind of claim false once it was actually executed. Reading the source: MOD-01 has no \u00c2\u00a75 refusal row (S3 \u00c2\u00a711:312), so it is N/A-by-absence. The REF-02 \u00c2\u00a75 name resolves to one case (tests/ports/external-isolation.test.ts:25) with a genuine forbidden input (node:crypto in fixtures/violating/src/facts). Whether those cases pass on this host is unverified. Tree integrity is also unverified: git status --porcelain could not be run before or after. This process wrote nothing and made no temp copy."
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": false,
+      "rationale": "Not executed: same missing Bash. By absence: S3 \u00c2\u00a711:312-313 assigns no vector to MOD-01 or MOD-02, and vectors/ holds only README.md, so `python3 tools/rederive.py --all` would exit 2 at rederive.py:174-175 ('no vectors found'). There was nothing to re-derive by hand. A finding for the next vector-bearing rung: rederive_invoke is `npx tsx {entry} {input_file}` (project.json:8), and rederive.py:108-111 runs it through subprocess.run without a shell. On Windows, npx is a .cmd shim that CreateProcess will not start, so CC-5 will fail at MOD-04 on the gate's host. That is the same class as the round-3 defect, and IR-20's tree-wide rule does not cover it (see CC-6)."
+    },
+    "CC-6": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Hooks are N/A-by-absence: S3 \u00c2\u00a711:312-313 assigns no \u00c2\u00a77 hook to MOD-01 or MOD-02. The parse-level guards are what this slice delivers, but the mandatory divergence and mutation experiments could not run because no command was available. The builder's battery rounds 3-4 (mutation-battery.md:103-193) remain unreproduced by the gate. By reading the detector's AST logic, the guard for the build's self-reliance point has holes. test_kernel_exports_no_projection_membership_predicate (tests/kernel/kernel.test.ts:103-125) only looks at ts.isFunctionDeclaration nodes that carry an export modifier, and matches the asserted type with a text test, asserted.includes('Projection'). Three K5 variants would be invisible to it: (1) `export const isProjection = (v: unknown): v is Projection<unknown> => \u00e2\u20ac\u00a6`, which is a VariableStatement holding an ArrowFunction, not a FunctionDeclaration; (2) a non-exported `function isProjection(v): v is Projection<unknown>` published through `export { isProjection }`; (3) a predicate on an alias, `type P = Projection<unknown>; \u00e2\u20ac\u00a6 v is P`. Each re-opens DG-F1 while BC-01-2 stays green. test_kernel_exposes_no_height_arithmetic (:178-198) has the same FunctionDeclaration-only blind spot and compares the text 'RecordHeight', so an arrow-const `distance` survives it. BC-01-3 and BC-01-4 (:140-150) assert only count > 0, so any unrelated diagnostic satisfies them, such as a broken type-argument arity in mutate-fact.ts. gate-well-formed only protects BC-01-4 that way, not BC-01-3. IR-20's spawn detector (tools/checks/spawn-portability.ts:86-90,113) matches the rightmost callee identifier as text. `import { execFileSync as run }` and `cp['execFileSync'](\u00e2\u20ac\u00a6)` both get past it, and its sweep (:76) skips .py, although tools/rederive.py launches a command by name. Under the amendment, a load-bearing name or string detector counts as a demonstrated verification gap."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Four dimensions. Object-model fidelity 7: the types follow S3, but kernel:165-167 claims an append-only property for subclasses that an interface cannot enforce (CC-2). Axiom coverage 6: the 'subclass cannot introduce a mutator' half of BC-01-3 has no test and no enforcement, and BC-01-3/4 accept any diagnostic instead of naming one. Base-case support / verification strength 5 (WORST): the detector for the self-reliance point (BC-01-2) is limited to one declaration form and uses a text match, and is beaten by arrow-const, export-specifier and alias predicates; the height-arithmetic detector has the same gap; the IR-20 spawn detector matches names and misses aliases, element access and .py; the suite was not executed this round. tests/checks/reported-path.test.ts:30 is tautological (reported() compared with its own body), and :31 contains a dead ternary `sep === '/' ? '\\\\' : '\\\\'` whose two arms are identical. Extensibility 7: the declared rederive_invoke uses the npx-by-name spawn that IR-20 forbids, so the first vector-bearing module will fail CC-5 on the gate's host. New work item, not a retroactive RETURN, against the MOD-02 slice closed at k7-pass-2: tools/checks/external-isolation.ts:106,122-136 scans only *.ts and does not see `import x = require('node:fs')` (ImportEqualsDeclaration); severity medium. The tests that must turn red are fixtures for those two forms under test_external_import_outside_ports_is_malformed's sibling suite. MIN = 5. The drift block on MOD-01 stays; it does not lift."
+    }
+  },
+  "drift_score": {
+    "value": 5,
+    "basis": [
+      {
+        "check_id": "CC-6",
+        "finding": "Worst dimension: verification strength. The BC-01-2 detector (tests/kernel/kernel.test.ts:111-119), which guards the build's self-reliance point, only examines exported FunctionDeclaration nodes and matches the asserted type with text.includes. An arrow-const type predicate, a local predicate exported through `export {}`, or a predicate on a type alias each re-admits shape-based Projection membership (defeating DG-F1) with the test still green. The height-arithmetic detector (:181-193) has the same form gap.",
+        "deduction": 5
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "The IR-20 spawn-portability detector (tools/checks/spawn-portability.ts:86-90) matches callee names as text: import aliasing and element access get past it, and it never sweeps .py, while tools/rederive.py:108-111 launches project.json:8's `npx tsx` by name. The 'rule, not the call site' claim is false in the repo's own CC-5 driver.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-2",
+        "finding": "kernel:165-167 and BC-01-3 claim no subclass can introduce a mutator, but AppendedFact is an interface whose readonly does not bind an implementing class or an extending interface. SEAM-06 is enforced only through the base-type view, and no test covers the subclass half.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "BC-01-3 and BC-01-4 (kernel.test.ts:142,149) assert count > 0 instead of the specific readonly-assignment and missing-property diagnostics, so an unrelated compile error satisfies them.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-4",
+        "finding": "The declared full suite, single-test and re-derive commands were not executed: the reviewer process had no Bash even though the agent file and R-01 grant it. The 24/24-green claim and the round-4 mutation kills are unverified by the gate, and tree integrity was not mechanically checked.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "tests/checks/reported-path.test.ts:30 is tautological (it compares reported() with its own implementation), and :31 contains a dead ternary with identical arms.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-4",
+      "module": "harness (tools/k7-run.py / reviewer launch) \u00e2\u20ac\u201d all modules",
+      "required_change": "The reviewer process must actually be able to run the three declared commands. R-01 must be operative in the launched process, not just written into project.json: this round received Read, Grep and Glob only. Until then, CC-4, CC-5 and CC-6 cannot be mechanical, the suite-green claim is unverified, and tree integrity cannot be measured. Confirm the reviewer has execution rights before the next round is launched."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-01 kernel",
+      "required_change": "The rule that no exported declaration answers Projection membership by shape must be decided over every export form: exported variable-bound arrow or function expressions, export specifiers that re-export local declarations, and class or object members. The asserted type must be resolved through aliases, not text-matched. Each of the three K5 variants named in CC-6 must turn test_kernel_exports_no_projection_membership_predicate red under the declared single-test command. The same property applies to test_kernel_exposes_no_height_arithmetic."
+    },
+    {
+      "check_id": "CC-2",
+      "module": "MOD-01 kernel",
+      "required_change": "Either 'a subclass cannot introduce a mutator' (BC-01-3, kernel:165-167) becomes a property that holds and is tested, so that a fixture with an implementing class that redeclares a field as mutable, or an extending interface that adds a mutator method, fails to compile, or the claim is withdrawn and the actual scope of SEAM-06's enforcement is registered as an interpretation. As written, the comment and the base case assert something the type system does not provide."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-01 kernel",
+      "required_change": "BC-01-3 and BC-01-4 must pin the specific diagnostic each fixture exists to produce (assignment to a readonly property; a required property missing), not any diagnostic. A mutation that breaks the fixture for an unrelated reason must leave them red, not green."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "tools/checks (IR-20) and tools/rederive.py",
+      "required_change": "IR-20 claims a tree-wide rule. Every process launch reachable from the declared commands, including rederive.py's use of rederive_invoke, must either launch the Node binary or be a registered exception. The detector must resolve which binding a call refers to (aliased imports, element access) rather than matching the callee name. Fixtures using an aliased execFileSync and an element-access call must turn the spawn-portability suite red."
+    },
+    {
+      "check_id": "CC-7",
+      "module": "tests/checks",
+      "required_change": "Remove the tautology at reported-path.test.ts:30 and the identical-arm ternary at :31. Each assertion must be able to fail for some implementation of reported() that violates the respelling property."
+    }
+  ],
+  "next_action": "Re-launch K7 with working execution rights for the three declared commands, after closing the BC-01-2 declaration-form gap, the BC-01-3 subclass claim, the non-specific fixture-diagnostic assertions and the name-matching spawn detector."
+}

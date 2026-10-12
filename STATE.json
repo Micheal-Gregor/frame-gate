@@ -3,14 +3,14 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "dec306243f39449c90b154d45013b91e0a52ab82",
-  "tree": "cd1900e22a23fda98023c1c0923d7227e28959b8",
+  "head": "4b6a37e89c3bc5937e94b4edb65b6292861f4e73",
+  "tree": "140d7125bd7bc6691656433b4b9433bee5c327f3",
   "dirty": true,
   "current_module": "MOD-01",
-  "k7_round": 3,
+  "k7_round": 4,
   "last_gate_tag": "k7-pass-2",
   "next_action": "Done: round-3 verdict committed (71a824d); IR-19..IR-21 remediation merged (dec3062); full suite green on Windows 2026-10-11 (tsc clean, 24/24). Next: K7 round 4 on MOD-01 (python tools/k7-run.py) - the one re-check RD-9 allows. Not PASS -> owner triage (fix now / known issue / won't-fix), close as closed-by-owner-4. Then, owner instruction 2026-10-11: record the move to MetaFramework 2.3.0 (roster v0.4, OS-1..OS-12) in RESOLUTION_RECORD.md, migrate tools and config in place, and build MOD-03 catalog under it.",
   "blocked_on": null,
-  "updated_at": "2026-10-12T03:50:58+00:00",
-  "updated_by": "refresh"
+  "updated_at": "2026-10-12T03:56:07+00:00",
+  "updated_by": "session-start:startup"
 }

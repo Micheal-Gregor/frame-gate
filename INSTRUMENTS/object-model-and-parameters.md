@@ -11,7 +11,7 @@ checks against the tree, in both directions.
 | MOD-02 ports | src/ports/index.ts | OBJ-35..OBJ-39 | The only module that may name an external: record, renderer, dispatch, author enum, digest | n/a — port interfaces only; no class | NO — cites externals; decides nothing | BUILT |
 | MOD-01 kernel | src/kernel/index.ts | OBJ-01, OBJ-02, OBJ-03, OBJ-04, OBJ-10 | The three abstract bases, the closed five-member Unknown family, RecordHeight. Exports NO Projection membership predicate | n/a — exports types, branded values and pure functions; no class | NO — bases, a closed family and an order; no business question | BUILT |
 | MOD-03 catalog | src/catalog/index.ts | OBJ-05, OBJ-06, OBJ-13 | Currency order (configuration, read-only), Unit, Declaration as an appended act with declaration_at only | n/a — the module's public surface (re-exports); its classes have rows below | NO | BUILT |
-| MOD-05 facts | src/facts/index.ts | OBJ-11, OBJ-12, OBJ-16, OBJ-31 | Candidate, Commitment (effective() is a fold), DrawContext, CommitGate | — written by `tools/new-object.py` at build | — set at build (S3 predates the Decides tag; IR) | NOT_STARTED |
+| MOD-05 facts | src/facts/index.ts | OBJ-11, OBJ-12, OBJ-16, OBJ-31 | Candidate, Commitment (effective() is a fold), DrawContext, CommitGate | n/a — the module's public surface (re-exports); its classes have rows below | NO | BUILDING |
 | MOD-04 reachability | src/reachability/index.ts | OBJ-24, OBJ-29 | THE CONCEPT. One gate quantified over the currency order; REF-03 tests it completely | — written by `tools/new-object.py` at build | — set at build (S3 predates the Decides tag; IR) | NOT_STARTED |
 | MOD-12 lineage | src/lineage/index.ts | OBJ-18, OBJ-28, OBJ-32 | Invalidation, its transitive-closure scope derived before the act, SignatureGate | — written by `tools/new-object.py` at build | — set at build (S3 predates the Decides tag; IR) | NOT_STARTED |
 | MOD-06 condition | src/condition/index.ts | OBJ-07, OBJ-17, OBJ-19, OBJ-27 | ConditionIdentity over the complete draw-input set, PromptRevision, Sample, Chain | — written by `tools/new-object.py` at build | — set at build (S3 predates the Decides tag; IR) | NOT_STARTED |
@@ -25,6 +25,7 @@ checks against the tree, in both directions.
 | MOD-03 · UnitRegistry | src/catalog/unit-registry.ts | OBJ-06 | Unit identities and their read-only features | units | NO | BUILT |
 | MOD-03 · DeclarationLedger | src/catalog/declaration-ledger.ts | OBJ-13 | Appends HUMAN classification declarations; reads the one in force at a height | record, levels | NO | BUILT |
 | MOD-03 · IndependenceLedger | src/catalog/independence-ledger.ts | OBJ-06/ODG-FG-06 (R-10) | Appends HUMAN independence acts; reads the one in force at a height | record | NO | BUILT |
+| MOD-05 · CommitmentLedger | src/facts/commitment-ledger.ts | OBJ-12, OBJ-31 | Appends HUMAN commitments; folds the effective commitment per (unit, currency) as of a height | record, invalidations | NO | BUILT |
 
 Rows are in build order (S3 section 10), not module-number order.
 

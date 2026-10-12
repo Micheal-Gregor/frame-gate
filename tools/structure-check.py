@@ -87,7 +87,8 @@ def load_roles(root: Path) -> dict:
 def tracked_markdown(root: Path) -> list[str]:
     try:
         out = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "*.md"],
+            # IR-44: tracked AND untracked (not ignored), the tree phase4-checks reads.
+            ["git", "-C", str(root), "ls-files", "--cached", "--others", "--exclude-standard", "*.md"],
             capture_output=True, text=True, check=True,
         )
     except (OSError, subprocess.CalledProcessError) as exc:

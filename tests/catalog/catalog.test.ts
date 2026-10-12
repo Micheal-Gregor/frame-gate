@@ -4,7 +4,7 @@
  *
  * RD-12: the sizes of the currency order are a sample of the rule, never the pair
  * the concept happened to be described with; the parse-level rules are decided by
- * the type checker over fixtures with pinned diagnostics (tools/checks/catalog-checks.mjs).
+ * the type checker over fixtures with pinned diagnostics (tools/checks/ledger-checks.mjs).
  */
 import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
@@ -42,7 +42,7 @@ interface CatalogChecks {
   fixtures: Record<string, { codes: number[]; messages: string[] }>;
   mint: { src: Finding[]; fixtures: Record<string, Finding[]> };
   forge: { src: Finding[]; fixtures: Record<string, Finding[]> };
-  surface: { src: Surface; fixtures: Record<string, Surface> };
+  surface: { src: Surface; ledgers: Record<string, Surface>; fixtures: Record<string, Surface> };
   sc3: { src: Finding[]; fixtures: Record<string, Finding[]> };
 }
 /** Every fixture of one section, split by its declared intent (the file-name prefix). */
@@ -58,7 +58,7 @@ function byIntent(section: Record<string, Finding[]>) {
 let checked: CatalogChecks | undefined;
 function catalogChecks(): CatalogChecks {
   if (checked === undefined) {
-    const raw = execFileSync(process.execPath, [resolve(repo, "tools/checks/catalog-checks.mjs")], {
+    const raw = execFileSync(process.execPath, [resolve(repo, "tools/checks/ledger-checks.mjs")], {
       cwd: repo,
       encoding: "utf8",
       maxBuffer: 8 * 1024 * 1024,
@@ -269,6 +269,13 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
     expect(surface.src.returns.filter((r) => !r.ok), "an operation reads the current act").toEqual([]);
     expect(surface.src.fabricated, "a read in src/catalog uses a made-up height").toEqual([]);
     expect(surface.src.held, "a catalog class holds mutable state").toEqual([]);
+    // BC-05-6: every LEDGER root obeys the same rules, not only the catalog's.
+    for (const [root, s] of Object.entries(surface.ledgers)) {
+      expect(s.returns.filter((r) => !r.ok), `${root}: an operation reads the current act`).toEqual([]);
+      expect(s.fabricated, `${root}: a read uses a made-up height`).toEqual([]);
+      expect(s.held, `${root}: a class holds mutable state`).toEqual([]);
+    }
+    expect(Object.keys(surface.ledgers)).toEqual(["src/catalog", "src/facts"]);
     const cases = Object.entries(surface.fixtures);
     expect(cases.length).toBeGreaterThan(1);
     for (const [name, v] of cases) {

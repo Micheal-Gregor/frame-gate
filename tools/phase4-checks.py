@@ -81,6 +81,17 @@ def git(root: Path, *args: str) -> str:
         return ""
 
 
+def tree_files(root: Path, *paths: str) -> list[str]:
+    """The tree every check reads (IR-40, IR-44): tracked AND untracked files, not ignored.
+
+    One definition, so no two checks - or two halves of one check - see different trees.
+    `ls-files` alone failed OPEN on a new file (a new unclaimed source, a new scaffold
+    banner, a new class all passed until tracked) and, once IR-40 widened only the class
+    list, failed CLOSED on a new class whose new isolation test was still untracked."""
+    return [f for f in git(root, "ls-files", "--cached", "--others", "--exclude-standard", "--", *paths).splitlines()
+            if f.strip()]
+
+
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -172,10 +183,10 @@ def check_modules(root: Path, cfg: dict) -> list[dict]:
         return out
 
     rx = glob_to_regex(glob)
-    tracked = [p for p in git(root, "ls-files").splitlines() if p.strip() and rx.match(p)]
+    tracked = [p for p in tree_files(root) if rx.match(p)]
     for p in sorted(set(tracked) - declared):
         out.append(v("unclaimed_source",
-                     f"{p} is tracked but claimed by no module; "
+                     f"{p} is in the tree but claimed by no module; "
                      f"'module not in Object Model -> build fails'"))
     return out
 
@@ -212,8 +223,8 @@ def check_scaffold(root: Path, cfg: dict) -> list[dict]:
     markers = [re.compile(p, re.I) for p in (cfg.get("scaffold_markers") or DEFAULT_MARKERS)]
     exempt = cfg.get("scaffold_exempt") or DEFAULT_EXEMPT
     out = []
-    for rel in git(root, "ls-files").splitlines():
-        if not rel.strip() or any(rel.startswith(e) for e in exempt):
+    for rel in tree_files(root):
+        if any(rel.startswith(e) for e in exempt):
             continue
         p = root / rel
         try:
@@ -510,7 +521,7 @@ def check_isolation_tests(root: Path, cfg: dict, files: list, std: dict) -> list
     pat = std.get("isolation_test_pattern", "tests/**/*{stem}*.isolation.*")
     if not pat:
         return []
-    out, tests = [], git(root, "ls-files", "tests").splitlines()
+    out, tests = [], tree_files(root, "tests")
     invariant = _contract_invariants(root, cfg)
     differs = re.compile(r"not\.toBe|not\.toEqual|notEqual|assertNotEqual|!==|\bassert[^\n]*!=")
     for rel in files:
@@ -569,9 +580,9 @@ def check_objects(root: Path, cfg: dict) -> list[dict]:
     src_rx = glob_to_regex(cfg.get("source_glob") or "src/**")
     # IR-40: tracked AND untracked (not ignored) source. `ls-files` alone saw only
     # tracked files, so a builder running this before committing a new class got a
-    # vacuous pass - MOD-03's first "objects: pass" was exactly that.
-    files = [f for f in git(root, "ls-files", "--cached", "--others", "--exclude-standard").splitlines()
-             if src_rx.match(f)]
+    # vacuous pass - MOD-03's first "objects: pass" was exactly that. IR-44: the same
+    # tree as every other check, via tree_files().
+    files = [f for f in tree_files(root) if src_rx.match(f)]
     out = []
 
     def allowed(rel, rule):

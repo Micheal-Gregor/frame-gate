@@ -2,19 +2,20 @@
  *
  * SCOPE (R-15) - what this checker decides, and what it registers. K7 scores it
  * against this statement; a limit is pinned by a `limit-` fixture it must NOT flag.
- *   mint     DECIDES, outside the owning ledger, a branded catalog value made by: an
+ *   mint     DECIDES, outside the owning ledger, a branded ledger value made by: an
  *            assertion (by result type); `any` reaching a branded position; a call to a
  *            user generic returning a bare type parameter; `x as T` on a type
  *            parameter; a user type guard; an overload or ambient signature (and any
  *            `.d.ts` under src/); a ts-directive.
  *            LIMITS: array covariance (limit-array-covariance.ts); property covariance
  *            (limit-property-covariance.ts). BOUNDARY: code outside src/ is not read.
- *   forge    DECIDES, outside src/catalog/, an object whose `kind` - keyed by any
- *            spelling, via const, shorthand, spread, class field or getter - has a
- *            catalog-kind literal type; and an append whose argument's type carries one.
+ *   forge    DECIDES, outside the ledger root that owns the kind, an object whose
+ *            `kind` - keyed by any spelling, via const, shorthand, spread, class field
+ *            or getter - has a ledger-kind literal type; and an append whose argument's
+ *            type carries one.
  *            LIMITS: a kind typed plain `string` (limit-dynamic-kind.ts); an entry typed
  *            `any` (limit-any-entry.ts). BOUNDARY: runtime wiring is PC-02's.
- *   surface  DECIDES, per catalog root: an exported act-returning operation that takes
+ *   surface  DECIDES, per ledger root: an exported act-returning operation that takes
  *            no height and does not append under a HUMAN author; a height handed to a
  *            read (directly or through any wrapper in the root) that is not the
  *            caller's parameter; a class field that is not readonly or whose TYPE is
@@ -24,14 +25,18 @@
  *   sc3      DECIDES: a numeric 2 in any source file of any extension; a comparison of
  *            a Currency collection's length or size to a numeric literal.
  *            LIMITS: cardinality asked by index (limit-cardinality-by-index.ts).
- * MOD-03's parse-level rules, decided by the type checker in its own process.
+ * The parse-level rules of every append-only LEDGER (MOD-03 catalog, MOD-05 facts, ...),
+ * decided by the type checker in its own process. Renamed from catalog-checks.mjs when
+ * MOD-05 made the catalog's rules everyone's (BC-05-6): a forged commitment is the same
+ * defect as a forged declaration (DR-18).
  *
- *   fixtures  Compile tests/fixtures/catalog/*.ts and report each one's diagnostic
- *             CODES (BC-03-2 REF-01, BC-03-3 HOOK-07). A base case pins the one
- *             diagnostic its fixture exists to produce (DR-09).
+ *   fixtures  Compile tests/fixtures/catalog/*.ts and tests/fixtures/facts/*.ts and
+ *             report each one's diagnostic CODES (BC-03-2 REF-01, BC-03-3 HOOK-07,
+ *             BC-05-4 OBJ-31). A base case pins the one diagnostic its fixture exists
+ *             to produce (DR-09).
  *   mint      REF-01's reach (K7 round 6, DR-19): every way a value of a branded
- *             catalog type (Declaration, IndependenceAct) can come into existence
- *             outside the ledger that owns it -
+ *             ledger type (Declaration, IndependenceAct, Commitment) can come into
+ *             existence outside the ledger that owns it -
  *               assertion        `x as T` / `<T>x` whose RESULT type carries the brand
  *               any-flow         an `any`-typed expression in a position whose
  *                                contextual type carries the brand
@@ -44,17 +49,19 @@
  *               ts-directive     `@ts-ignore` / `@ts-expect-error` / `@ts-nocheck`,
  *                                which silences any parse-level refusal at all
  *             IR-30 once said an assertion was "the ONLY way"; it was not (IR-36).
- *   forge     R-12's static half of INV-PROV at the read seam (DR-18): outside
- *             src/catalog/, no object whose type carries a catalog KIND is built
+ *   forge     R-12's static half of INV-PROV at the read seam (DR-18): outside the
+ *             ledger root that owns a KIND, no object whose type carries it is built
  *             (a `kind` property, directly or through a const or a spread), and no
- *             RecordPort.append takes one (a replay). The kinds are read from the
- *             catalog's payload TYPES, never listed here.
- *   surface   BC-03-4, "no current declaration" (DR-20), over each catalog root:
+ *             RecordPort.append takes one (a replay). The kinds and their owners are
+ *             read from each ledger's payload TYPES (LEDGERS), never listed here.
+ *   surface   BC-03-4, "no current declaration" (DR-20), over each ledger root
+ *             (`src` keeps the catalog's own report; `ledgers` holds every root):
  *               returns      every exported operation - class method or free
  *                            function - returning a branded act takes a
  *                            RecordHeight or is the HUMAN-only append;
  *               fabricated   every RecordHeight handed to a READ (RecordPort.readAsOf,
- *                            declarationAt, independenceAt) is a parameter of the
+ *                            declarationAt, independenceAt, effectiveCommitment) is a
+ *                            parameter of the
  *                            enclosing function - a height made up inside the
  *                            catalog is a "now";
  *               held         no class holds mutable state other than its record
@@ -66,7 +73,7 @@
  * Out of process and plain JavaScript for the reasons fixture-compiles.mjs gives
  * (heap inside a vitest worker; no loader, no shim, no platform - IR-21).
  *
- * Usage:  node tools/checks/catalog-checks.mjs
+ * Usage:  node tools/checks/ledger-checks.mjs
  */
 import ts from "typescript";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -94,7 +101,12 @@ const fx = (name) => resolve(repo, "tests/fixtures", name);
 
 const SRC = walk(resolve(repo, "src"), SOURCE);
 const CATALOG_DIR = resolve(repo, "src/catalog");
-const FIXTURES = walk(fx("catalog"), /\.ts$/);
+const FIXTURES = [...walk(fx("catalog"), /\.ts$/), ...walk(fx("facts"), /\.ts$/)];
+/** Every ledger module: its root, and the payload types whose `kind` it owns. */
+const LEDGERS = [
+  { root: "src/catalog", payloads: [["src/catalog/declaration-ledger.ts", "DeclarationPayload"], ["src/catalog/independence-ledger.ts", "IndependencePayload"]] },
+  { root: "src/facts", payloads: [["src/facts/commitment-ledger.ts", "CommitmentPayload"]] },
+];
 const MINT = walk(fx("catalog-mint"), /\.ts$/);
 /** Hand-written declaration files: an ambient declaration can assert any type (DR-23). */
 function declarationFiles(dir) {
@@ -157,17 +169,20 @@ function brandKey(file, name) {
 const BRANDS = [
   { owner: "src/catalog/declaration-ledger.ts", name: "Declaration", key: brandKey("src/catalog/declaration-ledger.ts", "Declaration") },
   { owner: "src/catalog/independence-ledger.ts", name: "IndependenceAct", key: brandKey("src/catalog/independence-ledger.ts", "IndependenceAct") },
+  { owner: "src/facts/commitment-ledger.ts", name: "Commitment", key: brandKey("src/facts/commitment-ledger.ts", "Commitment") },
 ];
 const HEIGHT = brandKey("src/kernel/index.ts", "RecordHeight");
 const CURRENCY = brandKey("src/catalog/currency-order.ts", "Currency");
-const KINDS = new Set(
-  [["src/catalog/declaration-ledger.ts", "DeclarationPayload"], ["src/catalog/independence-ledger.ts", "IndependencePayload"]].map(([f, n]) => {
+/** kind -> the module root that owns it, read from each ledger's payload TYPE. */
+const KIND_OWNER = new Map(
+  LEDGERS.flatMap((l) => l.payloads.map(([f, n]) => {
     const t = checker.getDeclaredTypeOfSymbol(exportOf(f, n));
     const k = checker.getTypeOfSymbol(checker.getPropertyOfType(t, "kind"));
     if (!k.isStringLiteral()) throw new Error(`${n}.kind is not a string literal type`);
-    return k.value;
-  }),
+    return [k.value, l.root];
+  })),
 );
+const KINDS = new Set(KIND_OWNER.keys());
 
 const parts = (t) => (t.isUnion() ? t.types : [t]);
 const has = (t, key) => checker.getPropertiesOfType(t).some((p) => p.escapedName === key);
@@ -175,6 +190,18 @@ const brandsIn = (t) => (t ? BRANDS.filter((b) => parts(t).some((c) => has(c, b.
 const isHeight = (t) => parts(t).every((c) => has(c, HEIGHT));
 const isExactlyHuman = (t) => t.isStringLiteral() && t.value === "HUMAN";
 const catalogKindIn = (t) => parts(t).some((c) => c.isStringLiteral() && KINDS.has(c.value));
+/** The ledger kinds a type can be: string-literal constituents that some ledger owns. */
+const kindsIn = (t) => parts(t).filter((c) => c.isStringLiteral() && KINDS.has(c.value)).map((c) => c.value);
+function kindsCarried(t) {
+  const out = [];
+  for (const c of parts(t)) {
+    const kind = checker.getPropertyOfType(c, "kind");
+    if (kind) out.push(...kindsIn(checker.getTypeOfSymbol(kind)));
+    const payload = checker.getPropertyOfType(c, "payload");
+    if (payload) out.push(...kindsCarried(checker.getTypeOfSymbol(payload)));
+  }
+  return out;
+}
 function carriesCatalogKind(t) {
   return parts(t).some((c) => {
     const kind = checker.getPropertyOfType(c, "kind");
@@ -281,26 +308,29 @@ function forgeFindings(file) {
   const sf = program.getSourceFile(file);
   const here = rel(file);
   const found = [];
-  const add = (n, how) => found.push({ file: here, line: lineOf(sf, n), how });
+  // A kind is forged only OUTSIDE the module that owns it: the catalog may build
+  // declarations, the facts module commitments, and neither the other's.
+  const outsideOwner = (kinds) => kinds.some((k) => !(here === KIND_OWNER.get(k) || here.startsWith(KIND_OWNER.get(k) + "/")));
+  const add = (n, how, kinds) => { if (outsideOwner(kinds)) found.push({ file: here, line: lineOf(sf, n), how }); };
   const visit = (n) => {
     if (ts.isPropertyAssignment(n) && ts.isObjectLiteralExpression(n.parent) && keyName(n.name) === KIND_KEY &&
-        catalogKindIn(checker.getTypeAtLocation(n.initializer))) add(n, "catalog-kind-literal");
+        catalogKindIn(checker.getTypeAtLocation(n.initializer))) add(n, "catalog-kind-literal", kindsIn(checker.getTypeAtLocation(n.initializer)));
     // DR-24: a class whose instances carry a catalog kind - as a field or a getter.
     if ((ts.isPropertyDeclaration(n) || ts.isGetAccessorDeclaration(n)) && keyName(n.name) === KIND_KEY) {
       const t = ts.isPropertyDeclaration(n) && n.initializer ? checker.getTypeAtLocation(n.initializer)
         : ts.isGetAccessorDeclaration(n) ? checker.getReturnTypeOfSignature(checker.getSignatureFromDeclaration(n))
         : checker.getTypeAtLocation(n);
-      if (catalogKindIn(t)) add(n, "catalog-kind-field");
+      if (catalogKindIn(t)) add(n, "catalog-kind-field", kindsIn(t));
     }
     if (ts.isShorthandPropertyAssignment(n) && n.name.text === KIND_KEY) {
       const s = checker.getShorthandAssignmentValueSymbol(n);
-      if (s && catalogKindIn(checker.getTypeOfSymbolAtLocation(s, n))) add(n, "catalog-kind-literal");
+      if (s && catalogKindIn(checker.getTypeOfSymbolAtLocation(s, n))) add(n, "catalog-kind-literal", kindsIn(checker.getTypeOfSymbolAtLocation(s, n)));
     }
-    if (ts.isSpreadAssignment(n) && carriesCatalogKind(checker.getTypeAtLocation(n.expression))) add(n, "catalog-kind-spread");
+    if (ts.isSpreadAssignment(n) && carriesCatalogKind(checker.getTypeAtLocation(n.expression))) add(n, "catalog-kind-spread", kindsCarried(checker.getTypeAtLocation(n.expression)));
     if (ts.isCallExpression(n)) {
       const d = declOf(checker.getResolvedSignature(n));
       if (declaredAs(d, "src/ports/index.ts", "append", "RecordPort") && n.arguments[0] &&
-          carriesCatalogKind(checker.getTypeAtLocation(n.arguments[0]))) add(n, "catalog-kind-append");
+          carriesCatalogKind(checker.getTypeAtLocation(n.arguments[0]))) add(n, "catalog-kind-append", kindsCarried(checker.getTypeAtLocation(n.arguments[0])));
     }
     ts.forEachChild(n, visit);
   };
@@ -311,16 +341,18 @@ function forgeFindings(file) {
 // ---- surface ----------------------------------------------------------------
 const MUTATORS = ["set", "add", "delete", "clear", "push", "pop", "shift", "unshift", "splice", "sort", "reverse", "fill", "copyWithin"];
 const isRecordPort = (t) =>
-  parts(t).every((c) => (c.aliasSymbol?.name === "SharedRecord") || (c.symbol?.name === "RecordPort" &&
+  parts(t).every((c) => (c.aliasSymbol?.name === "SharedRecord" || c.aliasSymbol?.name === "FactRecord") || (c.symbol?.name === "RecordPort" &&
     c.symbol.declarations?.some((d) => rel(d.getSourceFile().fileName) === "src/ports/index.ts")));
 const isBaseRead = (d) =>
   declaredAs(d, "src/ports/index.ts", "readAsOf", "RecordPort") ||
   declaredAs(d, "src/catalog/declaration-ledger.ts", "declarationAt") ||
-  declaredAs(d, "src/catalog/independence-ledger.ts", "independenceAt");
+  declaredAs(d, "src/catalog/independence-ledger.ts", "independenceAt") ||
+  declaredAs(d, "src/facts/commitment-ledger.ts", "effectiveCommitment");
 const isAppend = (d) =>
   declaredAs(d, "src/ports/index.ts", "append", "RecordPort") ||
   declaredAs(d, "src/catalog/declaration-ledger.ts", "declare") ||
-  declaredAs(d, "src/catalog/independence-ledger.ts", "declareIndependence");
+  declaredAs(d, "src/catalog/independence-ledger.ts", "declareIndependence") ||
+  declaredAs(d, "src/facts/commitment-ledger.ts", "commit");
 const enclosingFunction = (n) => {
   let fn = n.parent;
   while (fn && !ts.isFunctionLike(fn)) fn = fn.parent;
@@ -480,7 +512,6 @@ function sc3Findings(file) {
   return found;
 }
 
-const inCatalog = (f) => f === CATALOG_DIR || f.startsWith(CATALOG_DIR + sep);
 process.stdout.write(JSON.stringify({
   fixtures,
   mint: {
@@ -488,11 +519,12 @@ process.stdout.write(JSON.stringify({
     fixtures: Object.fromEntries([...MINT, ...MINT_DTS].map((f) => [rel(f), mintFindings(f)])),
   },
   forge: {
-    src: SRC.filter((f) => !inCatalog(f)).flatMap(forgeFindings),
+    src: SRC.flatMap(forgeFindings),
     fixtures: Object.fromEntries(FORGE.map((f) => [rel(f), forgeFindings(f)])),
   },
   surface: {
     src: surfaceOf(CATALOG_DIR, resolve(CATALOG_DIR, "index.ts")),
+    ledgers: Object.fromEntries(LEDGERS.map((l) => [l.root, surfaceOf(resolve(repo, l.root), resolve(repo, l.root, "index.ts"))])),
     fixtures: Object.fromEntries(SURFACE_CASES.map((c) => [c, surfaceOf(join(fx("catalog-surface"), c), join(fx("catalog-surface"), c, "index.ts"))])),
   },
   sc3: { src: SRC.flatMap(sc3Findings), fixtures: Object.fromEntries(SC3.map((f) => [rel(f), sc3Findings(f)])) },

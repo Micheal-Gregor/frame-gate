@@ -238,3 +238,49 @@ differ only in that input give different answers.
   load time, so the registry's stub threw before collection. That was also an OS-12 defect: an
   isolation test that needs a second class is not testing one class. Fixed by naming the `Unit`
   (an operation input) directly.
+
+## MOD-05 `facts/`, slice 1: commitments (OBJ-12 Commitment, OBJ-31 CommitGate; R-18..R-20)
+
+**Axioms carried:**
+
+- **RC-3 / SC-2:** the effective commitment is a fold over the append-only record, recomputed per
+  call and never stored.
+- **ER-1 / ER-2:** BOTTOM is a value in the closed Unknown family, never `null`, never coalesced,
+  never defaulted. It is `NoSubject` (IR-42).
+- **ER-4:** proposals never close; no act signature accepts a diagnostic (REF-06).
+- **INV-PROV:** a commitment is a HUMAN act.
+- **F2:** two effective commitments is a defect, answered `uncomputable` (R-20).
+
+Written before the class, and watched failing against typed stubs.
+
+**BC-05-1 — the effective commitment is a fold, per (unit, currency), as of a height.**
+> With no commitment for `(u, c)` at `h`, the fold answers `NoSubject` (BOTTOM). After
+> `commit(u, c, "HUMAN")` at height h₀, it answers that commitment at every h ≥ h₀ and `NoSubject`
+> before h₀. A commitment for another unit, or another currency, never answers for `(u, c)`.
+> Entries that are not the ledger's own (another module's facts, a non-HUMAN entry) never count.
+
+**BC-05-2 — supersession is read through the declared invalidation reader (R-19).**
+> A commitment the reader reports invalidated at `h` does not count at `h`. Superseding (invalidate
+> c₁, then commit c₂) answers c₂ from c₂'s height on, and c₁ in between.
+
+**BC-05-3 — two effective commitments is `uncomputable("two-effective-commitments")` (R-20).**
+> Two commitments for `(u, c)`, neither invalidated at `h`, answer `uncomputable` with that boundary.
+> Neither is chosen, and the answer is not BOTTOM.
+
+**BC-05-4 — `commit` is a HUMAN act at parse (OBJ-31 closed_by HUMAN_ACT; INV-PROV).**
+> `commit(u, c, "ENGINE")` fails to compile with the pinned diagnostic. A caller narrowed through
+> `mayDecide` compiles. Each `commit` appends exactly one entry.
+
+**BC-05-5 — REF-06: no act signature accepts a diagnostic.**
+> Every act in `src/` (an operation that appends to the record) takes only closed parameter types,
+> never `any`, `unknown`, `object`, `{}` or an unconstrained type parameter, any of which would
+> admit a diagnostic. Decided by the type checker, with positive-control fixtures. When MOD-10
+> builds the Diagnostic type, the rule gains its brand explicitly.
+
+**BC-05-6 — the ledger's acts and reads obey the catalog's rules (R-12, BC-03-4).**
+> No code outside `src/facts/` builds or appends an entry whose type carries the commitment kind.
+> No exported operation answers "the current commitment" (every commitment-returning operation
+> takes a RecordHeight or is the HUMAN append). No class holds mutable state other than its
+> record port. These are the same checks as MOD-03's, now applied to every ledger.
+
+**BC-05-7 — OS-12, the class in isolation.**

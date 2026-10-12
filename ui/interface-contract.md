@@ -9,7 +9,7 @@ listing, not an explanation. NOT-YET-WRITTEN
 *Build-time note (Frame Gate, 2026-10-12).* The library is not sealed. Rows are added module by
 module as each is built, because `gate.py` compares signatures against this file at every commit.
 The marker above stays until the seal writes the whole page. MOD-01 and MOD-02 export no classes
-(see the object model), so they have no rows here. MOD-03 rows are below.
+(see the object model), so they have no rows here. MOD-03 and MOD-05 rows are below.
 
 ## Objects
 
@@ -19,6 +19,8 @@ The marker above stays until the seal writes the whole page. MOD-01 and MOD-02 e
 | Unit (OBJ-06) | The identity of the thing a draw is made for, and its features | yes |
 | Declaration (OBJ-13) | A HUMAN assertion that a unit belongs to a classification level, at a height | yes, once appended — a later declaration supersedes it from its own height on |
 | IndependenceAct (R-10) | A HUMAN act licensing (or withdrawing) a unit's independence, at a height | yes, once appended |
+| Commitment (OBJ-12) | A HUMAN commitment for a (unit, currency), at a height; what the next currency's reachability reads | yes, once appended — it leaves force only when the invalidation reader (MOD-12) says so |
+| CommitGate (OBJ-31) | The gate a commitment passes: closed by a HUMAN act; a diagnostic or an observation may propose, never close | yes — a fixed descriptor |
 
 ## Actions
 
@@ -39,6 +41,8 @@ operation legitimately ignores — the only way an OS-12 two-call test may retur
 | DeclarationLedger.declarationAt | MOD-03 | The declaration in force for a unit as of a height | unit, at | Declaration, or Unknown | Unknown `NoSubject` when no declaration had been made by that height | none — reads the record | deterministic for a given record prefix | levels |
 | IndependenceLedger.declareIndependence | MOD-03 | Appends a HUMAN act asserting or withdrawing a unit's independence (R-10) | unit, independent, author | IndependenceAct | a non-HUMAN author does not compile (HOOK-07, R-11) | appends exactly one entry to the record | the returned height is assigned by the record; otherwise deterministic | none |
 | IndependenceLedger.independenceAt | MOD-03 | The independence act in force for a unit as of a height | unit, at | IndependenceAct, or Unknown | Unknown `NoSubject` when no act had been made by that height, which means NOT licensed | none — reads the record | deterministic for a given record prefix | none |
+| CommitmentLedger.commit | MOD-05 | Appends a HUMAN commitment for a unit at a currency | unit, currency, author | Commitment | a non-HUMAN author does not compile (OBJ-31); no diagnostic or observation can be passed (REF-06) | appends exactly one entry to the record | the returned height is assigned by the record; otherwise deterministic | invalidations |
+| CommitmentLedger.effectiveCommitment | MOD-05 | The commitment in force for a unit at a currency as of a height — a fold, never stored | unit, currency, at | Commitment, or Unknown | Unknown `NoSubject` when none is in force (BOTTOM); Unknown `uncomputable("two-effective-commitments")` when more than one is (R-20) | none — reads the record and asks the invalidation reader | deterministic for a given record prefix and invalidation reader | none |
 
 ## Error states
 
@@ -48,5 +52,6 @@ operation legitimately ignores — the only way an OS-12 two-call test may retur
 | RangeError "…must have a least element: the list is empty" | CurrencyOrder constructor | the currency order is empty |
 | RangeError "currencies must be distinct: a total order has no ties" | CurrencyOrder constructor | a currency appears twice in the order |
 | TypeError "UnitRegistry requires units" | UnitRegistry constructor | configuration is missing the units |
-| TypeError "… requires record" / "record must offer append and readAsOf" | DeclarationLedger, IndependenceLedger constructors | the record binding is missing or is not a RecordPort |
+| TypeError "… requires record" / "record must offer append and readAsOf" | DeclarationLedger, IndependenceLedger, CommitmentLedger constructors | the record binding is missing or is not a RecordPort |
 | TypeError "DeclarationLedger requires levels" | DeclarationLedger constructor | configuration is missing the classification levels |
+| TypeError "CommitmentLedger requires invalidations" / "invalidations must offer isInvalidated" | CommitmentLedger constructor | the invalidation reader (MOD-12, R-19) is missing or does not answer isInvalidated |

@@ -13,6 +13,9 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-03 move to MetaFramework 2.3.0 (roster v0.4, OS-1..OS-12) | **ACCEPTED 2026-10-11** (owner, in chat) | RD-9/RD-19 round cap governs from K7 round 4. Tools and config migrated in place once the round-4 gate closes; MOD-03 onward built under the Object Writing Standard |
 | R-04 K7 round 4 triage (DR-05..DR-10) | **ACCEPTED 2026-10-11** (owner, live gate) | Fix now: DR-05, DR-06, DR-07, DR-09, DR-10. DR-08: claim withdrawn, SEAM-06 scope registered. Round 4 void for cap accounting; one re-run |
 | R-05 reviewer shell tool on Windows (amends R-01) | **ACCEPTED 2026-10-11** (owner, live gate, as DR-05 fix now) | Agent `tools:` and `reviewer_command` allowlist name PowerShell alongside Bash, for the same three declared commands |
+| R-06 K7 round 5 triage; gate closed | **ACCEPTED 2026-10-12** (owner, live gate) | Gate closes as `closed-by-owner-5` (tag placed by the owner, R-02). Fix now: DR-12, DR-13, WI-01; DR-11, DR-14, DR-15 decidable parts, limits registered |
+| R-07 reviewer scratch worktree (amends R-05) | **ACCEPTED 2026-10-12** (owner, live gate), **subject to probe** | Runner-owned gitignored worktree `.k7/wt`; reviewer Write/Edit scoped to `.k7/**`; `k7-run.py` refuses, not warns, a verdict that leaves the real tree dirty |
+| R-08 MOD-03 opens with MOD-01 at drift 5 | **ACCEPTED 2026-10-12** (owner, live gate) | Explicit owner lift of the teeth rule, effective when the R-06 fix-now items are committed with their battery. MOD-03's first K7 gate reviews everything, these fixes included |
 
 ---
 
@@ -240,3 +243,56 @@ used `reviewer_command` from `project.json`, launched through Python `subprocess
 
 The k7-run launch still needs `~/.local/bin` on `PATH` on this host. That is an environment binding,
 not a repo change: the npm `claude` shim here is broken, and Python cannot spawn a `.cmd` by name.
+
+---
+
+## R-06 · K7 round 5 triage, and the gate's close
+
+Round 5 returned RETURN, drift 5 (`k7-verdict-5.json`, reviewed `e0dd0cc`). It was the last round
+under R-04, so this triage closes the gate. **Closed gates stay closed (RD-11):** what follows
+is new work, reviewed at the next gate, never a round 6 here.
+
+| Item | Disposition |
+|---|---|
+| DR-11 membership from SHAPE wider than the brand | **Fix the decidable part:** structural Projection shapes (a `compute(at: RecordHeight)` member) as well as the brand; members at any depth; callables returned by exported factories. **Register the limit:** a plain `boolean` function that tests shape is indistinguishable, to any checker, from any other boolean function |
+| DR-12 BC-01-3 pins `payload` only | **Fix now:** every `AppendedFact` member discovered from source must refuse assignment with TS2540 |
+| DR-13 `isUnknown` tested on 2 of 5 kinds | **Fix now:** checked against every kind discovered from the `UnknownValue` declaration |
+| DR-14 height arithmetic wider than two-in, one-out | **Fix the decidable part:** restate BC-01-5's prohibition so it separates from ordering, then detect every form K7 named (delta, offset, successor, rest fold) with `order` still green. Register what remains undecidable |
+| DR-15 spawn forms | **Fix the decidable part:** `shell: true` refused whatever the command; `.call` / `.apply` / `Reflect.apply`; asyncio launchers; a module rebound to a local name |
+| DR-16 reviewer cannot stage mutations | **R-07** |
+| WI-01 MOD-02 isolation sweep (`.ts` only; ImportEquals) | **Fix now,** as a new work item against MOD-02. The `k7-pass-2` gate is not reopened |
+
+**The close.** The owner places `closed-by-owner-5` on the commit that records this ruling.
+Under 2.3.0's `k7-run.py` that tag also ends the non-PASS streak (rounds 4–5), so MOD-03's first
+round is not refused.
+
+---
+
+## R-07 · The reviewer may mutate a throwaway worktree (amends R-05)
+
+**Why.** CC-6 orders mutation experiments. R-05's grant refuses every write, so for three rounds
+the gate has read the builder's battery instead of reproducing it.
+
+**Ruling.**
+
+- `tools/k7-run.py` creates a detached worktree of the reviewed commit at `.k7/wt`
+  (gitignored), names it in the prompt, and removes it after the round. `node_modules` resolves
+  from the repo above it, so the declared commands run against the copy with `--root .k7/wt` or
+  `-p .k7/wt`.
+- The reviewer gains `Write` and `Edit` scoped to `.k7/**`, and nothing else.
+- **`k7-run.py` refuses a verdict that leaves the real tree dirty.** Today it warns and still
+  writes the verdict, which, once the reviewer can write, would let an edit persist with only a
+  warning.
+
+**Before adoption, as with R-01 and R-05:** a live probe must show that the reviewer (a) can
+write inside `.k7/wt`, (b) is refused a write to the real tree, and (c) can run a declared
+command against the copy and see a planted mutation fail.
+
+---
+
+## R-08 · MOD-03 opens with MOD-01 at drift 5
+
+The teeth rule blocks new work on a module scoring < 7 until a fresh score or an explicit owner
+lift. **Lifted, explicitly, by the owner,** effective once the R-06 fix-now items are committed
+with their mutation battery. The fresh score comes from MOD-03's first gate, which reviews the
+whole tree.

@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 8,
+  "reviewed": {
+    "tree_sha": "6d7679660813c86514514a2ab73ec7ff5512a1d2",
+    "commit_sha": "6912829cf440068eed277a0e7b700eb3e5db6fa2",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-05"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-12T23:33:04+00:00",
+    "completed_at": "2026-10-12T23:50:06+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 7,
+    "prior_tree_sha": "e7a5742b9f0213f153d69d372bfc81577d7efb0e",
+    "prior_failing_checks": [
+      "CC-6",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked by reading. src/facts/ holds index.ts, commitment-ledger.ts, draw-context-log.ts, candidate-ledger.ts; each has a row in INSTRUMENTS/object-model-and-parameters.md (:14, :28-30) and traces to an admitted node: OBJ-12/OBJ-31 (commitment-ledger.ts:27-65, COMMIT_GATE is OBJ-31's Gate descriptor), OBJ-16 incl. the 'later resolution label' (draw-context-log.ts:39-64), OBJ-11 (candidate-ledger.ts:47-60) - S3 section 3:106-109. The new detectors are registered (act-signatures.mjs IR-46; ledger-checks.mjs IR-45/IR-50/IR-51/IR-56). No orphan file; no NOT_STARTED module has a file in src/. Every citation in the code resolves and is live: F2 seams S-01/S-05/S-08/S-09 (governance/S3/facets/F2-gate.md:319-327), IR-31/35/42/43/47/49/55/57, R-10, R-18..R-28, R-30. One S3 node lacks a usable destination and is scored under CC-3: SEAM-10 / F2 S-08 'the declaration recorded on OBJ-16 at draw time' - a candidate carries no key to its draw context, so the transferred value is not recoverable per candidate."
+    },
+    "CC-2": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "REF-05 is not honoured on the path that costs. candidate-ledger.ts:142-168 asks admission, from, signature and ceiling and never a declaration; CandidateLedgerInputs (:94-102) declares no DeclarationReader. Live reproduction in .k7/wt (probe k7_probe_candidate_append_without_declaration_is_refused, vitest exit 1): with a real DeclarationLedger holding NO declaration for the unit, recordDraw answered refuse('no-declaration') while appendCandidate at the same height appended a candidate ('a candidate was drawn with no declaration in force'). The suite's own fixture shows the same: candidateWorld (tests/facts/facts.test.ts:395-418) never declares anything and every candidate is appended. The rule: S3 section 5 REF-05 'a draw at a height where no declaration was in force -> Refuse(no-declaration)'; F2's row (F2-gate.md:345) 'no draw context appended, NO CANDIDATE APPENDED'; F1 S-14 (F1-kernel-ports.md:335) '`draw` asserts declaration_at(u,h) != BOTTOM'; S3 section 1 and REF-03 make a draw the act that creates a candidate. Everything else carried holds in the running code: SEAM-02 fold with BOTTOM = noSubject (commitment-ledger.ts:112) and uncomputable on two (:113); SEAM-03 admission first and its Unknown passed through (candidate-ledger.ts:144-145); SEAM-04 ceiling (:153); SEAM-19 `from` required at parse (:44); SEAM-22 counts never summed (:183-191); S-01 one append per kind; S-08 declaration read at the draw height and stored by height (draw-context-log.ts:98-108); R-26 (:200-214); REF-06 on commit (:88). Error paths: every refusal returns before the append; no Unknown is collapsed (draw-context-log.ts:102, candidate-ledger.ts:207, :212). Thresholds, populations and ratio arithmetic are absent by structure: N/A-by-absence."
+    },
+    "CC-3": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Three unregistered mechanisms. (a) The candidate append's exemption from the declaration assertion is a silent choice: IR-42..IR-57 read in full, none registers it (IR-52 registers only the SCOPE non-check); the object-model row (:30) and BC-05-15..21 enumerate four guards and no declaration, against F2:345 and F1:335. (b) OBJ-11 and OBJ-16 are unlinked by design and unregistered: CandidatePayload (candidate-ledger.ts:47-57) carries no draw-context height and DrawContextPayload (draw-context-log.ts:39-49) no candidate, so SEAM-10's value cannot be joined to a candidate except by (unit, condition) heuristics. (c) Detector scope statements omit limits they have (R-15; DR-26's shape). act-signatures.mjs DECIDES 'a public property declared in user code' and registers no limit for open members declared in LIBRARY types: in .k7/wt an act taking `why: Error` (Error.cause: unknown) and one taking `outcome: PromiseSettledResult<string>` (PromiseRejectedResult.reason: any) were unflagged while `.bind` indirection WAS caught (k7NoteBound proposal unknown); ledger-checks.mjs `paths` LIMITS reads 'typed unknown or any', but an append whose argument is a constrained type parameter (`relay<T extends { author }>(record, entry: T)` called by `K7CandidateBackfill.backfill`) was a second candidate append path with test_each_ledger_kind_has_exactly_one_append_path green. Both evasions fall outside the stated DECIDES and are known-issue candidates by R-15; the omitted limits are CC-3. Registered interpretations otherwise match the code: IR-42/43/47/48/49/55/57, R-21..R-28; IR-53 stands by R-30; IR-54 filed as SP-3."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit ; npx vitest run   (the declared full suite as its two commands in sequence; tsc printed no diagnostics, vitest 14 files 143/143 passed. Join checked with the declared single-test command: npx vitest run -t \"test_draw_without_declaration_is_refused\" selected exactly 1 case (tests/facts/facts.test.ts:231, REF-05, genuine forbidden input: no declaration, another unit's, a later one); npx vitest run -t \"test_no_act_signature_accepts_diagnostic\" selected exactly 1 case (:169, REF-06, parse-level over 13 pinned fixtures and the real acts). The REF-05 case exercises recordDraw only; F2's 'no candidate appended' clause has no case - scored under CC-2.)",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (stderr: 'rederive: no vectors found in ...\\vectors'. N/A-by-absence: S3 section 6:216 and section 11:316 give MOD-05 no vector; nothing to re-derive by hand, no impl_sha to check.)",
+        "exit_code": 2
+      }
+    },
+    "CC-6": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "All experiments ran in the runner's R-07 worktree .k7/wt at 6912829 (git worktree list), with `npx tsc --noEmit -p .k7/wt` and `npx vitest run --root .k7/wt -t <name>`; the repository was never written. MOD-05 owns no hook (S3 section 11:316, N/A-by-absence); the trigger sites of HOOK-01/HOOK-04/HOOK-05 are its injected deciders, and those were attacked. KILLS, each by the named test with the mutant tsc-clean: K1 admission deleted (candidate-ledger.ts:144-145) -> test_an_unreachable_draw_appends_nothing_and_asks_no_one_else red (a candidate at height 3 instead of refuse unreachable). K2 guarded ordering inverted, signature before `from` -> test_refusals_answer_in_order_and_later_deciders_are_not_asked red (malformed-signature where malformed-from was due). K3 REF-05's refusal coalesced into the draw height (draw-context-log.ts:99-103) -> test_draw_without_declaration_is_refused red. K4 invalidation reader never asked (commitment-ledger.ts:107) -> test_an_invalidated_commitment_is_not_in_force red. K5 act-signatures.mjs:120 fixed point removed -> test_no_act_signature_accepts_diagnostic red (six fixtures incl. violating-through-commit lost). K6 ledger-checks.mjs:652-656 closures not climbed -> test_each_ledger_kind_has_exactly_one_append_path red (replay reported as <closure:16>). K7 DIVERGENCE on real code: commit(unit, currency, author, basis?: unknown) -> REF-06's named test red naming CommitmentLedger.commit basis. DIVERGENCE D1 (REF-05 on the candidate path) is caught by nothing on the orchestrated path - scored as CC-2, not a hook defect. Detector scope (R-15): no evasion inside a stated DECIDES rule was found; `.bind` was caught; two outside-DECIDES evasions (library-declared open members; type-parameter relay) are reported under CC-3. Independence note: the R-14 widenings (mint overload/.d.ts, forge keyName, surface wrapper/held-type) implement shapes K7 round 7 prescribed; they belong to MOD-03's closed slice and are scored as unverified by this gate. Their MOD-05 generalisation (IR-45 ownership, IR-46 acts, IR-50 discovery, IR-51 reach, IR-56 paths) was not prescribed by K7 and is certified here by K5, K6 and the probes. Tree integrity: repo `git status --porcelain` = ' M STATE.json' before and after; worktree restored to tsc clean and 144/144 (143 + one neutralised probe test); the probe files were left in .k7/wt neutralised to `export {}` and a trivial passing case, which the runner deletes."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form (the drift ledger scores per entry, not D1-D6). Object-model fidelity 6: three classes to the Object Writing Standard, clean injection (R-18/R-25), but OBJ-11 and OBJ-16 - the draw's cost and the draw's context - are two unrelated facts with no key between them, and COMMIT_GATE (commitment-ledger.ts:55-65) is exported and asserted by no test: a dead descriptor. Axiom coverage 5 (WORST): REF-05, a carried refusal owned by this module, is breached on the path that costs; a candidate is drawn with no declaration in force and nothing refuses. Base-case support 6: BC-05-8 pins recordDraw only and no base case states F2's 'no candidate appended'; otherwise strong - non-empty verdicts pinned, ownership and limits pinned by fixtures, no tautological assertions found, every battery-12 pre-pin present. Extensibility 7: deciders arrive by declared slots and MOD-04/MOD-11/MOD-12 can satisfy them; two detector limits are unregistered so the next module inherits them unseen. MIN = 5. Drift block: MOD-05 scores 5, below 7, so MOD-04 does not open on this verdict."
+    }
+  },
+  "drift_score": {
+    "value": 5,
+    "basis": [
+      {
+        "check_id": "CC-2",
+        "finding": "Worst dimension: axiom coverage. REF-05 (S3 section 5:175; F2-gate.md:345 'no candidate appended'; F1 S-14 '`draw` asserts declaration_at(u,h) != BOTTOM') is breached by CandidateLedger.appendCandidate (candidate-ledger.ts:142-168), which consults no declaration: reproduced live in .k7/wt, a candidate appended while recordDraw at the same height refused no-declaration.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Object-model fidelity: the candidate append's exemption from the declaration assertion and the absence of any key from a candidate (candidate-ledger.ts:47-57) to its draw context (draw-context-log.ts:39-49) are unregistered choices; SEAM-10's 'declaration recorded at draw time' is not recoverable per candidate.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Extensibility / verification: two detector scope statements omit limits they have (R-15): act-signatures.mjs does not register open members declared in library types (Error.cause, PromiseRejectedResult.reason unflagged in .k7/wt), and ledger-checks.mjs `paths` does not register an append argument typed by a constrained type parameter (a generic relay was a second candidate append path with the named test green).",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-2",
+      "module": "MOD-05 facts (CandidateLedger.appendCandidate, src/facts/candidate-ledger.ts)",
+      "required_change": "The property: no candidate is appended for a unit at height h unless a declaration for that unit is in force at h (REF-05; F2-gate.md:345 'no candidate appended'; F1 S-14). The test that must fail today and pass after: with a real DeclarationLedger holding no declaration for the unit, appendCandidate answers Refuse(no-declaration) and appends nothing, while the same call after a declaration is admitted. Whether the ledger reads the declaration through the declared reader at the append height or the candidate must bind a draw context that already did is a design choice for the builder under an owner ruling; if the owner instead rules the candidate path exempt, that is an Interpretation Register entry with its AE-link and an F-supersession proposal against F2's REF-05 row, not a silent omission."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-05 facts (OBJ-11 Candidate / OBJ-16 DrawContext, INSTRUMENTS/drift-ledger.md)",
+      "required_change": "The property: for every candidate, the declaration recorded at draw time (SEAM-10, S-08) is recoverable from the record by key, not by (unit, condition) heuristics. Either register the interpretation that joins a candidate to its draw context (naming the key and the module that reads it), or close the gap; the test that must fail today: two draw contexts for one (unit, condition) recorded under different declarations, one candidate drawn under the second, and the record identifies which declaration that candidate was drawn under."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "tools/checks/act-signatures.mjs and tools/checks/ledger-checks.mjs (SCOPE blocks, R-15)",
+      "required_change": "Each statement must be true of its checker: act-signatures must either decide open members declared in library types (an act taking `Error` or `PromiseSettledResult<string>` turns test_no_act_signature_accepts_diagnostic red) or register that limit with a limit- fixture; `paths` must either decide an append whose argument is a type parameter (a generic relay appending a candidate-kind entry turns test_each_ledger_kind_has_exactly_one_append_path red) or name the type-parameter form in its LIMITS with a limit- fixture. Both are known-issue candidates by R-15; the owner may leave them registered."
+    }
+  ],
+  "next_action": "Return MOD-05 to the builder for one fix round on the REF-05 candidate-path breach, with the owner ruling first on whether the candidate append asserts the declaration itself or binds a draw context that did, then re-check."
+}

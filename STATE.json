@@ -3,15 +3,15 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "0641e1abcf4490dec4e3d0b6270f1090429192e4",
-  "tree": "bf85f92385d2230afd97263964ca419deb2f2c36",
+  "head": "6912829cf440068eed277a0e7b700eb3e5db6fa2",
+  "tree": "6d7679660813c86514514a2ab73ec7ff5512a1d2",
   "dirty": true,
   "current_module": "MOD-05",
-  "k7_round": 7,
+  "k7_round": 8,
   "last_gate_tag": "closed-by-owner-7",
   "seal_tag": "",
   "next_action": "MOD-05 BUILT (3 slices; batteries 10-12 all killed; 143/143). Next: owner picks round 8's reviewer model and rules on IR-53; then mechanical checks and K7 round 8 on MOD-05 (k7-run.py --modules MOD-05). MOD-04 follows, honouring IR-42.",
   "blocked_on": null,
-  "updated_at": "2026-10-12T23:29:37+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-10-12T23:51:18+00:00",
+  "updated_by": "refresh"
 }

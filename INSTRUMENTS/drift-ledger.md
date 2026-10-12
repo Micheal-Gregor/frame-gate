@@ -38,6 +38,10 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | WI-03 | MOD-01 · `kernel-exports.mjs:93` (DR-11 residue) | New work item. `x is { compute(at?: RecordHeight): unknown }`, an optional parameter, is `RecordHeight \| undefined`, and the shape arm requires every constituent to be branded | (K7 round 7, CC-6) | REMEDIATED (R-14) — an optional height parameter is a height |
 | WI-04 | `tools/checks/spawn-resolve.mjs:66`, `spawn-portability.py:72-74` (DR-15 residue) | New work item. The TS sweep reads `ts\|mts\|mjs\|cjs\|js`, not `cts\|tsx\|jsx` (the WI-01 extension class again). The Python half binds the literal name `*` for `from subprocess import *`, so a following `run(["npx", …])` is unseen | (K7 round 7, CC-6) | REMEDIATED (R-14) — `.cts/.tsx/.jsx` swept; `from subprocess import *` binds every launcher |
 | WI-05 | MOD-02 · `external-isolation.ts:165` (WI-01 residue) | New work item against the closed MOD-02 slice. `import(\`node:crypto\`)` with a template-literal specifier is unflagged (`ts.isStringLiteral` only) | (K7 round 7, CC-6) | REMEDIATED (R-14) — backtick specifiers resolved; a computed specifier refused as unresolvable |
+| DR-27 | MOD-05 · `src/facts/candidate-ledger.ts:142-168` (`appendCandidate`) | **REF-05 is not honoured on the path that costs.** The candidate append asks admission, `from`, signature and ceiling, but never a declaration, and `CandidateLedgerInputs` declares no declaration reader. Reproduced live by the reviewer in `.k7/wt`: with no declaration for the unit, `recordDraw` refused `no-declaration` while `appendCandidate` at the same height appended a candidate. The suite's `candidateWorld` never declares anything. The rule: S3 §5 REF-05; F2:345 "no draw context appended, **no candidate appended**"; F1 S-14 "`draw` asserts `declaration_at(u,h) ≠ ⊥`" | **5** (K7 round 8, CC-2, deduction 3; CC-7 axiom coverage 5, the worst dimension) | OPEN — blocking; owner ruling first (read the declaration on the append, or bind a draw context that did) |
+| DR-28 | MOD-05 · OBJ-11 `CandidatePayload` (`candidate-ledger.ts:47-57`) / OBJ-16 `DrawContextPayload` (`draw-context-log.ts:39-49`) | **A candidate and its draw context have no key between them, and that choice was not registered.** No IR (IR-42..IR-57) registers the candidate append's exemption from the declaration assertion. SEAM-10's "declaration recorded at draw time" is therefore not recoverable per candidate, except by (unit, condition) heuristics. The object-model row and BC-05-15..21 list four guards and no declaration | **5** (K7 round 8, CC-3, deduction 1) | OPEN — blocking |
+| DR-29 | `tools/checks/act-signatures.mjs`, `tools/checks/ledger-checks.mjs` (SCOPE blocks, R-15) | **Two scope statements omit limits they have (DR-26's shape).** act-signatures recurses only into properties declared in USER code, so an act taking `Error` (`cause: unknown`) or `PromiseSettledResult<string>` (`reason: any`) is unflagged, and no limit is registered for it. The `paths` LIMITS name "typed unknown or any", but an append whose argument is a constrained TYPE PARAMETER (a generic relay called by a backfill) was a second candidate append path while `test_each_ledger_kind_has_exactly_one_append_path` stayed green. Both evasions are outside the stated DECIDES, so they are known-issue candidates by R-15; the omitted limits are the CC-3 defect | **5** (K7 round 8, CC-3, deduction 1) | OPEN — blocking (decide or register, owner's choice) |
+| WI-06 | MOD-05 · `src/facts/commitment-ledger.ts:55-65` | Observation in CC-7, not blocking: `COMMIT_GATE` (OBJ-31's descriptor) is exported and asserted by no test, a dead descriptor | (K7 round 8, CC-7) | OPEN |
 
 ## Interpretation Register (decisions the handoff did not make)
 
@@ -326,4 +330,28 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   answers it. Mechanical checks before the round: `phase4-checks` (all) clean apart from the
   nine `module_file_absent` entries; `structure-check` pass; `rederive --all` (no vectors yet;
   every vector is deferred).
+
+- **2026-10-12 — K7 round 8, MOD-05's first gate (Fable 5.1, R-29): RETURN, drift 5.** Reviewed
+  `6912829` (tree `6d76796`). CC-1, CC-4 (mechanical) and CC-6 PASS; CC-5 N/A-by-absence (MOD-05
+  has no vector).
+  - **The finding that matters (DR-27):** REF-05 holds on `recordDraw` and is breached on
+    `appendCandidate`, the path that costs. A candidate can be appended for a unit with no
+    declaration in force. The reviewer reproduced it live.
+  - **DR-28:** a candidate and its draw context have no key between them, and that was not
+    registered.
+  - **DR-29:** two detector scope statements omit limits (act-signatures on open members of
+    library types; `paths` on a type-parameter relay).
+  - **WI-06:** `COMMIT_GATE` is a dead descriptor.
+  - **What held (CC-2):** SEAM-02 (fold; BOTTOM = NoSubject; uncomputable on two); SEAM-03
+    (admission first, its Unknown passed through); SEAM-04; SEAM-19 (`from` required at parse);
+    SEAM-22; S-01; S-08; R-26; REF-06; no Unknown collapsed.
+
+  **The builder's own miss, stated plainly.** Slice 2 implemented REF-05 on the draw context and
+  slice 3 never connected it to the candidate. Three batteries and their pre-battery sweeps
+  checked the claims each slice MADE. This was a claim the S3 makes ACROSS slices, and no slice
+  owned it. F1 S-14 says the declaration recorded into OBJ-16 is "thereafter never re-read from
+  the catalog", which points to the candidate binding its draw context rather than re-reading.
+
+  **Cap position (RD-9).** Round 8 is MOD-05's first K7 round. One builder fix round and one
+  re-check remain before owner triage. Drift 5 is below 7, so MOD-04 does not open.
 

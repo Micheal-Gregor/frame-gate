@@ -231,3 +231,48 @@ command), committed, and the whole battery re-run.
 **P18 is round 4's N2.** It was disclosed then as unkillable because "on this host `path.sep` is
 already `/`". On the gate's host it is killed. The disclosure was correct about Linux and is now
 moot where it mattered.
+
+## Round 6 — the R-06 fix round, after K7 round 5 RETURN (drift 5)
+
+Run on committed tree `8d8376c` on the Windows gate host, with the same discipline as round 5:
+every selected test green on the clean tree first, each mutation run under the declared
+`test_select`, every restore verified against HEAD, and the run aborts on a failed restore. The
+nineteen round-5 mutations (P1–P19) were re-run because the detectors under them were rewritten
+(P11 re-planted at its new anchor in `spawn-resolve.mjs`), plus twenty-one new ones (Q1–Q21)
+aimed at this round's fixes.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| P1–P3, P6–P19 | Round 5's mutations, re-run | KILLED (test), all 17 | as in round 5 |
+| **P4** | `later = (a, b) => (a > b ? a : b)` exported | **Equivalent: not a defect under R-09** | it is a SELECTION, legal like `latest`; re-planted as P4b |
+| **P5** | `gap(a: H, b: H): H { return a; }` exported via specifier | **Equivalent: not a defect under R-09** | it returns an input; re-planted as P5b |
+| P4b | two heights in, a MANUFACTURED height out (`height(a + b)`) | KILLED (test) | `test_kernel_exposes_no_height_arithmetic` |
+| P5b | manufactured height through an alias and a specifier | KILLED (test) | same |
+| Q1 | `AppendedFact.author` loses `readonly` | KILLED (test) | `test_assigning_to_an_appended_fact_field_does_not_compile` |
+| Q2 | `AppendedFact.at` loses `readonly` | KILLED (test) | same |
+| Q3 | `refuse` dropped from the runtime kind list | KILLED (test) | `test_is_unknown_answers_whether_not_which` (also a `tsc` error: the `Record` misses a kind) |
+| Q4 | Kernel exports a STRUCTURAL-shape predicate | KILLED (test) | `test_kernel_exports_no_projection_membership_predicate` |
+| Q5 | Kernel exports a predicate four members deep | KILLED (test) | same |
+| Q6 | Kernel exports a factory returning a predicate | KILLED (test) | same |
+| Q7 | Kernel exports a delta (two heights → number) | KILLED (test) | `test_kernel_exposes_no_height_arithmetic` |
+| Q8 | Kernel exports a bare unwrap (height → number), R-09 | KILLED (test) | same |
+| Q9 | Kernel exports a successor | KILLED (test) | same |
+| Q10 | Kernel exports a rest fold | KILLED (test) | same |
+| Q11 | Selection test admits everything | KILLED (test) | `test_the_height_detector_sees_every_export_form` |
+| Q12 | Selection test reads only a conditional's true branch | KILLED (test) | same (the disguised-selection fixture) |
+| Q13 | Membership loses the SHAPE arm | KILLED (test) | `test_the_membership_detector_sees_every_export_form` |
+| Q14 | Spawn resolver ignores the `shell` option | KILLED (test) | `test_shell_true_hands_any_command_to_a_shell` |
+| Q15 | Spawn resolver loses the `Reflect.apply` arm | KILLED (test) | `test_call_apply_and_reflect_apply_do_not_hide_a_spawn` |
+| Q16 | Python sweep forgets the asyncio launchers | KILLED (test) | `test_python_launches_are_resolved_through_bindings` |
+| Q17 | Python sweep stops following module rebinding | KILLED (test) | same |
+| Q18 | Isolation sweep loses the ImportEquals arm (WI-01) | KILLED (test) | `test_external_import_outside_ports_is_malformed` |
+| Q19 | Isolation sweep reads `.ts` only again (WI-01) | KILLED (test) | same |
+| Q20 | Fixture compiler discovers no `AppendedFact` members (vacuity) | KILLED (test) | `test_assigning_to_an_appended_fact_field_does_not_compile` |
+| Q21 | Real tree gains a spawn through `.call` | KILLED (test) | `test_the_real_tools_and_tests_trees_spawn_only_node` |
+
+**Forty planted, thirty-eight killed as planted. The two survivors are equivalent mutants under
+the owner's ruling.** P4 and P5 were written in round 5 as "height arithmetic", but each returns
+one of its own inputs. R-09 makes that a legal selection, so reporting them as survivors would
+misdescribe the detector, and so would deleting them quietly. They were re-planted as the
+manufacturing forms they were meant to be, and both died. That is the ruling working as stated:
+the line moved, and the battery found exactly where.

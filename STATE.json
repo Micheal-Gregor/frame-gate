@@ -3,14 +3,14 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "e0dd0ccc8c5a438fcd9d384bad5edd92658b5540",
-  "tree": "4f0a5c9f580fe34969e2c2b79b6ae75d309a042c",
-  "dirty": false,
+  "head": "de6b3667ca112c421536126a37fd04e6255d5756",
+  "tree": "d0a710213043dc46167bca7f7ecf0d86b0d46ca9",
+  "dirty": true,
   "current_module": "MOD-01",
-  "k7_round": 4,
+  "k7_round": 5,
   "last_gate_tag": "k7-pass-2",
-  "next_action": "R-04 fix round done (DR-05..DR-10 remediated; suite 33/33 on Windows; battery 19/19 killed). Next: K7 round 5, the LAST round under R-04 - PASS, or owner triage closes the gate as closed-by-owner-5. Then migrate to MetaFramework 2.3.0 (R-03) and build MOD-03 catalog under OS-1..OS-12.",
+  "next_action": "Gate closed (closed-by-owner-5). R-06 fix items done except DR-14: owner to write isHeightArithmetic in tools/checks/kernel-exports.mjs. Then full suite + battery + commit; then R-08 lift takes effect; migrate to MetaFramework 2.3.0 (R-03); build MOD-03 catalog under OS-1..OS-12.",
   "blocked_on": null,
-  "updated_at": "2026-10-12T06:52:19+00:00",
-  "updated_by": "session-start:startup"
+  "updated_at": "2026-10-12T17:41:32+00:00",
+  "updated_by": "manual"
 }

@@ -317,3 +317,17 @@ written with a warning. The agent's tools add `Write, Edit`, and `reviewer_comma
 The reviewer also reported that an undeclared exit-code echo was refused before it ran. The
 allowlist still admits only the declared commands. CC-6's mutation experiments can now be run by
 the gate rather than read from the builder's record.
+
+---
+
+## Implementation record — 2026-10-12 (tags, placed by the owner)
+
+- **R-02's consequential correction is now true in this clone.** The 2026-09-10 record says
+  `k7-pass-2` was moved to `538c892`, but that move never reached this clone or `origin`: both
+  still had `5316158` on 2026-10-11. The owner moved it at a terminal, through the active tag
+  guard. `k7-pass-2` → `538c892`, tree `350a2b5`, which is the tree verdict 2 records reviewing.
+  `phase4-checks tags` passes for the first time since this was found. **Not yet pushed:**
+  `origin` still has the old position.
+- **`closed-by-owner-5`** placed by the owner on `5ca4355`, the commit recording R-06. Verdicts 4
+  (`4b6a37e`) and 5 (`e0dd0cc`) both reviewed ancestors of it, so the gate is closed under
+  RD-11, and under 2.3.0's round cap the non-PASS streak ends here.

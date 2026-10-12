@@ -32,6 +32,10 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-22 where draw-time features come from | **ACCEPTED 2026-10-12** (owner, live gate) | GIVEN by the caller as values of the catalog's closed `Features` type; MOD-05 never calls `UnitRegistry.features` (F1: MOD-13 only; SEAM-27; DG-F1) |
 | R-23 carrying scope (OBJ-14) and condition (OBJ-07) before MOD-11 / MOD-06 exist | **ACCEPTED 2026-10-12** (owner, live gate) | The scope is recorded by its record height (an appended fact's identity); the condition as an uninterpreted identity string MOD-06 will define. MOD-05 inspects neither; recording a scope spends nothing (O-4 / DG-F3 stays MOD-11's, held) |
 | R-24 two resolution labels on one draw context | **ACCEPTED 2026-10-12** (owner, live gate) | The label read answers `uncomputable("two-resolution-labels")`, as R-20; nothing is refused at append |
+| R-25 the scope ceiling on the candidate append (REF-16, SEAM-04) | **ACCEPTED 2026-10-12** (owner, live gate) | A THIRD injected decider, R-18's pattern applied to MOD-11: the one candidate append path asks a constructor-declared scope ceiling; a stand-in until MOD-11 exists |
+| R-26 how a candidate's `from` is checked | **ACCEPTED 2026-10-12** (owner, live gate) | Against MOD-05's own fold: `from` must be the effective commitment at the currency immediately below, as of the append height; BOTTOM only at the least currency of a unit an independence act licenses at that height (R-10); else `Refuse(malformed-from)`, nothing appended |
+| R-27 who computes the lineage digest (S-04, VEC-05, IR-06) | **ACCEPTED 2026-10-12** (owner, live gate) | MOD-12, from the commitment: MOD-05 passes the injected signature check the whole proposal (`from` included) and the signature as an opaque value; MOD-05 chooses no encoding and computes no digest. S-04 is a registered interpretation |
+| R-28 which refusal answers when several guards fail | **ACCEPTED 2026-10-12** (owner, live gate) | Admission (MOD-04), then `from` (MOD-05), then the signature (MOD-12), then the scope ceiling (MOD-11); the first failure answers and nothing is appended |
 
 ---
 
@@ -658,3 +662,41 @@ draw, as a further append (F2). F2 does not say what two labels mean. **Ruling.*
 for commitments: the label read answers `uncomputable("two-resolution-labels")` and never
 chooses. Nothing is refused at append, because an append has no height to check against and
 two racing appends would both pass.
+
+## R-25 · The scope ceiling is a third injected decider on the one append path
+
+**Owner, 2026-10-12, live gate.** REF-16 (owned by MOD-11) refuses the N+1th candidate under a
+ceiling of N. SEAM-04 makes "the governing scope and its remaining ceiling" a hard seam INTO
+MOD-05, and S-01 allows exactly one candidate append path. R-18 named MOD-04's admission and
+MOD-12's signature check as injected deciders, but not MOD-11. **Ruling.** R-18's pattern
+applies to MOD-11: the candidate append takes a constructor-declared scope ceiling, declared in
+MOD-05 by the one question it asks, with a stand-in until MOD-11 is built. No guard is placed
+around the append, because that would be a second place where a draw is judged.
+
+## R-26 · `from` is checked against MOD-05's own fold
+
+**Owner, 2026-10-12, live gate.** OBJ-11: `from` is the Commitment in the currency immediately
+below that a candidate derives from, and BOTTOM is legal only at the least currency of an
+independent unit. **Ruling.** The append checks that `from` IS the effective commitment at the
+currency immediately below, as of the append height, read through MOD-05's own commitment
+fold. The currency order and the independence reader (R-10) are injected. At the least
+currency, BOTTOM is allowed only when an independence act asserting independence is in force
+at that height. Anything else answers `Refuse(malformed-from)`, and nothing is appended.
+
+## R-27 · MOD-12 computes the lineage digest, from the commitment
+
+**Owner, 2026-10-12, live gate.** S-04 says MOD-05 supplies "the digest of the Commitment a
+derived candidate binds, obtained via OBJ-39". VEC-05 (a signature with and without the lineage
+digest) belongs to MOD-12, and the digest's encoding is IR-06's open pin. **Ruling.** MOD-05
+passes the injected signature check the whole proposal, `from` included, together with the
+signature as an opaque value. MOD-12 digests `from` through OBJ-39 under its own encoding.
+MOD-05 chooses no encoding and computes no digest. S-04's wording is a registered
+interpretation: MOD-05 supplies the commitment the digest is taken of.
+
+## R-28 · Refusal order on the candidate append
+
+**Owner, 2026-10-12, live gate.** The Unknown family carries one guard per answer. **Ruling.**
+Admission (MOD-04) is checked first, so an unreachable draw answers `unreachable` and costs
+nothing (REF-03, S-01). Then come `from` (MOD-05), the signature (MOD-12, HOOK-04) and the
+scope ceiling (MOD-11, REF-16). The first failure answers, and nothing is appended.
+

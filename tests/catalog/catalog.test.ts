@@ -148,6 +148,34 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
     expect((ledger.declarationAt(u, first.at) as { payload: { level: string } }).payload.level).toBe("L1");
   });
 
+  it("test_a_declaration_answers_only_for_its_own_unit", () => {
+    // Battery round 7, R9: with one unit in every test, an as-of read that ignored
+    // WHICH unit it was asked about still passed.
+    const record = inMemoryRecord();
+    const ledger = new DeclarationLedger({ record, levels: ["L1", "L2"] });
+    const units = unitsOf(["u1", "u2"]);
+    const [u1, u2] = [unitIn(units, "u1"), unitIn(units, "u2")];
+    const d1 = ledger.declare(u1, "L1", "HUMAN");
+    const d2 = ledger.declare(u2, "L2", "HUMAN");
+    if (isUnknown(d1) || isUnknown(d2)) throw new Error("declaration refused");
+    expect(ledger.declarationAt(u1, d2.at)).toEqual(d1); // u2's later act is not u1's
+    expect(ledger.declarationAt(u2, d2.at)).toEqual(d2);
+    const u2Early = ledger.declarationAt(u2, d1.at);
+    expect(isUnknown(u2Early) && u2Early.kind === "no-subject").toBe(true);
+  });
+
+  it("test_an_entry_not_authored_by_a_human_is_never_read_as_a_declaration", () => {
+    // Battery round 7, R10: the record is SHARED - any module can append to it. An
+    // entry shaped like a declaration but authored by the ENGINE must never come back
+    // as a Declaration: that would be INV-PROV broken at runtime, with HOOK-07 green.
+    const record = inMemoryRecord();
+    const ledger = new DeclarationLedger({ record, levels: ["L1"] });
+    const u = unitIn(unitsOf(["u1"]), "u1");
+    const forged = record.append({ author: "ENGINE", payload: { kind: "declaration", unit: u, level: "L1" } });
+    const got = ledger.declarationAt(u, forged);
+    expect(isUnknown(got) && got.kind === "no-subject", "a forged ENGINE entry was read as a HUMAN declaration").toBe(true);
+  });
+
   it("test_an_unconfigured_level_is_refused_not_appended", () => {
     const record = inMemoryRecord();
     const ledger = new DeclarationLedger({ record, levels: ["L1"] });
@@ -184,6 +212,40 @@ describe("BC-03-5 - R-10: independence is a HUMAN act read as of a height", () =
     expect(ledger.independenceAt(u, withdrawn.at)).toEqual(withdrawn);
     expect(withdrawn.payload.independent).toBe(false);
     expect(ledger.independenceAt(u, granted.at)).toEqual(granted); // history kept
+  });
+
+  it("test_independence_answers_only_for_a_human_act_on_its_own_unit", () => {
+    // Battery round 7, R11 (and R9's shape): another unit's act, or a forged ENGINE
+    // entry, never licenses a null lineage.
+    const record = inMemoryRecord();
+    const ledger = new IndependenceLedger({ record });
+    const units = unitsOf(["u1", "u2"]);
+    const [u1, u2] = [unitIn(units, "u1"), unitIn(units, "u2")];
+    const forged = record.append({ author: "ENGINE", payload: { kind: "independence", unit: u1, independent: true } });
+    const viaForgery = ledger.independenceAt(u1, forged);
+    expect(isUnknown(viaForgery) && viaForgery.kind === "no-subject", "a forged ENGINE act licensed a unit").toBe(true);
+    const other = ledger.declareIndependence(u2, true, "HUMAN");
+    const viaOther = ledger.independenceAt(u1, other.at);
+    expect(isUnknown(viaOther) && viaOther.kind === "no-subject", "u2's act licensed u1").toBe(true);
+  });
+});
+
+describe("OBJ-06 - unit features are read-only", () => {
+  it("test_unit_features_are_read_only", () => {
+    // Battery round 7, R14: "read-only" was a comment. A caller - MOD-13 included -
+    // must not be able to change what the catalog answers for anyone else, and the
+    // configuration object handed in must not be a live window into the registry.
+    const config = { u1: { difficulty: 1 } };
+    const registry = new UnitRegistry({ units: config });
+    const u = unitIn(registry, "u1");
+    const f = registry.features(u);
+    if (isUnknown(f)) throw new Error("no features");
+    expect(Object.isFrozen(f)).toBe(true);
+    expect(() => {
+      (f as { difficulty: number }).difficulty = 9;
+    }).toThrow(TypeError);
+    config.u1.difficulty = 7; // mutating the input after construction changes nothing
+    expect(registry.features(u)).toEqual({ difficulty: 1 });
   });
 });
 

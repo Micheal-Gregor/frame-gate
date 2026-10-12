@@ -35,6 +35,23 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+# R-07: the reviewer's only writable place. Gitignored, inside the repo so that
+# node_modules resolves from the copy exactly as it does from the original.
+SCRATCH = ".k7/wt"
+
+
+def scratch_up(root: Path, commit: str) -> None:
+    scratch_down(root)
+    subprocess.run(["git", "-C", str(root), "worktree", "add", "--detach", SCRATCH, commit],
+                   capture_output=True, text=True, check=True)
+
+
+def scratch_down(root: Path) -> None:
+    subprocess.run(["git", "-C", str(root), "worktree", "remove", "--force", SCRATCH],
+                   capture_output=True, text=True)
+    subprocess.run(["git", "-C", str(root), "worktree", "prune"], capture_output=True, text=True)
+
+
 def git(root: Path, *a: str) -> str:
     r = subprocess.run(["git", "-C", str(root), *a],
                        capture_output=True, text=True)
@@ -99,8 +116,13 @@ Use only the declared commands:
   single test:     {test_select}
   re-derive all:   {rederive_all}
 
-Leave the working tree byte-identical. Restore anything you mutate and verify
-with `git diff --quiet`.
+A throwaway worktree of the reviewed commit is at {scratch}. It is the ONLY
+place you may write (R-07): run mutation experiments there, never in the
+repository. Run the declared commands against it by pointing them at it:
+  npx tsc --noEmit -p {scratch}
+  npx vitest run --root {scratch} -t "<test name>"
+The runner deletes it after this round. The repository itself must be left
+byte-identical: a verdict that leaves it dirty is refused, not recorded.
 
 Return ONE JSON object and nothing else, with exactly these keys:
   checks       object; one entry per check id. Each: {{"status": "pass"|"fail"|
@@ -200,7 +222,7 @@ def main() -> int:
     modules = [m for m in args.modules.split(",") if m] or ["(all)"]
 
     prompt = PROMPT.format(
-        root=root, s3=s3_doc or "(governance/S3)", rnd=rnd,
+        root=root, s3=s3_doc or "(governance/S3)", rnd=rnd, scratch=SCRATCH,
         modules=", ".join(modules),
         test_command=cfg.get("test_command") or "(undeclared)",
         test_select=cfg.get("test_select") or "(undeclared)",
@@ -217,6 +239,7 @@ def main() -> int:
     cmd = shlex.split(cmd_t.format(agent_file=agent))
 
     started = now()
+    scratch_up(root, commit)
     try:
         proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
                               timeout=args.timeout, cwd=str(root),
@@ -226,6 +249,8 @@ def main() -> int:
                    f"in project.json.", 2)
     except subprocess.TimeoutExpired:
         return die(f"reviewer exceeded {args.timeout}s; no verdict written")
+    finally:
+        scratch_down(root)
     completed = now()
 
     raw = proc.stdout.strip()
@@ -243,6 +268,16 @@ def main() -> int:
         supplied.pop(k, None)
 
     clean_after = worktree_clean()
+    if not clean_after:
+        # R-07: now that the reviewer can write, a dirty tree after review is not a
+        # warning to record - it is a reviewer that changed what it reviewed. The
+        # output is kept for the owner; no verdict is written.
+        raw_out = inst / f"k7-raw-{rnd}.json"
+        raw_out.write_text(m.group(0), encoding="utf-8")
+        for line in git(root, "status", "--porcelain", "--", ".", ":(exclude)STATE.json").splitlines()[:20]:
+            print(f"  {line}", file=sys.stderr)
+        return die("the reviewer left the repository dirty (lines above); verdict REFUSED "
+                   f"(R-07). Raw output preserved at {raw_out}.")
 
     verdict = {
         "schema_version": "1.0",
@@ -301,9 +336,6 @@ def main() -> int:
 
     print(f"k7-run: round {rnd} -> {verdict['verdict']} "
           f"(drift {verdict['drift_score']['value']}) written to {out.name}")
-    if not clean_after:
-        print("k7-run: WARNING reviewer left the tree dirty; verdict records it",
-              file=sys.stderr)
     return 0
 
 

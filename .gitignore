@@ -11,3 +11,6 @@ __pycache__/
 # makes "same inputs, same output" a claim rather than a hope.
 node_modules/
 *.bundle 
+
+# R-07: the reviewer's throwaway worktree of the reviewed commit.
+.k7/

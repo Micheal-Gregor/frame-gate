@@ -296,3 +296,24 @@ The teeth rule blocks new work on a module scoring < 7 until a fresh score or an
 lift. **Lifted, explicitly, by the owner,** effective once the R-06 fix-now items are committed
 with their mutation battery. The fresh score comes from MOD-03's first gate, which reviews the
 whole tree.
+
+---
+
+## Implementation record — 2026-10-12 (R-07)
+
+**R-07 applied and probed live before adoption.** `tools/k7-run.py` creates `.k7/wt`, a detached
+worktree of the reviewed commit, before the reviewer starts, and removes it in a `finally`. The
+prompt names the path and the two declared commands pointed at it. A verdict that leaves the
+repository dirty is now **refused**, with the raw output kept as `k7-raw-N.json`; it used to be
+written with a warning. The agent's tools add `Write, Edit`, and `reviewer_command` adds
+`Write(.k7/**)` and `Edit(.k7/**)`. `.k7/` is gitignored.
+
+| Check | Result |
+|---|---|
+| (a) write inside `.k7/wt` | **yes**: `probe-inside.txt` created |
+| (b) write to the real repository refused | **yes**: `probe-outside.txt` at the repo root was not created |
+| (c) a mutation run against the copy | **yes**: the reviewer appended a membership predicate to `.k7/wt/src/kernel/index.ts`, ran `npx vitest run --root .k7/wt -t "test_kernel_exports_no_projection_membership_predicate"`, and reported it FAILED (1 failed, 32 skipped). The builder's own run of the same command agrees |
+
+The reviewer also reported that an undeclared exit-code echo was refused before it ran. The
+allowlist still admits only the declared commands. CC-6's mutation experiments can now be run by
+the gate rather than read from the builder's record.

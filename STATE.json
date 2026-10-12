@@ -10,8 +10,8 @@
   "k7_round": 7,
   "last_gate_tag": "closed-by-owner-7",
   "seal_tag": "",
-  "next_action": "MOD-05 slice 1 (commitments, REF-06) built, battery 10 at 24/24 (0641e1a). Next: owner rulings on slice 2 (DrawContextLog: author, label cardinality, declaration by height, scope/condition carriers), then build it; slice 3 (CandidateLedger) follows; then MOD-05's K7 gate. MOD-04 after, honouring IR-42.",
+  "next_action": "MOD-05 slices 1-2 built (commitments; draw context), batteries 10-11 at 24/24 and 25/25. Next: owner rulings on slice 3 (CandidateLedger: scope-ceiling decider REF-16, how from is checked, signature/seed types, refusal order), then build it; then MOD-05's K7 gate; MOD-04 after, honouring IR-42.",
   "blocked_on": null,
-  "updated_at": "2026-10-12T21:57:12+00:00",
-  "updated_by": "refresh"
+  "updated_at": "2026-10-12T22:58:13+00:00",
+  "updated_by": "manual"
 }

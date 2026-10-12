@@ -284,3 +284,13 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
     registered as a read. Fixed and pinned both ways.
   - **Interpretations:** IR-47..IR-52. IR-47 (authors as given) and IR-52 (scope not checked
     here) are latent.
+
+- **2026-10-12 — Builder battery round 11 (MOD-05 slice 2): 25/25 killed after one fix.** Two
+  unpinned claims were pinned before the run: the element-key reference form of R-22's reach,
+  and NON-empty discovery verdicts. Otherwise D18 and D21–D23 would have survived. On
+  `594e28f`, 24 of 25 were killed by a test and none by the compiler alone. **D4 survived:**
+  the test drew at exactly the declaration's own height, so recording the draw height in its
+  place was invisible. Fixed in `a968e65` by drawing strictly above, and D3/D4 were re-planted
+  and killed. Recorded in `mutation-battery.md`. Slice 3 (the candidate ledger) needs owner
+  rulings before it is written. MOD-05's K7 gate waits for it.
+

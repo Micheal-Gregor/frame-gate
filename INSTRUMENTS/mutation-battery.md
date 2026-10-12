@@ -447,3 +447,49 @@ tooling fix with no automated test. It is verified by its own run: the false
 `OS-12_no_isolation_test` disappeared. The patch script asserted that no bare `ls-files`
 remained when it ran, but nothing in the repo stops one from returning. That is recorded as
 unpinned, not as covered.
+
+## Round 11 — MOD-05 `facts/` slice 2 (the draw context), before its K7 gate
+
+Run on committed tree `594e28f` with the round-5 discipline; each planting also ran `tsc`, and
+none was killed by the compiler alone. Before the run, two claims that no fixture pinned were
+pinned (`5be9ce9`, `594e28f`), applying round 10's lesson: the element-key REFERENCE form of
+the features reach, and NON-empty discovery verdicts. The misowned-ledger fixture's alias is
+named `Commitment`, so a brand is pinned as its name AND its owner.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| D1 | a refused draw appends before refusing | KILLED (test) | `test_draw_without_declaration_is_refused` |
+| D2 | another Unknown from the reader collapsed into the refusal | KILLED (test) | `test_another_unknown_from_the_reader_is_passed_through_not_collapsed` |
+| D3 | the declaration read at a made-up "now", not the draw height (S-08) | KILLED (test) | `test_the_recorded_declaration_is_the_one_in_force_at_draw_time` |
+| D4 | the draw height recorded instead of the declaration's height | **SURVIVED** | — |
+| D5 | features stored by reference: the caller can still change the record | KILLED (test) | `test_features_are_recorded_as_given_and_frozen` |
+| D6 | the scope replaced by the draw height (interpreted, not carried) | KILLED (test) | `test_scope_and_condition_are_carried_as_given` |
+| D7 | the condition dropped | KILLED (test) | same |
+| D8 | two labels: the first is CHOSEN | KILLED (test) | `test_two_labels_are_uncomputable_not_chosen` |
+| D9 | a label for another draw counts | KILLED (test) | `test_a_label_for_another_draw_does_not_count` |
+| D10 | the label read at a made-up "now": visible before its own height | KILLED (test) | `test_a_label_answers_from_its_own_height_on` |
+| D11 | no label answers a default resolution instead of NoSubject | KILLED (test) | `test_an_unlabelled_draw_has_no_resolution_yet` |
+| D12 | `label` does not append (minted at the context's height) | KILLED (test) | `test_no_operation_answers_the_current_declaration` (the surface rule, statically) |
+| D13 | `drawsAsOf` ignores the unit | KILLED (test) | `test_draws_are_read_per_unit_as_of_a_height` |
+| D14 | `drawsAsOf` mints at the wrong height (off by one) | KILLED (test) | `test_a_redeclaration_does_not_rewrite_a_recorded_draw` |
+| D15 | the declarations slot is not checked at construction (OS-1) | KILLED (test) | the isolation test's declared-slots case |
+| D16 | `label` takes the engine's reason, `basis?: unknown` (REF-06 on a new act) | KILLED (test) | `test_no_act_signature_accepts_diagnostic` |
+| D17 | reach: destructuring no longer seen | KILLED (test) | `test_no_module_but_advisory_reads_unit_features` |
+| D18 | reach: element-access references no longer seen (RD-13 sibling spelling) | KILLED (test) | same (the pre-battery element-key fixture) |
+| D19 | reach: the owner exemption widened to every root | KILLED (test) | same |
+| D20 | **a REGISTERED LIMIT closed silently** (reach decided by callee TEXT) | KILLED (test) | same (the `limit-cast-member` pin) |
+| D21 | discovery: `unlisted` always empty | KILLED (test) | `test_every_appended_fact_kind_is_a_listed_ledger` (the non-empty pin) |
+| D22 | discovery: ownership no longer checked | KILLED (test) | same |
+| D23 | discovery: a brand matched by NAME alone, any file | KILLED (test) | same (the alias named `Commitment` in the catalog) |
+| D24 | `fabricated`: back to innermost-function-only (IR-49's false positive returns) | KILLED (test) | `test_no_operation_answers_the_current_declaration` |
+| D25 | `fabricated`: a captured LOCAL accepted as the caller's | KILLED (test) | same (the `closure-made-up-height` case) |
+
+**D4 survived, and the gap was the test's design.** It drew exactly AT each declaration's own
+height, so "the draw height" and "the declaration's height" were the same number, and
+recording the wrong one was invisible. **Fix (`a968e65`):** draws are made strictly above each
+declaration. **Re-run on `a968e65`:** D3 KILLED (test), D4 KILLED (test).
+
+**Twenty-five of twenty-five killed after one fix.** D21–D23 would all have survived without
+the pre-battery pins: a verdict asserted only as empty is not tested by a mutation that
+empties it.
+

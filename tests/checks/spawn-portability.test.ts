@@ -8,7 +8,7 @@
  * stop it from passing by reading names.
  */
 import { describe, expect, it } from "vitest";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -123,6 +123,17 @@ describe("spawn portability - the Python the declared commands reach", () => {
     for (const f of files.filter((x) => x.startsWith("conforming"))) {
       expect(flagged.has(f), `${f} must not be flagged`).toBe(false);
     }
+  });
+
+  it("test_the_declared_rederive_invoke_launches_node", () => {
+    // IR-26: rederive.py refuses an invoke that does not begin with `node`, but it
+    // only runs that refusal when a vector exists - and none does before MOD-04.
+    // A declaration reverted to `npx tsx` would sit unexercised until the first
+    // vector-bearing rung failed on the gate's host. Checked at the declaration.
+    const cfg = JSON.parse(readFileSync(resolve(repo, ".metaframework/project.json"), "utf8")) as {
+      rederive_invoke?: string;
+    };
+    expect(cfg.rederive_invoke?.trim().split(/\s+/)[0]).toBe("node");
   });
 
   it("test_the_python_the_declared_commands_reach_spawns_only_node", () => {

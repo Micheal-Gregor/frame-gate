@@ -3,15 +3,15 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "204cdce7d3dc24d3ca2b5bf58de8a0a6a55d58a9",
-  "tree": "96ed368f9eedef8103a88d4645d0f8fce2b3c283",
-  "dirty": false,
+  "head": "0641e1abcf4490dec4e3d0b6270f1090429192e4",
+  "tree": "bf85f92385d2230afd97263964ca419deb2f2c36",
+  "dirty": true,
   "current_module": "MOD-05",
   "k7_round": 7,
   "last_gate_tag": "closed-by-owner-7",
   "seal_tag": "",
-  "next_action": "Build MOD-05 facts (OBJ-11 Candidate, OBJ-12 Commitment, OBJ-16 DrawContext, OBJ-31 CommitGate) under OS-1..OS-12 per S3 section 10 (R-17); base cases first and watched failing; then battery; then MOD-05's K7 gate. MOD-04 reachability follows against the real fold.",
+  "next_action": "MOD-05 slice 1 (commitments, REF-06) built, battery 10 at 24/24 (0641e1a). Next: owner rulings on slice 2 (DrawContextLog: author, label cardinality, declaration by height, scope/condition carriers), then build it; slice 3 (CandidateLedger) follows; then MOD-05's K7 gate. MOD-04 after, honouring IR-42.",
   "blocked_on": null,
-  "updated_at": "2026-10-12T21:13:04+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-10-12T21:57:12+00:00",
+  "updated_by": "refresh"
 }

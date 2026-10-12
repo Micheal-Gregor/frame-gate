@@ -4,12 +4,15 @@ Live human gate, per-abstraction. RC-3 order: resolution RECORDED first, body fi
 
 **No mid-round instruction changes.** Any change to gate rules, review scope, or K7's charter —
 even one proposed in chat — takes effect only after it appears here with the owner's disposition.
-Both entries below were **ACCEPTED by the owner on 2026-09-10** and are in force.
+Each entry below carries its owner disposition and date, and is in force from that date.
 
 | Gate | Disposition (human decision, dated) | Operationalized as |
 |---|---|---|
-| R-01 reviewer execution permissions | **ACCEPTED 2026-09-10** | `reviewer_command` in `.metaframework/project.json` — allowlist of the three declared commands; `acceptEdits` dropped |
+| R-01 reviewer execution permissions | **ACCEPTED 2026-09-10**; amended by R-05 | `reviewer_command` in `.metaframework/project.json` — allowlist of the three declared commands; `acceptEdits` dropped |
 | R-02 tag-guard reachability | **ACCEPTED 2026-09-10** | `.githooks/reference-transaction`, activated per clone with `git config core.hooksPath .githooks` |
+| R-03 move to MetaFramework 2.3.0 (roster v0.4, OS-1..OS-12) | **ACCEPTED 2026-10-11** (owner, in chat) | RD-9/RD-19 round cap governs from K7 round 4. Tools and config migrated in place once the round-4 gate closes; MOD-03 onward built under the Object Writing Standard |
+| R-04 K7 round 4 triage (DR-05..DR-10) | **ACCEPTED 2026-10-11** (owner, live gate) | Fix now: DR-05, DR-06, DR-07, DR-09, DR-10. DR-08: claim withdrawn, SEAM-06 scope registered. Round 4 void for cap accounting; one re-run |
+| R-05 reviewer shell tool on Windows (amends R-01) | **ACCEPTED 2026-10-11** (owner, live gate, as DR-05 fix now) | Agent `tools:` and `reviewer_command` allowlist name PowerShell alongside Bash, for the same three declared commands |
 
 ---
 
@@ -141,3 +144,72 @@ verdict 2 records reviewing. The tag is evidence again rather than assertion.
 
 Recorded in `CLAUDE.md`. If someone skips it the guard is silently absent — which is exactly today's
 situation, so the change cannot make matters worse, only better wherever it is applied.
+
+---
+
+## R-03 · Move to MetaFramework 2.3.0 mid-build
+
+**Owner instruction, 2026-10-11, in chat:** "Run stage 4 using the latest step 4 directions — it
+will prevent some sub-par code issues, and provides a class object library to support." The owner
+also stated that the move is a deliberate trial of the framework. Framework defects found along the
+way are logged with the framework, not in this repo's instruments.
+
+**What takes effect, and when.**
+
+- **From K7 round 4:** RD-9 as restated by RD-19 replaces this repo's "rounds are unbounded;
+  no-progress halts". The rule is PASS, or one fix round plus one re-check, then owner triage.
+- **After the round-4 gate closes:** the README's in-place migration. That covers the template
+  tools, `governance/contracts/`, roster v0.4 and the new `project.json` keys. The migration is
+  ordered after the close because the README requires the last gate to be closed first.
+- **From MOD-03:** every class is written to OS-1..OS-12 (RD-22..RD-24).
+
+**Open, for a later ruling.** RD-24 says the standard "applies to classes written after the change;
+it does not reopen sealed files". MOD-01 and MOD-02 were written before the change but are not
+sealed. Whether the seal's declaration comparison applies to them is not decided here.
+
+---
+
+## R-04 · K7 round 4 triage
+
+Round 4 returned RETURN, drift 5 (`k7-verdict-4.json`, reviewed `4b6a37e`), the second non-PASS
+after one fix round, so the cap was reached. Dispositions, owner, live gate, 2026-10-11:
+
+| Item | Disposition |
+|---|---|
+| DR-05 reviewer has no shell on this host | **Fix now**, as R-05 |
+| DR-06 membership-predicate and height-arithmetic detectors cover one declaration form | **Fix now**: every export form; types resolved through aliases, not text-matched |
+| DR-07 spawn detector matches names as text; `rederive.py` launches `npx` by name | **Fix now** |
+| DR-08 "no subclass can introduce a mutator" | **Claim withdrawn.** A TypeScript interface cannot bind an implementer or an extending interface. SEAM-06's actual enforcement scope is registered as an interpretation |
+| DR-09 BC-01-3/4 accept any diagnostic | **Fix now**: pin the specific diagnostic each fixture exists to produce |
+| DR-10 tautological assertion in `reported-path.test.ts` | **Fix now** |
+
+**Round 4 is void for cap accounting.** The reviewer could not execute any declared command (DR-05),
+so round 4 is not counted as the re-check RD-9 allows. After the fix-now items, K7 runs once more
+with a working shell. **If that round is not PASS, owner triage closes the gate, as
+`closed-by-owner-5`, and no further rounds run.** Round 4's findings stand as findings; only its
+place in the count is voided.
+
+Note: the runner (2.3.0 `k7-run.py`, once migrated) counts every non-PASS verdict and would refuse
+round 5. Round 5 is therefore launched with this repo's current runner, before migration, under
+this ruling.
+
+---
+
+## R-05 · The reviewer's shell is named after one host (amends R-01)
+
+**Found 2026-10-11 (builder probe after round 4).** Under `claude -p` on the Windows gate host,
+Claude Code 2.1.296 exposes `PowerShell` and no tool named `Bash`. R-01's allowlist and the agent's
+`tools:` line name `Bash` only, so both granted nothing. The reviewer held Read, Grep and Glob, and
+still returned a verdict. Round 3 executed because the CLI then still exposed Bash.
+
+**Ruling.** Name both shells. In the agent `tools:` line and in the allowlist, use the same three
+declared command prefixes for each shell. The grant is not widened: it is the same commands under
+the second shell's name.
+
+**Before adoption, as with R-01:** confirm with a live probe that the reviewer process (a) lists a
+shell tool, (b) can run a declared command, and (c) is refused an undeclared one. An unverified
+grant fails open into a read-only review that still scores.
+
+**Recorded, not changed.** The allowlist does not admit the copy/edit commands a CC-6 mutation
+experiment needs ("copy to a throwaway /tmp directory"). That is why round 3's CC-6 was also
+non-mechanical. Changing it would widen the reviewer's grant, so it needs its own ruling.

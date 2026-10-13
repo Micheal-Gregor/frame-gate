@@ -53,6 +53,9 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-43 what a candidate's signature IS (OBJ-32; no credential, no signer port) | **ACCEPTED 2026-10-13** (owner, live gate) | The DIGEST of its material, through the pinned OBJ-39 DigestPort; the material structurally includes the lineage digest of its `from` commitment. Verification recomputes and compares. What is unforgeable is the BINDING (VEC-05). MOD-12 offers the proposer the one way to form a signature |
 | R-44 the refusal for a signature that does not match its recomputed material | **ACCEPTED 2026-10-13** (owner, live gate) | `Refuse(malformed-signature)`, OBJ-32's single ON_FAIL. Omitting the lineage stays a parse error (REF-04); a mismatch is the runtime face of the same guard. No new refusal name |
 | R-45 what a BOTTOM-from candidate's signature covers in place of a lineage digest | **ACCEPTED 2026-10-13** (owner, live gate) | A typed BOTTOM lineage marker. The material's lineage is required at parse and is EITHER a lineage digest (minted only by MOD-12, from a Commitment) OR the marker, so a BOTTOM-signed candidate cannot be replayed as a derived one, nor the reverse |
+| R-46 IR-77: a candidate from the displayed scope, accepted AFTER the invalidation | **ACCEPTED 2026-10-13** (owner, live gate) | BORN SUPERSEDED: a commitment accepting any candidate of an invalidation's frozen scope is invalidated, whenever it is made. The commit is appended (the record says what happened); the fold answers BOTTOM for it (the read says what holds), R-20's split. MOD-05 and OBJ-31 unchanged |
+| R-47 REF-07's freshness: how recent must the displayed derivation be | **ACCEPTED 2026-10-13** (owner, live gate) | STRICT, SAME HEIGHT: `invalidate(displayed, "HUMAN", at)` refuses unless the scope was derived at `at`, the height the caller asserts as current (as `appendCandidate`'s `at` is). RecordPort has no head read, so a concurrent append between display and act is a registered single-writer production concern |
+| R-48 how an invalidation proves its scope was displayed (RC-4) | **ACCEPTED 2026-10-13** (owner, live gate) | A DisplayedScope TOKEN that only MOD-12 mints, when `display` has handed the scope to RendererPort.present. `invalidate` accepts only the token: without a derivation it does not compile (REF-07 at parse); a stale one is refused at runtime (R-47). Nothing extra is appended |
 
 ---
 
@@ -937,4 +940,34 @@ nothing (R-10, R-40). **Ruling.** The material's lineage is required at parse an
 lineage digest, a type minted only by MOD-12 from a Commitment, OR a typed BOTTOM marker. The
 signature then covers "derives from nothing". A BOTTOM-signed candidate cannot be replayed as
 derived, nor the reverse, and no bytes are invented to hash for a value that names nothing.
+
+## R-46 · A commitment accepting a candidate of a frozen scope is born superseded (IR-77)
+
+**Owner, 2026-10-13, live gate.** IR-77: after K is invalidated, a candidate derived from K can
+still be committed, if it was in the displayed scope but never accepted. The result is a
+commitment in force on a lineage the human un-approved. **Ruling.** An invalidation's scope is
+FROZEN as derived and displayed (R-42, R-47): K's closure over `from` as of `scopeAt`. A commitment
+that accepts any candidate of that frozen scope is invalidated, WHENEVER it is made. The commit is
+still appended, because the record says what happened. The fold answers BOTTOM for it, because the
+read says what holds. This is the split R-20 already uses for two commitments in force. Nothing
+can then derive from that commitment: MOD-05's from-check refuses a `from` not in force. MOD-05,
+and OBJ-31's condition, are unchanged.
+
+## R-47 · REF-07: the displayed derivation must be at the act's height
+
+**Owner, 2026-10-13, live gate.** REF-07 (F2): "an append reached without a prior derivation at the
+same height is rejected." RecordPort (OBJ-35) exposes `append` and `readAsOf`, and `readAsOf(h)` is
+exactly the first `h` facts (IR-31). So an act cannot learn the head without appending. **Ruling.**
+`invalidate(displayed, "HUMAN", at)` refuses unless the displayed scope was derived at `at`, the
+height the caller asserts as current. `CandidateLedger.appendCandidate`'s `at` is trusted the same
+way. A concurrent append between display and act cannot be seen through the port. It is registered
+as a single-writer production concern and carried forward, not built around.
+
+## R-48 · A DisplayedScope token proves the display (RC-4)
+
+**Owner, 2026-10-13, live gate.** **Ruling.** `display(scope)` hands the scope to RendererPort.present
+(OBJ-36, outbound; its return is never branched on) and returns a DisplayedScope that only MOD-12
+mints. `invalidate` accepts only that token. An invalidation without a derivation therefore does
+not compile, which is REF-07 at parse, and a stale token is refused at runtime under R-47. Nothing is
+appended for the display: no fact kind or append path beyond the S3's.
 

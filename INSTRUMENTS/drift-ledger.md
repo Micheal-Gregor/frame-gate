@@ -547,3 +547,10 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   builder's own LF-writing scripts had masked this in earlier modules. IR-75..IR-77; IR-77 is
   carried to slice C's gate. 188/188.
 
+- **2026-10-13 — Slice B and slice C rulings (R-43..R-48), before any MOD-12 code.** IR-77 is
+  answered by R-46: born superseded. The IR row stays as written (append-only). MOD-12 is built as
+  ONE rung, slices B and C together, and closed on the full suite. The S3 §5 test treats a module
+  as built once `src/<dir>` exists, and from then on it requires REF-04 AND REF-07 to select one
+  case each. Closing slice B alone would need REF-07's case red, or faked. That is MF-32's shape,
+  and here the build's own rule caught it.
+

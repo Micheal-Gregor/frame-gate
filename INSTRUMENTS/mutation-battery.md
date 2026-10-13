@@ -778,3 +778,16 @@ the same material under the other port is that port's digest of the same bytes. 
 `958b688`; re-run, M8 is KILLED. **36 / 36.** M31..M33 are MF-34's spellings of "MOD-05 imports
 MOD-12" (a type import, a re-export, an import-type expression); all are resolved and killed.
 
+## Round 20 — R-51's fix-now items, sized to the change (R-50)
+
+On `ad33e1a`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| N1 | DR-37 undone below the least currency: agreement by height alone | KILLED (test) | `test_a_from_is_the_recorded_commitment_not_a_copy` |
+| N2 | DR-37 undone on the inheritance branch | KILLED (test) | `test_a_from_is_the_recorded_commitment_not_a_copy` |
+| N3 | DR-41: the closure ordered backwards | KILLED (test) | `test_the_scope_is_the_closure_over_from_through_acceptances` |
+| N4 | DR-41: the invalidated set ordered backwards | KILLED (test) | `test_every_invalidation_counts_and_only_an_invalidation_is_read` |
+
+**4 / 4.** MOD-12's gate is closed by owner triage (R-51).
+

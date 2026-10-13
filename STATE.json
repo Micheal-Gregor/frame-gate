@@ -10,8 +10,8 @@
   "k7_round": 11,
   "last_gate_tag": "closed-by-owner-11",
   "seal_tag": "",
-  "next_action": "MOD-12 built; battery 19 36/36 (M8 survived once, test sharpened). R-49: K7 round 12 = MOD-12, MOD-05, MOD-04 on Fable 5.1. Next: run K7 round 12 on the committed tree.",
+  "next_action": "MOD-12 gate closed by owner triage (R-51; owner tags closed-by-owner-12 on 13a8210); R-51 fixes in (ad33e1a), battery 20 4/4. Next per S3 s10: MOD-06 condition / MOD-07 observation, under R-50.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T06:05:51+00:00",
-  "updated_by": "session-start:startup"
+  "updated_at": "2026-10-13T06:44:08+00:00",
+  "updated_by": "manual"
 }

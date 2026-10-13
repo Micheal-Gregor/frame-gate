@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 11,
+  "reviewed": {
+    "tree_sha": "a8c9dbf135161b4b2f058a4e73f295082fa9d1ec",
+    "commit_sha": "724e048b49ad2a032b8e2dc23787a38d193ffffc",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-04",
+      "MOD-05",
+      "MOD-01"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T04:03:48+00:00",
+    "completed_at": "2026-10-13T04:20:31+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 10,
+    "prior_tree_sha": "1e583a2874328255254910697e292cbc0b2b9486",
+    "prior_failing_checks": [
+      "CC-1",
+      "CC-3",
+      "CC-6",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Every file changed since round 10's reviewed commit (git diff --stat 7700e42 HEAD: no src/ file; 28 files, all INSTRUMENTS, fixtures, two detectors, two tests) traces to a live register entry: tests/fixtures/reach-branch/src/reachability/{violating-destructured-least,violating-destructured-hop,violating-destructured-object-key,conforming-destructured-data,limit-class-field-least}.ts -> R-38 DR-30 / IR-69 (drift-ledger.md:126); tests/fixtures/reach-sole-site/src/{facts,spend}/violating-{helper-fold,helper-by-reference,closure-reader,array-from,set-foreach,map-foreach}.ts and limit-helper-verdict.ts, and tests/fixtures/projection-joins/src/{facts,statistics}/violating-{call,apply-bind,reflect,generic-launder}-join.ts -> R-38 DR-32 / IR-70 (:127); BC-04-10..12 in axioms-and-base-cases.md:495-513 written before the change; tools/checks/reach-checks.mjs and projection-joins.mjs SCOPE blocks rewritten with the code. The round-10 CC-1 failure is closed: PC-05 is enumerated for MOD-04 at completion-ledger.md:16 with the mechanism IR-68 registers (attribution by re-evaluation of a pure as-of fold at the refusal's height; the aggregating stream is deployment, Developer), and object-model-and-parameters.md:14-15 now read MOD-05 BUILT (k7-pass-9) and MOD-04 BUILT with Decides YES for ReachabilityGate (:31-32). src/ is byte-identical to the round-10 tree, so that round's code trace (reachability.ts -> OBJ-24 s3:104; reachability-gate.ts -> OBJ-29 s3:105, HOOK-01 s7:224; kernel asProjection -> WI-10/R-35; tools/vectors/run.ts -> R-36; vectors/VEC-01.json -> s6:207) stands unchanged; no orphan file in src/. Cosmetic only: the MOD-04 status cell at completion-ledger.md:16 still reads '177/177; ... battery and K7 pending' while the suite is 179 and battery round 16 is recorded at mutation-battery.md:633-660."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Read as code paths; src/ unchanged since round 10 and re-verified live rather than accepted from the diff. The fold (reachability.ts:86-96): predecessors from MOD-03's order (SEAM-01), one effectiveCommitment read per strictly cheaper currency (SEAM-02), answers kept as given in the witness (BOTTOM is noSubject, never coalesced), 'unmet' is ANY Unknown (IR-42) so R-20's uncomputable refuses (test_an_uncomputable_predecessor_is_unmet_not_bottom green on the clean tree), the least currency reachable by the empty find with no comparison to a particular currency, no threshold, no count, no cache (of() mints a fresh Projection per call; compute(at) refolds; BC-04-4). The gate (reachability-gate.ts:53-58) answers SEAM-03's two outcomes on the reachability axis and passes MOD-03's refusal through unchanged for a currency outside the order (IR-64). HOOK-01 sits first on MOD-05's one append path (candidate-ledger.ts:158-159) and an unreachable draw appends nothing and asks nothing further. Divergence-injection E1 in .k7/wt (the fold made to answer reachable always) sent the orchestrated draw to the next guard ('malformed-from' where 'unreachable' was due) and turned five named tests red; E2 (admission call deleted) appended a candidate at height 8 and turned three red; E3 (admission moved after the ceiling) answered 'context-mismatch' first and turned three red. PC-05's re-evaluation claim (IR-68) is true by construction - evaluate() is a pure fold over injected readers with no stored state - and is pinned at reachability.test.ts:53 by a second evaluate at the same height. Registration placement (s7:255) honoured: the gate is injected into MOD-05 as 'admission' (R-18); MOD-05 imports nothing from reachability/. N/A-by-absence, stated: thresholds, populations, ratio arithmetic, observation components, scope expiry."
+    },
+    "CC-3": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "No unregistered mechanism in src/ (IR-68, IR-69, IR-70 register the three closures; no test depends on anything unregistered). FAIL on the SCOPE (R-15) statements of the two fixed detectors, probed in .k7/wt with the probes planted in src/ (tsc --noEmit -p .k7/wt clean) and the named tests run by the declared single-test command; three positive controls (the exact fixture spellings) each turned its test red and nothing else was flagged, so the detectors read those directories. (1) reach-checks.mjs `branch` (SCOPE :21-35) claims 'a binding element of an array (or numeric-keyed object) destructuring' of the loaded order. pickedFromOrder (:229) accepts only ts.isNumericLiteral(propertyName): the sibling spellings `const { \"0\": least } = order.currencies(); c === least` (k7-p1) and `const { [0]: least } = order.currencies()` (k7-p2) were NOT flagged - the RD-13 sibling-spelling gap this build already ruled a defect once (DR-24: quoted and computed keys). The same statement's final clause 'or a const initialised by any of those (one hop)' is not what particular() (:244-247) decides: `const [least] = order.currencies(); const l = least; c === l` (k7-p3) evades because the binding element consumes the one hop; either the statement or the LIMITS ('more than one hop of const') must say which. (2) projection-joins.mjs (SCOPE :7-26) claims indirect joins through .call/.apply/.bind/Reflect.apply 'as spawn-resolve decides it' - spawn-resolve resolves the target by TYPE (DR-15) - but namesJoin (:138-142) matches the symbol's declarations only, so `const j = asProjection; j.call(undefined, 'Ratio', ...)` in src/facts (k7-p8) was not flagged while the direct alias call was round 10's positive control. (3) reach-checks `soleSite` (SCOPE :7-20) claims a reader 'handed to an iteration method by reference'; :195 accepts identifiers only, so a reader METHOD handed as `below.every(this.committed, this)` (k7-p6) is not decided by this rule - it was caught only incidentally by ledger-checks' surface rule for reading its height from a field, and the same class through a factory, `below.map(readerFor(at))` (k7-p6b), evades every rule. Omitted limits, outside DECIDES, each a known-issue candidate under R-15: the Currency widened on the left before the comparison, `(c as string) === 'c1'` and `String(c) === 'c1'` (k7-p5, k7-p5b - the simplest spelling of the forbidden branch; strip() is applied to the particular side only); a rest element then a literal index, `const [...all] = order.currencies(); c === all[0]` (k7-p4); a reader through .bind (k7-p7); a reader called from a USER iteration helper (k7-p11); a read-wrapping helper returning `boolean | undefined` (k7-p12, :147 requires every constituent BooleanLike); a Projection typed by any-flow (k7-p9) and by a user type guard (k7-p10) - both doors catalog-mint names and decides for catalog brands (IR-36) and the joins statement neither decides nor registers. Covered by a sibling rule, not a gap: the wrapped generic launder (k7-p13) is caught by ledger-checks' brand-agnostic type-parameter-cast rule under test_declaration_from_derivation_is_malformed. With the eleven uncovered probes plus p5b and p6b live and the controls neutralised, the whole declared suite ran green in the worktree. Independence: round 10's required change named the destructured-member closure's shape and R-38 restated it; I did not accept that closure from the diff - D1 proved its fixtures bite and the probes above falsify its reach."
+    },
+    "CC-4": {
+      "status": "fail",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit && npx vitest run   (run as its two declared commands in sequence on the repository: tsc exit 0, no diagnostics; vitest 17 files, 179/179 passed, exit 0). Then the s5 join under the declared single-test command: npx vitest run -t \"test_draw_without_cheaper_commitment_is_refused\" -> '2 passed | 177 skipped', exit 0. REF-03's authoritative name now selects TWO cases, because the fix round added test_draw_without_cheaper_commitment_is_refused_on_the_orchestrated_path (reachability.test.ts:56) whose title contains the s5 name as a substring; S3 s5:194-195 states property (B) 'every name selects exactly one case in the suite', and the build's own tools/checks/spec-name-join.py (:95-100) reports a name selecting more than one case as a violation (not run: undeclared). REF-05 'test_draw_without_declaration_is_refused' (facts.test.ts:233) and REF-06 'test_no_act_signature_accepts_diagnostic' (:170) each remain the only title with that prefix. MOD-01: N/A-by-absence per s11:312. Genuine forbidden inputs confirmed on the clean tree: nothing committed and c2 requested; c3 with two unmet naming the cheapest; and, in the new orchestrated case, a c3 draw through MOD-05's real append with the real gate injected - no candidate, no later decider asked. Observation: that orchestrated coverage reaches the s5 row only through the substring collision that breaks (B).",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (exit 0: 'ok VEC-01 MOD-04 \u00c2\u00b7 Reachability re-derived'; '1 vector(s), all re-derived'). Provenance checked independently of the tool: Get-FileHash SHA256 of src/reachability/reachability.ts = 249288DB61AF...AE570566 = vectors/VEC-01.json impl_sha; state COMPUTED; computed_by names the R-36 harness with the implementing file as entry, and tools/vectors/run.ts:74-77 refuses any other entry (test_the_harness_refuses_a_wrong_entry green). Hand re-derivation from the s6:207 rule without reading the file: empty set -> c1 ADMIT (empty predecessor set), c2 and c3 refused; set c1 -> c1, c2 ADMIT, c3 refused; set c1,c2 -> all ADMIT; equals the pinned output cell for cell. Computed, not transcribed: with the fold mutated to always reachable (E1, in .k7/wt) python3 tools/rederive.py --all --root .k7/wt exited 1 ('recomputed ... but the pinned value is ...') and test_vec_01_re_derives_from_the_fold went red with the recomputed table differing in three cells. No deferred vector belongs to MOD-04, MOD-05 or MOD-01; VEC-02..07 remain DEFERRED against other modules with discharge conditions at completion-ledger.md:28-36.",
+        "exit_code": 0
+      }
+    },
+    "CC-6": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "All experiments ran in the runner's R-07 worktree .k7/wt at 724e048 (git worktree list), baseline byte-identical to the repository (git diff --no-index --stat on src, tools, tests, vectors: empty), with npx tsc --noEmit -p .k7/wt and npx vitest run --root .k7/wt -t <names>; the repository was never written. HOOK-01 is FALSIFIABLE: (a) divergence-injection on the real orchestrated path, E1 (reachability.ts:92, the fold made to answer reachable always) -> test_the_candidate_append_asks_the_gate_first_hook_01, test_draw_without_cheaper_commitment_is_refused, its orchestrated-path sibling, test_reachable_iff_every_cheaper_currency_has_a_commitment and test_vec_01_re_derives_from_the_fold all red (5 failed), with MOD-05 answering 'malformed-from' where 'unreachable' was due, and rederive --all --root .k7/wt exit 1. (b) mutation: E2 (candidate-ledger.ts:158-159, the guarded admission call deleted) -> the hook test, test_an_unreachable_draw_appends_nothing_and_asks_no_one_else and the orchestrated-path REF-03 test red (a candidate appended at height 8); E3 (admission moved after the ceiling) -> test_refusals_answer_in_order_and_later_deciders_are_not_asked plus those two red. Every mutant compiled, so each kill is the test's. The fix round's fixtures bite: D1 (reach-checks.mjs:246, the binding-element arm dropped) turned test_no_code_branches_on_a_particular_currency red on the three destructured fixtures; D2 (projection-joins.mjs:143, the call/apply/bind arm dropped) turned test_projection_joins_follow_the_s3_partition red on the call and apply-bind fixtures. Trace citations are conditional on live register status: R-38 at RESOLUTION_RECORD.md:829-853, IR-68..IR-70 at drift-ledger.md:125-127, DR-30..DR-32 REMEDIATED awaiting round 11 (:49-51), which this round supplies. FAIL on detector reach (R-15), scored against the SCOPE blocks: inside the `branch` rule's stated DECIDES, the numeric-keyed object destructuring is decided in one spelling only - `{ \"0\": least }` and `{ [0]: least }` (k7-p1, k7-p2 in .k7/wt/src/reachability/) picked the least currency from the loaded order and compared it, with test_no_code_branches_on_a_particular_currency green and, with every surviving probe live, the whole declared suite green (177/179 with only two probes caught, both by sibling rules, then 5/5 relevant rules green after those two were neutralised); the exact fixture spelling planted beside them (k7-c1) was flagged, so the gap is spelling, not reach - the RD-13 failure a load-bearing detector may not have. Inside the joins rule's stated DECIDES, `const j = asProjection; j.call(undefined, 'Ratio', ...)` (k7-p8, src/facts/) evaded indirect-join while the direct fixture spelling (k7-c3) was flagged. Inside the sole-site rule's stated DECIDES, a reader method handed by reference (k7-p6) was not decided by that rule (caught by ledger-checks' field-height rule instead; the factory form k7-p6b evades all). At the boundary: k7-p3 (a const initialised by a binding element). Outside DECIDES, reported under CC-3 as known-issue candidates: widened-left comparison (p5, p5b), rest element (p4), .bind (p7), user iteration helper (p11), boolean|undefined helper (p12), any-flow and type-guard Projection mints (p9, p10). Tree integrity: repository git status --porcelain = ' M STATE.json' before and after; after restoration the worktree's tools/, tests/, vectors/ and INSTRUMENTS/ are byte-identical to the repository (git diff --no-index --stat empty) and src/ differs only by the k7-p*/k7-c* probe files (controls and the two sibling-covered probes neutralised to `export {};`), which the runner deletes with the worktree."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form (the drift ledger scores per entry, not D1-D6). Object-model fidelity 8: two classes to the Object Writing Standard, OBJ-29 composing OBJ-24, one join through the kernel's door, PC-05 enumerated with a mechanism that is true by construction (IR-68), the module rows corrected; deductions for the stale MOD-04 status cell (completion-ledger.md:16 '177/177 ... battery and K7 pending') and a vacuous assertion in MOD-04's isolation test (tests/reachability.isolation.test.ts:47, expect(height(1)).toBeDefined(), true of any number). Axiom coverage 8: every carried rule holds in the running code and every fold, ordering and detector mutation died by test; the deduction is the s5 join - REF-03's authoritative name selects two cases under the declared selector (S3 s5 property B), introduced by this fix round. Base-case support 8: BC-04-10..12 written first and watched red (battery round 16, 12/12), VEC-01 computed and provenance independently re-derived, non-empty detector verdicts pinned; deduction because BC-04-10 and BC-04-12 pin the fixture spellings and not the rule ('picked by POSITION'), which is why the sibling spellings pass. Extensibility 6 (WORST): all three fixed detectors admit an evasion inside their own stated DECIDES (string-key and computed-key destructuring; alias-then-.call; method reference), the statements are untrue in those clauses, and the limit registers omit forms the build already names as doors elsewhere (any-flow, type guard) and the simplest spelling of the forbidden branch (the Currency widened on the left). Code quality: no unused imports, no dead code, no hidden state in src/reachability; probe files compile, so none of this is a compiler artefact. MIN = 6: a demonstrated verification gap below the floor of 7, so MOD-04 does not pass and the next module does not open on this tree."
+    }
+  },
+  "drift_score": {
+    "value": 6,
+    "basis": [
+      {
+        "check_id": "CC-6",
+        "finding": "Worst dimension: extensibility. tools/checks/reach-checks.mjs `branch` (SCOPE :21-35; pickedFromOrder :229 requires ts.isNumericLiteral) decides `const { 0: least } = order.currencies()` but not the sibling spellings `{ \"0\": least }` and `{ [0]: least }` - inside its stated 'numeric-keyed object destructuring', planted in .k7/wt/src/reachability/ with test_no_code_branches_on_a_particular_currency green and the full declared suite green; projection-joins.mjs (:138-143) decides `asProjection.call` by symbol, not by type as its 'as spawn-resolve decides it' claims, so `const j = asProjection; j.call(...)` evades indirect-join; reach-checks `soleSite` (:195) decides a reader handed by reference only as an identifier, so a method reference is not decided by the rule that claims it.",
+        "deduction": 4
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Base-case support / extensibility: the SCOPE statements omit limits the detectors have - the Currency widened on the left before comparison ((c as string) === 'c1', String(c) === 'c1'), a rest element then a literal index, a reader through .bind, a factory-made reader, a user iteration helper, a boolean|undefined helper, and any-flow or type-guard Projection mints (doors catalog-mint already names, IR-36) - and BC-04-10/BC-04-12 pin fixture spellings rather than the rule 'picked by position'.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-4",
+        "finding": "Axiom coverage: npx vitest run -t \"test_draw_without_cheaper_commitment_is_refused\" selects 2 cases (2 passed, 177 skipped) because tests/reachability/reachability.test.ts:56 added a title containing REF-03's s5 name as a substring; S3 s5:194-195 property (B) requires exactly one, and tools/checks/spec-name-join.py:98-100 would report it.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-1",
+        "finding": "Object-model fidelity, cosmetic: INSTRUMENTS/completion-ledger.md:16 MOD-04 status cell still reads '177/177; VEC-01 computed and re-derived; battery and K7 pending' after battery round 16 and a 179-case suite; tests/reachability.isolation.test.ts:47 carries a vacuous assertion (expect(height(1)).toBeDefined()).",
+        "deduction": 2
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-6",
+      "module": "MOD-04",
+      "required_change": "The `branch` rule of tools/checks/reach-checks.mjs must decide the property its SCOPE and R-38 already state - a member picked by POSITION from the loaded order - independent of how the position key is spelled: the object-destructuring arm must judge the binding element's resolved property name (numeric literal, string literal with a numeric value, computed numeric key), as DR-24 already required of the forge rule's `kind` key. Ship violating- fixtures for `{ \"0\": least }` and `{ [0]: least }` under tests/fixtures/reach-branch/src/reachability/ that turn test_no_code_branches_on_a_particular_currency red while the detector is unchanged and green once it is; decide or register with limit- fixtures the const initialised by a binding element (k7-p3; the statement's own 'one hop' clause must say which side the hop is on), the rest element then literal index, and the Currency widened on the left before the comparison, which is the simplest spelling of the forbidden branch and today unflagged and unregistered."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-01",
+      "required_change": "projection-joins.mjs `indirect-join` must resolve the receiver of .call/.apply/.bind and the callee argument of Reflect.apply by its TYPE or resolved declaration, as the SCOPE's 'as spawn-resolve decides it' claims, so that `const j = asProjection; j.call(undefined, 'Ratio', ...)` is a wrong-module join; a violating- fixture of that alias form must turn test_projection_joins_follow_the_s3_partition red first. Decide, or register with limit- fixtures, a Projection typed by any-flow and by a user type guard - the two doors catalog-mint names in IR-36 that the joins statement neither decides nor registers."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-04",
+      "required_change": "Make the `soleSite` SCOPE true: 'handed to an iteration method by reference' must either be decided for a reader METHOD reference (property access, with or without thisArg) and a reader produced by a factory call or .bind, or those forms must be registered as limits with limit- fixtures the test asserts as unflagged, and the statement must say which rule actually decides the method-reference form today (ledger-checks' surface rule, by the fabricated height, not soleSite). Likewise decide or register a reader called from a user iteration helper and a read-wrapping helper returning boolean | undefined."
+    },
+    {
+      "check_id": "CC-4",
+      "module": "MOD-04",
+      "required_change": "REF-03's S3 s5 Test name must select exactly one case under the declared single-test command (property B, s5:194-195): npx vitest run -t \"test_draw_without_cheaper_commitment_is_refused\" must report 1 selected. The orchestrated-path case at tests/reachability/reachability.test.ts:56 needs a title that does not contain the s5 name as a substring, and the completion ledger must then state honestly that the orchestrated path is covered by a test s5 does not name (the ODG-FG-08 observation), not by the s5 row."
+    }
+  ],
+  "next_action": "Take MOD-04 to owner triage with the sibling-spelling, alias-call and by-reference evasions inside the detectors' stated DECIDES and the REF-03 selector collision as the open items, each to be decided or registered with a fixture watched red first."
+}

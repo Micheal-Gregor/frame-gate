@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 14,
+  "reviewed": {
+    "tree_sha": "d531a6f3aab0ce2b86576165b617594e7b3ac332",
+    "commit_sha": "54a8fdfd3163c7350e292406edeef6089a09a37f",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-07"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T08:03:32+00:00",
+    "completed_at": "2026-10-13T08:18:22+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 13,
+    "prior_tree_sha": "7eacb5cd9ba9632e3246cbce574805cd8c9e882e",
+    "prior_failing_checks": [
+      "CC-2",
+      "CC-3",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Trace holds both ways. src/observation/values.ts -> OBJ-08 Score (S3 s3:114; R-58, values.ts:17,:34-37) and OBJ-09 Absent (s3:115; :25-28 with its Discharge :20-22); src/observation/observation-ledger.ts -> OBJ-15 Observation (s3:116; the nominal AppendedFact :45, one append path :87, minted on append :89 and on read :104); index.ts is the surface only. F3 s2's eight plain-language signatures all resolve: append_observation -> ObservationLedger.observe (:67), observation_of -> observationOf (:93), component (values.ts:59), is_absent (:50), discharge_condition (:54), author_of (:65), is_all_absent (:71), scored_components (:76). Object-model rows exist for the module, values and the ledger (object-model-and-parameters.md:18,:41-42) with declared slots record, components matching the constructor (:51); OS-12 isolation test present (tests/observation-ledger.isolation.test.ts). s11:318's destinations exist: REF-09 (observation.test.ts:72), HOOK-02 (the type, values.ts:30-31), PC-01 enumerated (completion-ledger.md:19), VEC n/a-by-absence (S3 s6:216, F3 s5:188). The ledger is registered where every ledger rule reaches it: LEDGERS (ledger-checks.mjs:155), BRANDS (:243), ownership fixtures (tests/fixtures/ledger-owners/src/observation/*, pinned catalog.test.ts:250-251), the append-path map pins observation: ['ObservationLedger.observe'] (facts.test.ts:522), discovery pins the kind (:178). Trace citations R-58..R-60 resolve to ACCEPTED live rows (RESOLUTION_RECORD.md:68-70); IR-94..IR-96 present (drift-ledger.md:168-170). No orphan file, no S3 node for MOD-07 without a destination. One contract widening is stated only in a base case (BC-07-5) and no IR: component/authorOf answer NoSubject for an unconfigured name (values.ts:61,:67) where F3 s2 states 'a Score or an Absent' - deducted under CC-7, not failed here."
+    },
+    "CC-2": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Read as code paths and demonstrated live in the R-07 worktree .k7/wt (git worktree list: detached at 54a8fdf = repository HEAD) by tests/k7/k7-probes.test.ts under npx vitest run --root .k7/wt -t \"k7_p\" (3 failed, as predicted). HELD: no threshold, no population, no ratio, no difficulty read, no current-declaration read, nothing derived stored (both fields readonly, Object.freeze(this) :63; surface rule held=[] for src/observation); ABSENT is a tagged variant never null (values.ts:25-28), omitted never zeroed (:78), copied fresh (observation-ledger.ts:81); the Score codomain is finite at construction (R-58, values.ts:36); every configured component and only those at append (R-59, :69-71, nothing appended on refusal); the latest at or below the height is in force (R-60, :94); SEAM-25 by IR-95; observe takes no diagnostic. FAIL on carried rules, on the real path with legal inputs: (1) R-60 says 'the LATEST COMPLETE vector' and R-59 'every observation states every configured component', but the read seam applies neither: #isObservation (:110-116) recognises by shape - kind, a numeric candidate, components with a string name, a string author and a 'value' key - never against this ledger's configured list (:49) and never against R-58's codomain. Probe k7_p1: a ledger configured [a,b] observes; a ledger configured [a,b,c] over the same record answers that vector as in force (at 10) where NoSubject was due - the same construction the module's own isolation test uses (observation-ledger.isolation.test.ts:37-47). Probe k7_p2: entries carrying value NaN, null and 'high' are read back and reach scoredComponents ([NaN],[null],['high']) - R-58's codomain and HOOK-02 defeated at the read seam, which MOD-08 (R-63/R-64) will do arithmetic over. The forge rule's static half bounds src/ (its BOUNDARY line says runtime wiring is PC-02's), but R-12 set this build's standard for the read seam - 'reads ignore entries at unconfigured levels' - and MOD-07's reads do not. (2) R-60's 'a later vector may not score a component an earlier one marked Undischargeable: refused' is decided as of the caller's at (:72-76), while the append lands at the record's own height (:87). Probe k7_p3: an undischargeable mark at the head, then observe(..., at = an earlier height) with a Score for that component: appended, not refused, and that vector is then in force. R-47 chose STRICT same-height for MOD-12's act; MOD-07 registers nothing for this residue (IR-84's class). N/A-by-absence, stated: thresholds, populations and exclusion counts (MOD-09), statistics (MOD-08), ratio, scope, lineage, difficulty - none reachable from src/observation. Not halt-class: no owner text in this S3 names these a HALT, and the same read-seam class (DR-18) was triaged as RETURN at MOD-03."
+    },
+    "CC-3": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Registered and honoured: IR-94 (HOOK-02 by type; the limit pinned by limit-negate-absent.ts, codes []), IR-95 (any author per component; the fact's own author a separate parameter), IR-96 (ODG-FG-04 left to consumers), R-58..R-60 live. No unregistered mechanism the tests depend on to pass. FAIL on a SCOPE statement under R-15, probed with the fixture compile MOD-07's own test uses (ledger-checks.mjs through tests/k7/k7-fixtures.test.ts, --root .k7/wt): IR-94 claims 'comparisons over a possibly-ABSENT component do not compile', and equality does - k7-eq-absent.ts (component(o,'motion') === 0.5) and k7-switch-absent.ts (a numeric case) both compile, codes [] - so the statement claims a form the type does not decide. It also omits limits it has: an assertion past ABSENT then arithmetic ((component(o,'motion') as number) + 1, k7-cast-absent.ts, codes []); any-typed sinks (Reflect.apply(Math.max, undefined, [component(o,'motion'), 1]) + 1 and an (x: any) => x + 1 parameter, k7-reflect-absent.ts and k7-anyparam-absent.ts, codes []); the unary ~ coercion beside the registered unary +/- (k7-coerce-absent.ts, codes []). IR-94 registers only a Score cast and the coercions Number(x), unary +/-, a template. Positive controls held and the decided class is broader than stated (k7-sub-absent.ts: -, *, /, %, **, <, >=, | all refused, codes 2362/2365), so this is an untrue statement, not a live breach: src/observation itself carries only the registered score() cast (values.ts:36). Lesser, unregistered contract widening: component/authorOf add a third outcome (NoSubject, values.ts:61,:67) to F3 s2's 'a Score or an Absent' - a contract change under R-50's own rule, one line owed. Independence: none of round 13's prescribed closures (DR-42..DR-45) is in this round's scope (R-62 names MOD-07 only); nothing here re-scores a closed module."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit && npx vitest run   (run as its two declared parts in sequence on the repository at 54a8fdf: tsc silent, no diagnostics; vitest 30 files, 257/257 passed). Then the s5 join under the declared single-test command: npx vitest run -t \"test_arithmetic_on_absent_component_is_malformed\" -> 1 passed | 256 skipped (REF-09, observation.test.ts:72; tests/spec/s5-names.test.ts green, so every built module's s5 name selects exactly one case). Genuine forbidden inputs at parse: arithmetic-on-absent.ts [2365], max-over-absent.ts [2345], compare-absent.ts [2365], each pinned non-empty (:74-76); the registered limit pinned [] (:78) and the positive control sum-of-scores.ts pinned [] (:80). REF-09+'s facet name all_absent_vector_is_accepted_and_stored selects test_all_absent_vector_is_accepted_and_stored (:83). N/A-by-absence, stated: MOD-07 pins no further s5 row (S3 s11:318).",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (exit 0: 'ok VEC-01 MOD-04 \u00c2\u00b7 Reachability re-derived'; 'ok VEC-05 MOD-12 \u00c2\u00b7 SignatureGate re-derived'; '2 vector(s), all re-derived'). MOD-07 pins no golden vector: S3 s6:216 names MOD-07 N/A-by-absence and F3 s5:188 states why (a parse-time malformation is structural, discharged by REF-09). VEC-02/03/04/06/07 remain DEFERRED against unbuilt modules, each with its discharge condition (completion-ledger.md:31-36); the two live vectors belong to closed modules outside R-62's scope and re-derived under the declared command.",
+        "exit_code": 0
+      }
+    },
+    "CC-6": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "All experiments ran in the runner's R-07 worktree .k7/wt (detached at 54a8fdf = repository HEAD), each mutant checked with npx tsc --noEmit -p .k7/wt (silent = compiles, so every kill is the test's) and run under npx vitest run --root .k7/wt -t <name>; the repository was never written (git status --porcelain = ' M STATE.json' before and after). HOOK-02 is FALSIFIABLE on both mandatory experiments. (a) Divergence-injection on the real compiled path: a src-level consumer .k7/wt/src/observation/k7-divergence.ts combining component(o,'motion') + 1 -> the declared command npx tsc --noEmit -p .k7/wt exit 2, TS2365 at k7-divergence.ts(5,44); the definition is malformed at parse, as HOOK-02 states. (b) Mutation, six killed of six: M1 the guard deleted at the type (component returns a bare Score, values.ts:59) -> test_arithmetic_on_absent_component_is_malformed red ('arithmetic-on-absent compiled: expected 0 to be greater than 0'); M2 observationOf answers .at(0) not .at(-1) (observation-ledger.ts:94) -> test_the_latest_observation_is_in_force red (at 11 where 13 was due); M3 the undischargeable guard deleted (:76) -> same test red (a vector appended where refuse('undischargeable') was due); M4 ABSENT zeroed in scoredComponents (values.ts:78) -> test_all_absent_vector_is_accepted_and_stored red (three scores of 0); M5 the recognizer accepts an entry with no component list (:115) -> test_the_latest_observation_is_in_force red ('an entry with no components was read'); M6 score() admits a non-finite number (:36) -> test_a_score_is_any_finite_number red (NaN minted). Detector scored against its stated scope (R-15): the decided class is wider than stated (-, *, /, %, **, <, >=, | all refused at parse); equality, assertion, any sinks and ~ are evasions outside the DECIDES rule and are scored under CC-3 as an untrue statement, not here. Trace citations conditional on live status: R-58..R-60 ACCEPTED (RESOLUTION_RECORD.md:68-70); IR-94..IR-96 (drift-ledger.md:168-170); battery 23 recorded (mutation-battery.md:831-849, 11/11) - its 'Killed by' column carries the same transcription artefact 'test) (test_...' as round 21 in every row, cosmetic. Closed gates stay closed: nothing here re-scores MOD-01..MOD-06 or MOD-12."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form. Object-model fidelity 8: Score a branded finite number minted in one place, Absent a tagged non-value with its two-case discharge, Observation a nominal AppendedFact with one append path, one module for P-1, the ledger to the Object Writing Standard with OS-1 slots checked by operation (observation-ledger.ts:52-60); deductions for the unregistered third outcome of component/authorOf and for a read seam that admits what the append seam refuses. Axiom coverage 6 (WORST): R-60's 'complete' and R-58's codomain are not applied by the read (k7_p1: an incomplete vector in force; k7_p2: NaN, null and a string reach scoredComponents), and undischargeable permanence is as-of a caller-chosen stale height (k7_p3) - demonstrated invariant gaps against the owner's own ruling text, unregistered. Base-case support 7: BC-07-1..5 written first and watched red (axioms-and-base-cases.md:681-689), positive control and registered limit both pinned, the forged-entry pin present (observation.test.ts:131-133); deductions because no base case covers a second configuration over one record, a forged value shape, or the stale-height edge, and the isolation test's 'components differs' case passes by a refusal rather than by two vectors. Extensibility 7: HOOK-02 by type is the strongest form available and the decided class is broad, but IR-94's statement is imprecise (equality claimed, assertion and any-sink limits unstated and unpinned); cosmetic: battery 23's Killed-by artefact, index.ts says an Observation is minted only through observe while #observationsOf mints on read (:104, honestly commented). No unused import, no dead code, no hidden state, no vacuous assertion found in src/observation or its tests. MIN = 6: below the floor of 7, so MOD-07 does not pass on this tree."
+    }
+  },
+  "drift_score": {
+    "value": 6,
+    "basis": [
+      {
+        "check_id": "CC-2",
+        "finding": "Worst dimension: axiom coverage. The read seam recognises an observation by shape (observation-ledger.ts:110-116), never against this ledger's configured components (R-59/R-60 'the latest COMPLETE vector') nor R-58's finite codomain: probe k7_p1 - a vector stating [a,b] is answered in force by a ledger configured [a,b,c] (NoSubject due); probe k7_p2 - forged values NaN, null, 'high' are read back and reach scoredComponents. Unregistered; R-12 set the build's standard that reads ignore what their configuration does not admit.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-2",
+        "finding": "Axiom coverage: R-60's undischargeable permanence is decided as of the caller's at (observation-ledger.ts:72-76) while the append lands at the record's height (:87). Probe k7_p3 - a mark at the head, then observe(..., stale at) scoring that component: appended and in force, where 'refused' is the ruling. Neither STRICT (R-47's shape) nor registered (IR-84's class).",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Extensibility / verification strength: IR-94's SCOPE statement is untrue under R-15 - 'comparisons do not compile' while === and a switch case compile (k7-eq-absent.ts, k7-switch-absent.ts, codes []); assertions past ABSENT (as number), any-typed sinks (Reflect.apply, an any parameter) and the ~ coercion are limits it has and does not state or pin (all codes []).",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Object-model fidelity / registration and cosmetics: component and authorOf answer NoSubject for an unconfigured name (values.ts:61,:67), a third outcome F3 s2's 'a Score or an Absent' does not state, in a base case and no IR; battery 23's 'Killed by' column carries the 'test) (test_' transcription artefact in all eleven rows; no base case covers a second configuration over one record or a forged value shape.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-2",
+      "module": "MOD-07",
+      "required_change": "The read seam must honour R-58..R-60 for what it reads, not only what it appends: an entry counts as one of this ledger's observations only if it states every configured component and only those (R-59, R-60's 'complete') and each value is a finite number or a well-formed Absent (R-58); anything else is not an observation to this ledger, so observationOf answers NoSubject and the undischargeable collection ignores it - or the owner narrows R-60's 'complete' by ruling and the narrowing is registered. The tests that must fail first, on the real path: a ledger configured [a,b,c] reading a vector appended by a ledger configured [a,b] over the same record (today the vector, probe k7_p1); and entries carrying NaN, null and a string as a value (today they reach scoredComponents, probe k7_p2)."
+    },
+    {
+      "check_id": "CC-2",
+      "module": "MOD-07",
+      "required_change": "Decide where R-60's permanence is judged: either the undischargeable check is as of the height the vector will actually land at (or the caller's at is required to be that height, R-47's STRICT shape), or the residue is registered in one IR line with its consequence stated (a stale at admits a Score over an Undischargeable mark; IR-84's single-writer class). The test that must fail first: an undischargeable mark at the head, then observe with a Score for that component at an earlier at - today appended and in force (probe k7_p3)."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-07",
+      "required_change": "Make IR-94's SCOPE statement true (R-15, one line per limit under R-50): 'comparisons' means relational operators only - equality (===, a switch case) compiles and is a test, stated as such; assertions past ABSENT (as number), any-typed sinks (Reflect.apply, an any-typed parameter) and the ~ coercion are registered limits, each pinned by a limit- fixture under tests/fixtures/observation/ that the REF-09 case asserts compiles, as limit-negate-absent.ts is."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-07",
+      "required_change": "Register in one line that component and authorOf answer NoSubject for a name the observation does not state (a third outcome beside F3 s2's Score-or-Absent), and correct battery 23's 'Killed by' column, whose every row carries the 'test) (test_' transcription artefact DR-45 already named at round 21."
+    }
+  ],
+  "next_action": "Return MOD-07 for one fix round that makes the read seam honour R-58..R-60 (probes k7_p1 and k7_p2 watched red first), decides or registers the stale-height residue (k7_p3), and makes IR-94's scope statement true with pinned limit fixtures."
+}

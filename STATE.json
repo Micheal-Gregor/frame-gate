@@ -3,15 +3,15 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "c87fef61251aad06fbdb0eabfdeff770dfde2c38",
-  "tree": "7eacb5cd9ba9632e3246cbce574805cd8c9e882e",
+  "head": "54a8fdfd3163c7350e292406edeef6089a09a37f",
+  "tree": "d531a6f3aab0ce2b86576165b617594e7b3ac332",
   "dirty": false,
   "current_module": "MOD-07",
-  "k7_round": 12,
-  "last_gate_tag": "closed-by-owner-11",
+  "k7_round": 13,
+  "last_gate_tag": "closed-by-owner-12",
   "seal_tag": "",
   "next_action": "MOD-07 built, battery 23 11/11; K7 round 14 on MOD-07 (R-62). MOD-08 ruled (R-63..R-65). Owner: tag closed-by-owner-13 on 297fffa if not yet.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T08:03:20+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-10-13T08:03:40+00:00",
+  "updated_by": "session-start:startup"
 }

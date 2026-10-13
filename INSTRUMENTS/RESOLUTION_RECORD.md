@@ -65,6 +65,10 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-55 a draw under a condition not in force | **ACCEPTED 2026-10-13** (owner, live gate) | ALLOWED; MOD-05 unchanged. The draw joins its own condition's sample, whose closure already shows the revision |
 | R-56 the sole-site rule vs MOD-06's Chains (an in-force read per commitment, in a loop) | **ACCEPTED 2026-10-13** (owner, live gate) | ONE exception, by declaration: `soleSite` skips `Chains.#edges` in `src/condition/chains.ts`, resolved by file, class and member (not a name or a comment), with a fixture proving the same pattern anywhere else is still flagged. The rule's scope otherwise stays frozen (R-50) |
 | R-57 K7 round 13's scope (MOD-06's gate) | **ACCEPTED 2026-10-13** (owner, live gate) | `--modules MOD-06` on Fable 5.1, its dependencies in scope as such: LineageReader's new reads (IR-90) and the sole-site exception (R-56). Closed modules are not re-reviewed (R-50) |
+| R-58 what OBJ-08 Score is (MOD-07) | **ACCEPTED 2026-10-13** (owner, live gate) | A branded FINITE number: NaN and the infinities refused at construction; no range imposed (the system owns no scoring algorithm) |
+| R-59 an observation's components (MOD-07) | **ACCEPTED 2026-10-13** (owner, live gate) | A CONFIGURED, closed list loaded once at construction; every observation states every configured component (a Score or ABSENT); a missing or unknown name is refused |
+| R-60 which observation of a candidate is in force (MOD-07) | **ACCEPTED 2026-10-13** (owner, live gate) | The LATEST complete vector at or below the height; earlier ones stay in the record. A later vector may not score a component an earlier one marked Undischargeable: refused |
+| R-61 K7 round 13 triage (RETURN, drift 6): MOD-06's gate closes | **ACCEPTED 2026-10-13** (owner, live gate) | FIX NOW, test-first: DR-42 (Chains surfaces the fold's Unknown); DR-43 (a lossless number encoding); DR-45 (IR lines, style). KNOWN LIMIT (R-50): DR-44, stated in the surface rule's SCOPE. A small battery; NO re-check. Tag `closed-by-owner-13` on this commit |
 
 ---
 

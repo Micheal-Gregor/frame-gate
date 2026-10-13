@@ -210,6 +210,8 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-132 | **A consequence of "spent by dispatch" (R-78), written down (K7 round 19).** Suppose a draw is dispatched while reachable, and an invalidation (MOD-12) lands before its candidate returns. The scope stays charged, and the candidate is refuse("unreachable"). The draw happened and was paid for; only its result is refused | benign | MOD-05, MOD-11, MOD-12 |
 | IR-133 | **WORK ITEM (low; K7 round 19): stale wording.** CandidateLedger's header (step 5 "CEILING ... the scope's remaining ceiling (REF-16)") and its object-model row predate R-78: step 5 is now the scope match, and the ceiling is charged at the draw. Left as PASSed, because a closed gate's content does not change; fixed at the next touch of MOD-05 or at the seal | benign | MOD-05 |
 | IR-134 | **WORK ITEM (low; K7 round 19): setup stand-ins name the currency `"c0" as never`** in tools/vectors/run.ts and four test files, bypassing the Currency type where the admission stand-in admits everything. Discharge: a typed stand-in helper | benign | tests, tools |
+| IR-135 | **`advisory(unit)` takes no height (R-83), an interface deviation from S3's `advisory(unit, record_height)`.** Unit features are catalog configuration, not record facts, so a height would change nothing. A height-taking advisory would also look like a fold, which is RFD-01's confusion | benign | MOD-13 (R-83) |
+| IR-136 | **DG-F1 holds by structure, not by a brand.** Nothing in src imports src/advisory (BC-13-2, resolved), so no gate condition, proposal, act or declaration can name an AdvisoryValue. The value itself is unbranded: code outside src (a Phase 5 view) may build one, and is only displaying | benign | MOD-13 (DG-F1) |
 
 ## Log
 
@@ -701,3 +703,5 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   - The reviewer confirmed BC-11-9 by independent scenarios: three currencies, a foreign scope, and divergence runs.
   - The known-issue candidates are logged as low-severity work items: IR-131 (one admission, by composition only), IR-132 (a charge survives an invalidation between dispatch and return), IR-133 (stale CEILING wording), IR-134 (`as never` stand-ins).
   - Also noted: `currencyOf`'s Unknown is HOOK-05's one refusal (IR-122, IR-130), and SEAM-26 reaches Ratio only through MOD-05's counts.
+
+- **2026-10-13 — MOD-13 `advisory/` built (R-82, R-83), the last module.** Tests were written first and watched red against a typed stub (4 / 355). BC-13-2 and BC-13-3 are structural and green from the start: nothing imports the advisory, and it joins no family. The stub phase also fixed one type error (`Object.freeze` dropped the plain rule's contextual type). 355 / 355.

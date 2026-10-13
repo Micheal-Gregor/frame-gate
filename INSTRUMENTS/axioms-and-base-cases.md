@@ -747,3 +747,11 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 
 **Watched failing (the fix round):** 3 / 346 red - BC-11-9, the SCOPE_GATE wording pin in BC-11-8, and the draw log's admission isolation case (tightened after it first passed vacuously). After: 347 / 347, with `currencyOf`'s isolation case.
 
+## MOD-13 `advisory/` (R-82, R-83; written before the module, watched failing; one line each, R-50)
+
+- **BC-13-1** R-82: the advisory is the injected rule's reading of the unit's registered features. The plain rule shipped gives them as given, in a copy that is out of the registry's reach. A unit not registered is answered by the registry's own Unknown, as itself.
+- **BC-13-2** REF-01a / S-17 / DG-F1: nothing reads it. No file in src outside src/advisory resolves an import into it, so no gate condition, proposal, act or declaration can name a difficulty (the catalog's half is BC-03's).
+- **BC-13-3** RFD-01 / R-83: OBJ-34 is not a Projection. `advisory(unit)` takes no height and returns a plain value; nothing in src/advisory joins the family, and the family's list does not name it.
+- **BC-13-4** OS-3: the rule is injected, so a different rule gives a different reading. The value carries its unit, frozen.
+
+**Watched failing (MOD-13):** against a typed stub, 4 / 355 red (BC-13-1, BC-13-4 and both isolation cases); BC-13-2 and BC-13-3 are structural and green from the start; `tsc` clean. After: 355 / 355.

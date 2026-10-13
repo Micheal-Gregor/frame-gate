@@ -20,7 +20,7 @@ checks against the tree, in both directions.
 | MOD-09 calibration | src/calibration/index.ts | OBJ-22, OBJ-23 | Bar (no setter exists) and the non-monotone PopulationPartition. DEFERRED: BUILT reachable, COMPLETE blocked by AE-5 | n/a - the module's public surface (re-exports); its parts have rows below | NO - it derives; the separation decision is injected (AE-5, R-69) | BUILT |
 | MOD-10 diagnostic | src/diagnostic/index.ts | OBJ-25, OBJ-41, OBJ-42 | The product of two independent classifiers; carries which axis is withheld and what would supply it | n/a - the module's public surface (re-exports); its parts have rows below | NO - it proposes; no act accepts a diagnostic (REF-06) | BUILT |
 | MOD-11 spend | src/spend/index.ts | OBJ-14, OBJ-26, OBJ-30, OBJ-33, OBJ-40 | Scope, Ratio (vector always), ScopeGate, StopCondition, AuthorizationForm as a domain object | n/a - the module's public surface (re-exports); its parts have rows below | the ScopeGate decides a draw; nothing here decides a spend | BUILT |
-| MOD-13 advisory | src/advisory/index.ts | OBJ-34 | DifficultyAdvisory: computed, displayed, read by nothing | — written by `tools/new-object.py` at build | — set at build (S3 predates the Decides tag; IR) | NOT_STARTED |
+| MOD-13 advisory | src/advisory/index.ts | OBJ-34 | DifficultyAdvisory: computed, displayed, read by nothing | n/a - the module's public surface (re-exports); its parts have rows below | NO - advisory (DG-F1) | BUILT |
 | MOD-03 · CurrencyOrder | src/catalog/currency-order.ts | OBJ-05 | The total order of draw classes, loaded once and read-only | currencies | NO | BUILT |
 | MOD-03 · UnitRegistry | src/catalog/unit-registry.ts | OBJ-06 | Unit identities and their read-only features | units | NO | BUILT |
 | MOD-03 · DeclarationLedger | src/catalog/declaration-ledger.ts | OBJ-13 | Appends HUMAN classification declarations; reads the one in force at a height | record, levels | NO | BUILT |
@@ -53,6 +53,8 @@ checks against the tree, in both directions.
 | MOD-11 · ScopeGate | src/spend/scope-gate.ts | OBJ-30 (R-77, R-78; REF-16, HOOK-05) | The gate before a draw: the named scope is this unit's governing scope with remaining > 0, charged by dispatch; and on the candidate's return, the scope's unit and currency | scopes, charges | YES - it is the Gate HOOK-05 registers; MOD-05 is handed it (R-78) | BUILT |
 | MOD-11 · Ratio | src/spend/ratio.ts | OBJ-26 (REF-18) | The per-unit candidate count vector over the currency order, zeros included; joins the family as "Ratio"; never a quotient | candidates | NO | BUILT |
 | MOD-11 · AuthorizationForms | src/spend/authorization.ts | OBJ-40 (R-81; REF-19, HOOK-09) | Builds the form a Scope is authorized from, carrying its ratio at every currency - or builds nothing | ratio | NO | BUILT |
+| MOD-13 · DifficultyAdvisory | src/advisory/difficulty-advisory.ts | OBJ-34 (R-82, R-83; DG-F1, REF-01a, S-17, RFD-01) | A display value: the injected rule's reading of a unit's features. No height, no Projection, read by nothing | units, rule | NO - it is advisory; the rule it is handed reads, and nothing reads it | BUILT |
+| MOD-13 · plain-rule | src/advisory/plain-rule.ts | OBJ-34 (R-82) | The difficulty rule the build ships: the features as given, in a copy - no score invented | n/a - one frozen rule | NO - it reads, it decides nothing | BUILT |
 
 Rows are in build order (S3 section 10), not module-number order.
 

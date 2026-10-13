@@ -10,8 +10,8 @@
   "k7_round": 18,
   "last_gate_tag": "closed-by-owner-14",
   "seal_tag": "",
-  "next_action": "MOD-11 PASSED (round 19, drift 7; MOD-05's R-78/R-84 work with it). Owner: tag k7-pass-19 on cfaafc5 (and 15/16/17 if not yet placed). Next: MOD-13 advisory (R-82, R-83), the last module; then the seal.",
+  "next_action": "MOD-13 BUILT (R-82, R-83): every module is built. Next: battery 30 (receipt), K7 round 20 (MOD-13), then the seal sweep. Owner: tag k7-pass-19 on cfaafc5.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T21:47:41+00:00",
+  "updated_at": "2026-10-13T21:54:23+00:00",
   "updated_by": "manual"
 }

@@ -525,3 +525,10 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   WI-11..WI-14 are reviewed at that module's gate. The owner places `closed-by-owner-11` on
   `a46492a`, the commit recording R-39.
 
+- **2026-10-13 — MOD-12 opens; its specification surfaces two MOD-05 gaps (R-40, R-41) and the
+  closure's meaning (R-42).** The builder missed F3's inheritance relation when MOD-05 was built,
+  and the miss was carried into R-26 and IR-53. A commitment naming its accepted candidate is
+  stated in F4, S-07 and SEAM-11, not in F2's OBJ-12, which the builder built from. Both are
+  MF-32's shape across FACETS: a module's carried rows read in one facet, with the clauses that
+  bind it in another.
+

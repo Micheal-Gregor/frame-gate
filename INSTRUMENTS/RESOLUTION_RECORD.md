@@ -47,6 +47,9 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-37 K7 round 10's scope and reviewer | **ACCEPTED 2026-10-13** (owner, live gate) | Modules MOD-04, MOD-05 and MOD-01: the new module plus every work item since `k7-pass-9` (WI-07, WI-08 in MOD-05; WI-10 in MOD-01). Reviewer Fable 5.1, as rounds 8-9; `reviewer_command` unchanged |
 | R-38 K7 round 10 triage (MOD-04 RETURN, drift 6): the fix round | **ACCEPTED 2026-10-13** (owner, live gate) | DR-30: the branch rule DECIDES destructuring (a binding element picked from the loaded order); a class field holding the least is a registered limit. DR-31: PC-05 enumerated for MOD-04 - attributable by construction through re-evaluation at the same height (a pure as-of fold); the refusal stream is deployment, carried forward. DR-32: all five forms DECIDED |
 | R-39 K7 round 11 triage, and MOD-04's gate closes (cap reached) | **ACCEPTED 2026-10-13** (owner, live gate) | DR-33: decide the numeric-string and computed keys, the binding-element hop and the widened-left comparison; REGISTER rest-then-index. DR-34: decide all three (by TYPE; any-flow; type guard). DR-35: decide method reference, factory reader, `.bind`, boolean-or-nullish result; REGISTER the user iteration helper. DR-36: fix now. The gate closes on `closed-by-owner-11` (this record's commit); the fixes are new work, batteried and reviewed at the next module's gate; the drift block lifts for the next module once that work and its battery are recorded |
+| R-40 inheritance: may a least-currency candidate derive from ANOTHER unit's commitment? (F3 OBJ-27 vs R-26) | **ACCEPTED 2026-10-13** (owner, live gate) | YES (amends R-26): at the least currency `from` is BOTTOM (licensed independent, R-10) or ANOTHER unit's commitment in force as of the append height (F3's inheritance relation). IR-53 is answered from F3; the SP-2 addendum is withdrawn. MOD-05 work item |
+| R-41 a commitment names the candidate it accepts (F4 Accepted; S-07; SEAM-11) | **ACCEPTED 2026-10-13** (owner, live gate) | `commit(candidate, "HUMAN")`: unit and currency come from the candidate, recorded by height; Accepted is read by key, never inferred. MOD-05 also gains a record-only lineage reader (derived-from, accepted-by), so MOD-12 reads lineage without the fold (no construction cycle). MOD-05 work item |
+| R-42 what an invalidation does to the commitments downstream in its scope (OBJ-28) | **ACCEPTED 2026-10-13** (owner, live gate) | SUPERSEDED WITH IT: one HUMAN approval of the displayed scope invalidates K and every commitment that accepted a candidate in K's scope (derived, not appended one by one); the invalidation reader answers true for all of them; MOD-09 moves all their candidates to PassedOver |
 
 ---
 
@@ -870,4 +873,38 @@ follows is new work, reviewed at the next module's gate.
 **The next module.** MOD-04 closes at drift 6. The drift block on opening the next module (MOD-12
 `lineage/` or MOD-06 `condition/`, S3 §10) is lifted once the work above and its battery are
 recorded, as R-16 did for MOD-03. The work is reviewed at that module's gate.
+
+## R-40 · A least-currency candidate may inherit from another unit's commitment (amends R-26)
+
+**Owner, 2026-10-13, live gate.** Reading MOD-12's specification surfaced F3's OBJ-27 Chain:
+"unit *v* is the successor of unit *u* when *v*'s least-currency candidate derives from *u*'s
+commitment", and a chain ends where "an independently-generated candidate terminates it". R-26, as
+built in MOD-05, allows only a licensed BOTTOM at the least currency. **Ruling.** At the least
+currency, `from` is either BOTTOM, licensed by an independence act in force (R-10), or ANOTHER
+unit's commitment that is in force (the fold answers it for that unit and currency) as of the
+append height. Above the least currency, R-26 stands unchanged: the same unit's commitment
+immediately below. IR-53's question ("what does a non-independent unit derive from?") is answered
+from F3, and the SP-2 addendum (R-30) is withdrawn. This is new work against MOD-05's closed gate.
+
+## R-41 · A commitment names the candidate it accepts
+
+**Owner, 2026-10-13, live gate.** F4: "`Accepted` = candidates that received a commitment". S-07
+and SEAM-11 move "each invalidated commitment's candidate" to PassedOver. MOD-05's `commit(unit,
+currency, author)` names no candidate. **Ruling.** `commit(candidate, "HUMAN")`. The unit and
+currency come from the candidate, and the commitment records the candidate by height (IR-43), so
+Accepted is read by key and never inferred. MOD-05 also gains a record-only LINEAGE READER (the
+candidates derived from a commitment; the commitments accepting a candidate). It needs no fold, so
+MOD-12 can derive scopes without constructing the commitment ledger whose invalidation reader
+MOD-12 itself supplies. This is new work against MOD-05's closed gate.
+
+## R-42 · An invalidation supersedes every commitment downstream in its scope
+
+**Owner, 2026-10-13, live gate.** OBJ-28's scope of a commitment K is the candidates whose `from`
+names K, closed transitively. With R-41, the closure walks: K → candidates from K → the
+commitments that accepted them → candidates from those, and so on. **Ruling.** One HUMAN approval
+of the DISPLAYED scope invalidates K and every commitment in that closure. That is derived from
+the one invalidation, as of the height its scope was derived and displayed, not appended one by
+one. MOD-12's invalidation reader answers true for all of them, so reachability above them
+refuses. The invalidated set MOD-09 reads holds all of them, and their candidates move
+Accepted → PassedOver.
 

@@ -216,3 +216,12 @@ the append is `Refuse(malformed-from)`*. Add the matching REF row beside SP-2's.
 
 **Status:** OPEN, with SP-2. Never patched in `governance/S3/`.
 
+---
+
+## SP-2 addendum WITHDRAWN (R-40, 2026-10-13)
+
+The R-30 addendum asked what a non-independent unit's least-currency candidate derives from. The
+handoff answers it in F3, OBJ-27 Chain: from another unit's commitment (inheritance). The builder
+had not read F3 when R-30 was ruled. MOD-05 is amended under R-40, and nothing goes upstream for
+this question. SP-2 itself (the independence operations in F1) stands.
+

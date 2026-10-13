@@ -10,8 +10,8 @@
   "k7_round": 11,
   "last_gate_tag": "k7-pass-9",
   "seal_tag": "",
-  "next_action": "MOD-12 built (slices B+C one rung; R-43..R-48), 218/218, VEC-05 computed. Next: pre-battery sweep + battery 19, then the K7 round 12 scope/reviewer ruling (owner).",
+  "next_action": "MOD-12 built; battery 19 36/36 (M8 survived once, test sharpened). R-49: K7 round 12 = MOD-12, MOD-05, MOD-04 on Fable 5.1. Next: run K7 round 12 on the committed tree.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T05:48:40+00:00",
+  "updated_at": "2026-10-13T06:04:58+00:00",
   "updated_by": "manual"
 }

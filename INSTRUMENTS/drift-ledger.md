@@ -573,3 +573,8 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   object.py` wrote CRLF again, three files and the object model, restored to LF. IR-78..IR-84.
   218 / 218.
 
+- **2026-10-13 — Battery 19 (MOD-12): 36/36, after one survivor.** M8 survived a test whose
+  claim (the digest is the port's) was confounded with the lineage: two materials compared, not
+  one material under two ports. The test is sharpened at `958b688` and the re-run killed M8. R-49
+  sets K7 round 12's scope: MOD-12, MOD-05, MOD-04 on Fable 5.1.
+

@@ -721,3 +721,60 @@ SURVIVED without those pins.
 L11 is IR-76's divergence: a reader with its own looser recognizer. Only the pin added in the
 sweep kills it.
 
+## Round 19 — MOD-12 `lineage/`: slices B and C, one rung (R-43..R-48)
+
+Run on committed tree `b267347` with the round-5 discipline: every restore was verified against
+HEAD, and the tree was clean after the run. Before the run, the sweep (MF-30, MF-34) pinned five
+claims and spellings: REF-04's omission written as `undefined` and spread out, with the CAST
+registered as a limit (IR-85); same height in BOTH directions; every invalidation counting, in
+height order; the invalidation recognizer; BOTTOM as a fresh value in the material. M14 and
+M22..M26 would have survived without those pins.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| M1 | sign: the seed left out of the encoding | KILLED | `test) (test_a_signature_is_the_digest_of_its_whole_material` |
+| M2 | sign: the lineage left out of the encoding (REF-04 at runtime) | KILLED | `test) (test_signature_without_lineage_digest_is_refused` |
+| M3 | lineage digest: the accepted candidate left out (R-41) | KILLED | `test) (test_a_signature_binds_the_commitment_it_derives_from` |
+| M4 | lineage digest: the author left out | KILLED | `test) (test_a_signature_binds_the_commitment_it_derives_from` |
+| M5 | material: BOTTOM is the caller's object, not a fresh value | KILLED | `test) (test_a_bottom_from_signature_covers_the_bottom_marker` |
+| M6 | material: the lineage is never computed (always BOTTOM) | KILLED | `test) (test_signature_without_lineage_digest_is_refused` |
+| M7 | check: always VERIFIED | KILLED | `test) (test_signature_without_lineage_digest_is_refused` |
+| M8 | sign: the digest port bypassed (MOD-12 chooses the 'digest') | SURVIVED, then KILLED (test) on re-run at `958b688` | `test_a_signature_is_the_digest_of_its_whole_material` |
+| M36 | OBJ-32's descriptor: closed by a human act | KILLED | `test) (test_signature_gate_states_obj_32` |
+| M9 | closure: one level only (no fixed point) | KILLED | `test) (test_the_scope_is_the_closure_over_from_through_acceptances` |
+| M10 | closure: acceptances not followed (R-42) | KILLED | `test) (test_the_scope_is_the_closure_over_from_through_acceptances` |
+| M11 | count: the commitments, not the candidates | KILLED | `test) (test_the_scope_is_the_closure_over_from_through_acceptances` |
+| M12 | closure: not in append order | KILLED | `test) (test_the_scope_is_the_closure_over_from_through_acceptances` |
+| M13 | closure: read as of the commitment's own height, not the caller's | KILLED | `test) (test_the_scope_is_the_closure_over_from_through_acceptances` |
+| M14 | REF-07: same height in ONE direction only (a later display passes) | KILLED | `test) (test_append_before_scope_derivation_is_refused` |
+| M15 | REF-07: no height check at all | KILLED | `test) (test_append_before_scope_derivation_is_refused` |
+| M16 | display: the renderer never called | KILLED | `test) (test_an_invalidation_is_one_human_append_after_its_display` |
+| M17 | display: derived at the commitment's height, not the caller's | KILLED | `test) (test_an_invalidation_is_one_human_append_after_its_display` |
+| M35 | invalidate: scopeAt recorded from the wrong field | KILLED | `test) (test_an_invalidation_is_one_human_append_after_its_display` |
+| M18 | invalidated set: K itself left out | KILLED | `test) (test_what_is_invalidated_as_of_a_height` |
+| M19 | invalidated set: the frozen bound removed (the scope grows after display) | KILLED | `test) (test_the_scope_is_frozen_where_it_was_displayed` |
+| M20 | invalidated set: the frozen bound inverted | KILLED | `test) (test_what_is_invalidated_as_of_a_height` |
+| M21 | invalidated set: born superseded dropped (R-46) | KILLED | `test) (test_what_is_invalidated_as_of_a_height` |
+| M22 | invalidated set: only the first invalidation counts | KILLED | `test) (test_every_invalidation_counts_and_only_an_invalidation_is_read` |
+| M23 | invalidated set: not in height order | KILLED | `test) (test_every_invalidation_counts_and_only_an_invalidation_is_read` |
+| M24 | recognizer: a non-HUMAN invalidation read | KILLED | `test) (test_every_invalidation_counts_and_only_an_invalidation_is_read` |
+| M25 | recognizer: an invalidation naming no scope height read | KILLED | `test) (test_every_invalidation_counts_and_only_an_invalidation_is_read` |
+| M26 | recognizer: an invalidation naming no commitment read | KILLED | `test) (test_every_invalidation_counts_and_only_an_invalidation_is_read` |
+| M27 | isInvalidated: a second rule (K only) diverging from the set | KILLED | `test) (test_what_is_invalidated_as_of_a_height` |
+| M28 | fixtures: the two-directory list again (lineage's never compiled) | KILLED | `test) (test_signature_without_lineage_digest_is_refused` |
+| M29 | mint: DisplayedScope unprotected (IR-79) | KILLED | `test) (test_declaration_from_derivation_is_malformed` |
+| M30 | ledgers: src/lineage unlisted | KILLED | `test) (test_every_appended_fact_kind_is_a_listed_ledger` |
+| M31 | MOD-05 imports MOD-12: a type import | KILLED | `test) (test_the_candidate_append_asks_the_signature_gate_hook_04` |
+| M32 | MOD-05 imports MOD-12: a re-export from its surface | KILLED | `test) (test_the_candidate_append_asks_the_signature_gate_hook_04` |
+| M33 | MOD-05 imports MOD-12: an import TYPE expression | KILLED | `test) (test_the_candidate_append_asks_the_signature_gate_hook_04` |
+| M34 | harness: the 'without' signature computed WITH the lineage | KILLED | `test) (test_vec_05_re_derives_from_the_signature_gate` |
+
+**Thirty-five of thirty-six on the first pass; M8 survived.** The test claimed "the digest is the
+PORT's", but it compared two gates over two DIFFERENT materials. Each material's lineage is
+digested by its own gate's port, so the signatures differed from the lineage alone, and a `sign`
+that bypassed the port passed. The isolation test, which signs ONE material under two ports, would
+have killed it, but the battery names the test that claims the property. The claim is now exact:
+the same material under the other port is that port's digest of the same bytes. Committed as
+`958b688`; re-run, M8 is KILLED. **36 / 36.** M31..M33 are MF-34's spellings of "MOD-05 imports
+MOD-12" (a type import, a re-export, an import-type expression); all are resolved and killed.
+

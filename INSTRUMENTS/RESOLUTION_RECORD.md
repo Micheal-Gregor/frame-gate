@@ -56,6 +56,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-46 IR-77: a candidate from the displayed scope, accepted AFTER the invalidation | **ACCEPTED 2026-10-13** (owner, live gate) | BORN SUPERSEDED: a commitment accepting any candidate of an invalidation's frozen scope is invalidated, whenever it is made. The commit is appended (the record says what happened); the fold answers BOTTOM for it (the read says what holds), R-20's split. MOD-05 and OBJ-31 unchanged |
 | R-47 REF-07's freshness: how recent must the displayed derivation be | **ACCEPTED 2026-10-13** (owner, live gate) | STRICT, SAME HEIGHT: `invalidate(displayed, "HUMAN", at)` refuses unless the scope was derived at `at`, the height the caller asserts as current (as `appendCandidate`'s `at` is). RecordPort has no head read, so a concurrent append between display and act is a registered single-writer production concern |
 | R-48 how an invalidation proves its scope was displayed (RC-4) | **ACCEPTED 2026-10-13** (owner, live gate) | A DisplayedScope TOKEN that only MOD-12 mints, when `display` has handed the scope to RendererPort.present. `invalidate` accepts only the token: without a derivation it does not compile (REF-07 at parse); a stale one is refused at runtime (R-47). Nothing extra is appended |
+| R-49 K7 round 12's scope and reviewer (MOD-12's gate) | **ACCEPTED 2026-10-13** (owner, live gate) | `--modules MOD-12,MOD-05,MOD-04` on Fable 5.1: MOD-12 (new); MOD-05's R-40/R-41 work items (slice A); MOD-04's WI-11..WI-14, which R-39 deferred to this gate. Detector changes are reviewed with the module they serve |
 
 ---
 
@@ -970,4 +971,13 @@ as a single-writer production concern and carried forward, not built around.
 mints. `invalidate` accepts only that token. An invalidation without a derivation therefore does
 not compile, which is REF-07 at parse, and a stale token is refused at runtime under R-47. Nothing is
 appended for the display: no fact kind or append path beyond the S3's.
+
+## R-49 · K7 round 12 reviews MOD-12, MOD-05 and MOD-04, on Fable 5.1
+
+**Owner, 2026-10-13, live gate.** Round 12 is MOD-12's gate. Since the last reviewed tree, three
+things have landed: MOD-12 itself; slice A's MOD-05 work items (R-40, R-41); and MOD-04's work
+items WI-11..WI-14, which R-39 deferred to the next module's gate. **Ruling.** The scope is
+`--modules MOD-12,MOD-05,MOD-04`, so every line changed since the last review gets a reviewer.
+Detector changes are reviewed with the module they serve. The reviewer stays Fable 5.1, as in
+rounds 8-11. This is recorded before the round runs (RD-15).
 

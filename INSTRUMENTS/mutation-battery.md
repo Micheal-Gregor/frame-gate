@@ -582,3 +582,51 @@ Run on committed tree `77ff1ea` with the round-5 discipline.
 **Six of six killed on the first pass.** No plausible single mutation closes the registered
 destructured-relay limit: following a binding element still leaves the caller's argument
 without a kind at its top level. Its pin stands guard against a future widening.
+
+## Round 15 — MOD-04 `reachability/` (the concept), WI-10, the three new detectors, VEC-01
+
+Run on committed tree `2b923c5` with the round-5 discipline. Before the run, the unpinned-claims
+sweep (MF-30) added five pins (`2b923c5`):
+
+- commits in a loop are appends, not folds (the height discriminator);
+- a classic indexed `for` loop;
+- `.at(literal)` as a particular member;
+- the brand never leaves the kernel;
+- the CHEAPEST of two unmet currencies is the one named.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| H1 | 'unmet' read as NOT-BOTTOM only: uncomputable admitted (IR-42) | KILLED (test) | `test_an_uncomputable_predecessor_is_unmet_not_bottom` |
+| H2 | only the currency immediately below is checked | KILLED (test) | `test_skipping_a_currency_does_not_reach_past_it` |
+| H3 | the least currency special-cased as a cardinality test (the forbidden branch) | KILLED (test) | `test_the_number_two_appears_nowhere` |
+| H4 | witnesses dropped from the evaluation | KILLED (test) | `test_one_evaluation_answers_the_verdict_and_its_witnesses` |
+| H5 | the DEAREST unmet currency named | KILLED (test) | `test_draw_without_cheaper_commitment_is_refused` |
+| H6 | a verdict cached by subject, not by height (stored across extensions) | KILLED (test) | `test_reachability_is_as_of_a_height` |
+| H7 | the least currency made unreachable (the fold's identity broken) | KILLED (test), +tsc | `test_the_least_currency_is_reachable_by_the_empty_fold` |
+| H8 | admit evaluates a second time | KILLED (test) | `test_admit_derives_from_one_evaluation_never_a_second` |
+| H9 | a currency outside the order collapsed into 'unreachable' | KILLED (test) | `test_a_currency_outside_the_order_is_passed_through` |
+| H10 | the gate refuses with a guard other than its ON_FAIL | KILLED (test) | `test_reachability_gate_states_obj_29` |
+| H11 | asProjection accepts any name (DG-F1's door opened) | KILLED (test) | `test_only_a_listed_member_joins_the_family` |
+| H12 | the brand exported from the kernel | KILLED (test) | `test_the_brand_never_leaves_the_kernel` |
+| H13 | joins: the module check removed | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| H14 | joins: spread re-branding no longer seen | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| H15 | sole site: the height discriminator dropped (appends read as folds) | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| H16 | sole site: only for-of loops counted | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| H17 | branch: the one const hop dropped | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| H18 | a REGISTERED LIMIT closed silently (recursion read as an iteration) | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| H19 | a second reachability check planted in MOD-05's real source | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| H20 | the harness's entry check removed (impl_sha could pin the wrong file) | KILLED (test), +tsc | `test_the_harness_refuses_a_wrong_entry` |
+| H21 | the fold changed after VEC-01 was pinned (impl_sha no longer the fold's) | KILLED (test) | `test_vec_01_re_derives_from_the_fold` |
+
+**Twenty-one of twenty-one killed on the first pass.** Three of them would have survived without
+the pre-battery pins:
+
+- H5, the dearest unmet currency named: no test had two unmet;
+- H12, the brand exported;
+- H15, the height discriminator dropped.
+
+H3, the least currency special-cased as a cardinality test, is caught by SC-3's existing rule,
+written for MOD-03, now guarding MOD-04's "no per-currency branch". H19 plants a second
+reachability check in MOD-05's REAL source, and the sole-site rule sees it there. H21 shows that
+VEC-01's provenance is live: changing the fold by one comment character breaks its `impl_sha`.
+

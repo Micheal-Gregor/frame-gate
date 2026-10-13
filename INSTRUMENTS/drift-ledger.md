@@ -433,3 +433,8 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   `rederive.py --all` passes (1 vector, re-derived). BC-04-9 re-runs the harness in the suite and
   checks that a wrong entry is refused. 177/177; checks clean. IR-66.
 
+- **2026-10-13 — Builder battery round 15 (MOD-04, WI-10, detectors, VEC-01): 21/21 killed on the
+  first pass.** Five pins were added before the run (MF-30); H5, H12 and H15 would have survived
+  without them. Recorded in `mutation-battery.md`. MOD-04 is ready for its K7 gate. The round's
+  scope and reviewer model await the owner.
+

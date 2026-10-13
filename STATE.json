@@ -10,8 +10,8 @@
   "k7_round": 11,
   "last_gate_tag": "closed-by-owner-11",
   "seal_tag": "",
-  "next_action": "MOD-06 condition built (R-52..R-56), 245/245. Next: battery 21 (sized to MOD-06, R-50), then K7 round 13 (scope to rule).",
+  "next_action": "MOD-06 built, battery 21 15/15; R-57: K7 round 13 on MOD-06. Owner: closed-by-owner-12 on 13a8210 is not in this clone or on origin - re-place and push.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T07:11:39+00:00",
+  "updated_at": "2026-10-13T07:17:40+00:00",
   "updated_by": "manual"
 }

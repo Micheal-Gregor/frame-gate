@@ -791,3 +791,27 @@ On `ad33e1a`; restores verified.
 
 **4 / 4.** MOD-12's gate is closed by owner triage (R-51).
 
+## Round 21 — MOD-06 `condition/`, sized to its claims (R-50)
+
+On `3da66a6`; restores verified. P13 (Chains' least-currency check dropped) was not planted: R-26 makes it an equivalent mutant (an above-least candidate derives only from the same unit).
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| P1 | identity: object keys not sorted | KILLED | `test) (test_a_condition_identity_is_the_digest_of_the_whole_input_set` |
+| P2 | identity: a nested record's components dropped | KILLED | `test) (test_a_condition_identity_is_the_digest_of_the_whole_input_set` |
+| P3 | identity: list order normalized away | KILLED | `test) (test_a_condition_identity_is_the_digest_of_the_whole_input_set` |
+| P4 | identity: the digest port bypassed | KILLED | `test) (test_a_condition_identity_is_the_digest_of_the_whole_input_set` |
+| P5 | revision recognizer: a non-HUMAN revision read | KILLED | `test) (test_a_revision_sets_the_condition_in_force` |
+| P6 | condition in force: the FIRST revision, not the last | KILLED | `test) (test_a_revision_sets_the_condition_in_force` |
+| P7 | HOOK-06 removed | KILLED | `test) (test_an_assembly_of_mixed_conditions_is_rejected_hook_06` |
+| P8 | closure: a revision BEFORE the first member closes | KILLED | `test) (test_a_sample_closes_by_a_revision_or_a_commitment_whichever_is_first` |
+| P9 | closure: a revision naming the SAME condition closes | KILLED | `test) (test_a_sample_closes_by_a_revision_or_a_commitment_whichever_is_first` |
+| P10 | closure: a revision wins even when an acceptance came first | KILLED | `test) (test_a_sample_closes_by_a_revision_or_a_commitment_whichever_is_first` |
+| P11 | samplesFor: a refused assembly skipped, not passed through | KILLED | `test) (test_an_assembly_of_mixed_conditions_is_rejected_hook_06` |
+| P12 | chains: a commitment not in force makes an edge | KILLED | `test) (test_chains_are_maximal_paths_of_inheriting_units` |
+| P14 | chains: paths stop at the first edge (not maximal) | KILLED | `test) (test_chains_are_maximal_paths_of_inheriting_units` |
+| P15 | R-56 exception widened from the declaration to the whole file | KILLED | `test) (test_reachability_is_decided_in_one_place` |
+| P16 | lineage reader: commitmentsAsOf reads a non-HUMAN commitment | KILLED | `test) +tsc (test_the_lineage_reader_reads_every_candidate_and_commitment` |
+
+**15 / 15.**
+

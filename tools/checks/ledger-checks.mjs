@@ -48,7 +48,11 @@
  *            path they mirror.
  *            LIMITS: an entry whose type carries no kind at any call - typed `unknown` or
  *            `any` (limit-untyped-entry.ts; forge registers the same residue); a relay
- *            reached indirectly, through `.call` / `.apply` (limit-indirect-relay.ts).
+ *            reached indirectly, through `.call` / `.apply` (limit-indirect-relay.ts); a
+ *            TYPED helper - its parameter already carries the kind - is the path itself,
+ *            so two callers sharing it count once, as the helper (limit-typed-helper.ts).
+ *            In src/ the exact per-kind map still turns red the moment a path moves into
+ *            such a helper.
  *   sc3      DECIDES: a numeric 2 in any source file of any extension; a comparison of
  *            a Currency collection's length or size to a numeric literal.
  *            LIMITS: cardinality asked by index (limit-cardinality-by-index.ts).

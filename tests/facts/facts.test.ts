@@ -469,6 +469,7 @@ describe("BC-05-15 - one guarded append; an unreachable draw costs nothing (S-01
     });
     expect(Object.fromEntries(Object.entries(out.paths.fixtures).map(([k, v]) => [k, v.map((x) => `${x.kind} ${x.fn}`).sort()]))).toEqual({
       "src/facts/limit-indirect-relay.ts": [],
+      "src/facts/limit-typed-helper.ts": ["candidate TypedHelper.#write"],
       "src/facts/limit-untyped-entry.ts": [],
       "src/facts/violating-backfill-path.ts": ["candidate CandidateBackfill.backfill", "candidate CandidateBackfill.replay"],
       "src/facts/violating-generic-relay.ts": ["candidate RelayBackfill.backfill", "candidate RelayBackfill.viaTwoRelays"],
@@ -513,6 +514,10 @@ describe("BC-05-24 - the bound context must be this draw's (R-31)", () => {
     nothingAppendedSince(record, h2);
     const k = candidate(ledger.appendCandidate(good, "sig", record.noise(), "ENGINE"));
     expect(k.payload.context).toBe(good.context.at);
+    // "Newer than the append height" is the refusal; a context AT the append height is this
+    // draw's (succeeds is strict, R-09) - pinned before battery 13.
+    const exact = propose(c1, k0, "cond");
+    expect(candidate(ledger.appendCandidate(exact, "sig", exact.context.at, "ENGINE")).payload.context).toBe(exact.context.at);
   });
 });
 

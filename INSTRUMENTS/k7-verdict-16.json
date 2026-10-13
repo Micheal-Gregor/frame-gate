@@ -1,0 +1,129 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 16,
+  "reviewed": {
+    "tree_sha": "4b754402582909264e63dcae89f6b3236baf75db",
+    "commit_sha": "48f5e156d23d36742aff94b5be316a5715db8f80",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-09"
+    ],
+    "scope": [
+      {
+        "module": "MOD-09",
+        "mode": "full",
+        "manifest": "c796e27050591ebb21f3e4fbe64725377a8df2f16e56e1570500f18f8e6b2a9f",
+        "base": null,
+        "base_round": null,
+        "credit_round": null,
+        "unresolved": [],
+        "deps": [
+          "MOD-01",
+          "MOD-03",
+          "MOD-05",
+          "MOD-06",
+          "MOD-07"
+        ],
+        "importers": []
+      }
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T09:40:01+00:00",
+    "completed_at": "2026-10-13T09:55:21+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 15,
+    "prior_tree_sha": "253f755386436422231d70bcbe92d83a2a5e6430",
+    "prior_failing_checks": [],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Trace holds both ways. src/calibration/bar.ts -> OBJ-22 (S3 s3:119 'theta or bottom with cause and discharge condition; no setter exists': BarValue bar.ts:36-38 is the tagged pair, Bar.prototype offers `of` and nothing else, pinned at calibration.test.ts:172; joined as \"Bar\" through the kernel, bar.ts:62). src/calibration/population-partition.ts -> OBJ-23 (s3:120 'non-monotone; computed as-of, never accumulated': readonly slots, Object.freeze(this), #partition recomputed per compute(at), :120-151). src/calibration/separation.ts -> AE-5's interface and the R-69 stand-in (object-model-and-parameters.md:48 names it as a decider row); index.ts is the surface only. Object-model rows exist for the module, PopulationPartition, Bar and separation (object-model-and-parameters.md:20,46-48) with declared slots matching both constructors (lineage, samples, draws, declarations, invalidations, observations; populations, separation), each checked by operation (OS-1, population-partition.ts:98-109, bar.ts:50-53); OS-12 isolation tests present (tests/bar.isolation.test.ts, tests/population-partition.isolation.test.ts). S3 s11:320's destinations exist: REF-11..REF-14 (calibration.test.ts:103,146,185,208), VEC-02/06/07 (vectors/, COMPUTED), HOOK-03 and HOOK-08 (bar.ts:22-25,78-89), PC-04 enumerated (completion-ledger.md:21). Seams: SEAM-09 (#scoreOf :170-175), SEAM-10 (#levelAtDraw :161-167 reads the declaration at the context's recorded height and checks identity), SEAM-11 via IR-83's commitment-to-candidate step (:127-128), SEAM-23 (closure read as given, :134), SEAM-28 (compute(at)); SEAM-13/15's shape (theta or no-bar with cause and discharge) is BarValue, consumers unbuilt. The join detector confirms Bar and PopulationPartition joined once each in src/calibration (calibration.test.ts:297-298). Trace citations R-69..R-71 resolve to ACCEPTED live rows (RESOLUTION_RECORD.md:79-81); IR-106..IR-111 present (drift-ledger.md:184-189). No orphan file. One trace-hygiene gap, deducted under CC-7 not failed: S3 s9:288 ODG-FG-07 ('which member of the Unknown family theta = bottom carries ... a MOD-09 decision surfaced to MOD-01') is decided in substance by BarValue's tagged `no-bar` variant (ADR-001's shape: not an Unknown member at all, bar.ts:38), but no IR or resolution names ODG-FG-07 as closed; INSTRUMENTS mentions it only inside k7-verdict-4/5 - the same class as round 15's ODG-FG-03 finding (IR-105)."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Read as code paths and demonstrated live in the R-07 worktree .k7/wt (HEAD 48f5e15 = repository HEAD per .git/worktrees/wt/HEAD) by tests/k7/k7-probes.test.ts under `npx vitest run --root .k7/wt -t \"k7_p\"` (7/7 as predicted) and by ten killed mutants (CC-6). HELD: no threshold supplied - src/calibration holds no numeric literal but the counters' 0 and `+= 1` (grep), Bar.of takes (level, component) only, the constructor takes populations and separation only, the one mint is `verdict.theta as Threshold` at bar.ts:88 reached only after both populations are non-empty and the injected rule answered `separated`; ABSENT never zero - #scoreOf :174 excludes it, counted on its side (:142-145); the five Unknowns not collapsed - a samples Unknown (:132), a draw-context Unknown (:137) and any observation Unknown other than NoSubject (:172, M7 killed) are each the answer as themselves, Bar passes the partition's Unknown through (bar.ts:64); nothing stored, nothing accumulated - k7_p7 reads one Bar Projection at two heights and gets both-empty then AE-5 open, k7_p4 shows an observation appended after `at` is excluded at `at` and scored later; the declaration read is the one recorded at draw (M4 killed; BC-09-6); X21 and R-42's scope (BC-09-4: the downstream commitment in K's scope moves too; M5 killed); SEAM-23 (a revision closes for calibration: BC-09-7; k7_p2: revision-then-commit leaves the member Accepted and the rest PassedOver, R-53's earliest-event closure read as given); R-70 per component (BC-09-5 q vs r); R-71 pooled per level (BC-09-7 two currencies; k7_p3: a candidate at another level is in neither population AND counted excluded on neither side); IR-107 (k7_p5: re-commitment after invalidation returns the candidate to Accepted); IR-109 (k7_p6: an unstated component excludes every member, both counts carried on the both-empty no-bar). HOOK-08 on every exit: #answer is the single return path (bar.ts:79-89) and the type requires both counts (calibration.test.ts:232). N/A-by-absence, stated: ratio, scope, stop condition (MOD-11), diagnostic (MOD-10), signatures (MOD-12), difficulty (MOD-13), external naming (src/calibration imports kernel, catalog, facts, condition, observation only). Registered residue, probed and deducted under CC-7 not failed: IR-108 - k7_p1 shows a SeparationRule that ignores its populations (`separate: () => ({kind:'separated', theta: 0.85})`) yields `{kind:'bar', theta: 0.85}` branded as a Threshold on the real orchestrated path, and nothing in MOD-09 or any detector rejects it; the module itself supplies nothing, the seam is the owner's R-69 design, and IR-108 says what counts as a lawful rule is AE-5's ruling - so not halt-class, but it is the one place HOOK-03's 'originates from the bar projection' is true by brand rather than by origin. Also deducted: #scoreOf :174 collapses ANY Unknown from `component()` into 'excluded' (`isUnknown(value) || isAbsent(value)`), where :172 distinguishes NoSubject; equivalent today because `component()` emits only NoSubject (IR-99), structurally a collapse waiting for a second member."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Registered and honoured: R-69 (the injected decider; only AE5_OPEN shipped, separation.ts:22-24, its no-bar returned as given with the rule's own cause, BC-09-2), R-70 (per component, both `of(level, component)` signatures), R-71 (pooled per level), IR-106 (the Threshold brand plus the hand-listed BRANDS entry, ledger-checks.mjs:247-249), IR-107 (acceptance counts acts, not the effective commitment: population-partition.ts:128 reads commitmentsAsOf filtered by invalidation, never the fold), IR-108 (no population floor here: the branch is 'empty' and nothing more, bar.ts:68-72), IR-109 (ABSENT excluded whether dischargeable or not; an unstated component excluded not refused), IR-110 (VEC-02 COMPUTED with `deferred_rows`), IR-111 (framework). No unregistered mechanism the tests depend on to pass: every behaviour BC-09-1..9 assert traces to those rulings or to the S3 (REF-11's order, the two exclusion counts, SEAM-10, closure read from MOD-06, the one join each). Interpretation linked to its AE: separation.ts and bar.ts both name AE-5/R-69 at the open body. Independence: no closure here was prescribed by an earlier K7 round (MOD-09 is a first review). Unregistered but cosmetic, noted not failed: the cause tokens `both-empty` / `accepted-empty` / `passed-over-empty` and the discharge prose (bar.ts:69-72) are the builder's wording; `sampleSize` = scored members of both populations is stated only in BC-09-2's base-case line; ODG-FG-07's closure is unlinked (CC-1). SCOPE statements: MOD-09 ships no detector of its own; the two it leans on belong to closed gates and are not re-scored. One observation on ledger-checks' `mint` statement: its DECIDES clause says 'a branded ledger value' and its illustrative list (:74-76) names three ledger brands, while BRANDS now also carries two hand-listed non-ledger brands (DisplayedScope, Threshold) by comment and IR only - the rule decides them correctly (CC-6 reach probe), so the statement is incomplete rather than untrue; recorded as a known-issue candidate for the detector's owner, not a MOD-09 defect."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit && npx vitest run   (run as its two declared parts in sequence on the repository at 48f5e15, PowerShell 5.1 having no &&: tsc silent, exit 0; vitest 36 files, 295/295 passed, exit 0). Then each S3 s5 MOD-09 row under the declared single-test command, each selecting exactly one case and passing (1 passed | 294 skipped): npx vitest run -t \"test_bar_with_empty_population_returns_bottom\" (REF-11, calibration.test.ts:103: both-empty, accepted-only, passed-over-only through the real record, a recording spy asserting the separation rule was never consulted and no theta/sampleSize key present); -t \"test_threshold_assignment_is_malformed\" (REF-12, :146: five parse-level spellings under @ts-expect-error - literal, default parameter, coalesced fallback, threshold argument to of, threshold constructor key - plus the mint rule over src/ and the positive-control fixture tests/fixtures/catalog-mint/mint-threshold.ts flagged as 'assertion', plus Bar.prototype = [of]); -t \"test_invalidated_commitment_moves_to_passed_over\" (REF-13, :185: a real MOD-12 display-then-invalidate over a commitment whose R-43 scope holds a downstream commitment; both candidates move, union unchanged); -t \"test_exclusion_counts_present_on_both_populations\" (REF-14, :208: unobserved and ABSENT members on BOTH sides, per component, counts riding on the population-branch no-bar, the stand-in no-bar and a threshold). tests/spec/s5-names.test.ts green, so property (B) holds for every built module. N/A-by-absence: none for MOD-09 - all four of its s5 rows are built and resolve.",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (exit 0: 'ok VEC-01', 'ok VEC-02 MOD-09 \u00c2\u00b7 Bar re-derived', 'ok VEC-03', 'ok VEC-05', 'ok VEC-06 MOD-09 \u00c2\u00b7 PopulationPartition re-derived', 'ok VEC-07 MOD-09 \u00c2\u00b7 PopulationPartition re-derived'; '6 vector(s), all re-derived'). Computed from the implementation: each handler in tools/vectors/run.ts (:247-323) builds its fixture through the REAL ledgers (DeclarationLedger, DrawContextLog, CandidateLedger, CommitmentLedger, ObservationLedger, RevisionLog, Samples, InvalidationScope/Ledger) and calls the real Bar / PopulationPartition; a run handed another entry exits 2. impl_sha present and current: VEC-02 a1d88223... = Get-FileHash SHA256 of src/calibration/bar.ts; VEC-06 and VEC-07 23f8e2e3... = SHA256 of src/calibration/population-partition.ts (both on the repository and on .k7/wt). Independently re-derived by hand by the reviewer: VEC-06 - fact heights from the script (declare 1; a=7, b=14, c=21 unobserved, K=22, d=27, e=34, K2=37, mark before=37, invalidation=38) give before {accepted [7,27], passedOver [14,34], excluded 0/1, union 4} and after {accepted [27], passedOver [7,14,34], 0/1, 4} = pinned; VEC-07 - mixed: sample x {a .9 accepted, b unobserved, c ABSENT} and y {d accepted unobserved, e .4, f unobserved} give [1,1,1,3], control [2,4,0,0] = pinned; VEC-02 - rows [0,0,0,0 both-empty], [1,0,0,0 passed-over-empty], [2,1,0,1 AE-5 open with accepted {.62,.48} vs passedOver {.71} genuinely overlapping, rule consulted] = pinned. Deferred: VEC-02 row 4 carried as `deferred_rows` with its discharge ('AE-5's separation rule closes (R-69)...'), and completion-ledger.md:21,31 keeps MOD-09 BUILT not COMPLETE on it (IR-110). Noted under CC-7: rederive.py reads only `state`, so the deferred row is invisible to the mechanical check and is carried by the ledger and BC-09-9 (:320-321) instead.",
+        "exit_code": 0
+      }
+    },
+    "CC-6": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Both hooks falsified in the runner's R-07 worktree .k7/wt (detached at 48f5e15 = repository HEAD), every mutant run under the declared single-test command `npx vitest run --root .k7/wt -t <name>` and the parse-level one under `npx tsc --noEmit -p .k7/wt`; the repository was never written. (a) Divergence-injection. HOOK-03: planted .k7/wt/src/calibration/k7-mint.ts with four spellings of a configured Threshold outside bar.ts - `<Threshold>(0.85 as number)`, a generic launder `cast<Threshold>(0.85)`, any-flow `const t: Threshold = JSON.parse(\"0.85\")`, a user type guard `x is Threshold`: tsc accepted the file (exit 0, so the type system alone does not stop any-flow) but REF-12's named test went red with all four flagged (assertion / generic-launder / any-flow / type-guard, plus the type-parameter-cast root) - every form is inside the mint rule's stated DECIDES; no evasion found inside the statement. HOOK-08: the type requires both counts (BC-09-5's @ts-expect-error at :232) and #answer is the one exit. (b) Mutation, ten killed of ten: M1 population branch removed, rule consulted first -> test_bar_with_empty_population_returns_bottom red ({kind:'bar', theta: NaN} where both-empty was due); M2 excludedPassedOver copied from excludedAccepted (bar.ts:83) -> test_exclusion_counts_present_on_both_populations red (2 where 3 was due); M3 `Threshold = number` -> tsc exit 2, TS2578 at calibration.test.ts:158,160,162, AND the named test red because ledger-checks' brand anchor throws loudly ('Threshold carries no computed-key brand'); M4 #levelAtDraw reading the CURRENT declaration -> test_membership_reads_the_declaration_recorded_at_draw_time red; M5 invalidation filter dropped (:128) -> test_invalidated_commitment_moves_to_passed_over red ([8,25] stayed Accepted); M6 open samples admitted (:134) -> test_passed_over_is_read_from_closed_samples red; M7 every observation Unknown collapsed to 'excluded' (:172) -> test_populations_are_computed_as_of_a_height red; M8 level filter dropped (:138) -> BC-09-6 red (levels merged); M9 sampleSize = acceptedCount (:88) -> test_the_injected_rule_decides_separation red; M10 only the passed-over-empty check removed (:72) -> REF-11's test red (theta -Infinity minted). Every restore verified: worktree bar.ts and population-partition.ts re-hash to the pinned impl_sha values. Known-issue candidate, not a CC-6 failure (outside any detector's claim, registered IR-108): a SeparationRule returning a constant (k7_p1) is minted as a Threshold - no DECIDES rule claims the rule seam. Trace citations conditional on live status: R-69..R-71 ACCEPTED (RESOLUTION_RECORD.md:79-81); IR-106..IR-111 present; battery 26's record INSTRUMENTS/battery-records/MOD-09-round-26.json (16/16, manifest sha256:c796e270...) matches mutation-battery.md:918-941. Tree integrity: `git status --porcelain` before and after the battery is identical - ' M .pipelinegate/lines/7368...2a9f.jsonl' (the runner's own record, modified before the reviewer's first command) and ' M STATE.json' - neither reviewed content, nothing else touched. Two reviewer files remain in .k7/wt only (tests/k7/k7-probes.test.ts; src/calibration/k7-mint.ts neutralised to `export {}` after its run because Remove-Item is outside the reviewer's allowlist); the runner deletes the worktree."
+    },
+    "CC-7": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form, as a hard grader. Object-model fidelity 8 (WORST, tied): two Projections joined once each through the kernel, OS-1 slots checked by operation, no hidden state, one exit for the bar, the no-bar codomain as ADR-001's tagged variant; deductions because `Separation.theta` is a plain number that #answer brands unconditionally (bar.ts:88) so HOOK-03's 'originates from the bar projection' is true by brand, not by origin (IR-108, k7_p1), and because ODG-FG-07 is closed in substance and linked nowhere. Axiom coverage 8: every carried rule demonstrated live (k7_p1..p7) and by ten killed mutants; deductions for #scoreOf :174 collapsing any `component()` Unknown into 'excluded' (equivalent today, structurally a collapse) and for the IR-108 residue reaching the brand. Base-case support 8: BC-09-1..9 written first and watched red (17/295, axioms-and-base-cases.md:716), real worlds through MOD-05/06/07/12, every vector hand re-derivable; deductions because no base case pins the as-of read of a later observation (k7_p4), a candidate at another level counted on neither side (k7_p3), or re-commitment after invalidation (k7_p5), and because tests/bar.isolation.test.ts:11 fakes a Candidate with `undefined as unknown as Candidate`. Extensibility 8: the open body is one injected interface, no integer floor crept in; deductions because a non-ledger brand must be hand-listed in a closed gate's detector whose `mint` statement still reads 'branded ledger value' (ledger-checks.mjs:5-9,74-76; IR-106), and because `state: COMPUTED` on a vector with an uncomputed row keeps row 4 out of the mechanical check's sight (IR-110). No unused import, no vacuous assertion, no tautology found in src/calibration or its tests; no literal threshold anywhere in the module. MIN = 8: MOD-09 passes on this tree as BUILT, not COMPLETE (AE-5 open), which is the S3's designed state."
+    }
+  },
+  "drift_score": {
+    "value": 8,
+    "basis": [
+      {
+        "check_id": "CC-2",
+        "finding": "Worst dimension: object-model fidelity. `Separation.theta` (separation.ts:13) is a plain number and Bar#answer brands whatever the injected rule returns (bar.ts:88); probe k7_p1 on the orchestrated path shows a rule ignoring its populations yields {kind:'bar', theta: 0.85} as a Threshold with nothing rejecting it. Registered latent (IR-108) and owner-designed (R-69), so not a failure, but HOOK-03's 'originates from the bar projection' holds by brand rather than by origin until AE-5 names a lawful rule.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-1",
+        "finding": "Object-model fidelity / trace hygiene: ODG-FG-07 (S3 s9:288, 'which Unknown member theta = bottom carries ... a MOD-09 decision surfaced to MOD-01') is decided by BarValue's tagged `no-bar` variant (bar.ts:38, ADR-001's shape - not an Unknown member), but neither IR-106..IR-111 nor any resolution row names the gate as closed; the same class as round 15's ODG-FG-03 (IR-105).",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-2",
+        "finding": "Axiom coverage: population-partition.ts:174 collapses ANY Unknown from `component()` into 'excluded' (`isUnknown(value) || isAbsent(value)`), where :172 distinguishes NoSubject from the other members; equivalent today because `component()` emits only NoSubject (IR-99), but the structure is a collapse of the closed family waiting for a second member.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Base-case support: no base case pins the as-of read of an observation appended after `at` (k7_p4), a candidate at another level being counted excluded on neither side (k7_p3), or a re-commitment after invalidation returning the candidate to Accepted (k7_p5) - all held under probe but unpinned by the suite; tests/bar.isolation.test.ts:11 fakes a Candidate with `undefined as unknown as Candidate`.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-5",
+        "finding": "Extensibility: `Threshold` had to be hand-listed in a closed gate's detector (ledger-checks.mjs:247-249) whose `mint` SCOPE still says 'a branded ledger value' and lists three ledger brands (:74-76), so the next non-ledger brand has no discovery (IR-106, IR-79's policy); and VEC-02's `state: COMPUTED` keeps its deferred row 4 outside rederive.py's sight (it reads `state` only), carried by the completion ledger and BC-09-9 instead (IR-110).",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "PASS",
+  "blocking": [],
+  "next_action": "Tag k7-pass-16 on 48f5e15, then before MOD-10 reads SEAM-13 register in one line each that ODG-FG-07 is closed by BarValue's tagged no-bar variant and that a configured number can wear the Threshold brand only through the AE-5 rule seam (IR-108), so the owner's AE-5 ruling must name what a lawful rule is."
+}

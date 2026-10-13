@@ -187,6 +187,8 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-109 | **ODG-FG-04 at MOD-09:** an ABSENT component counts as excluded whether or not it is dischargeable, and the counts are integers that carry no bound. Whether the undischargeable bound reaches the user is left to MOD-10's WithheldReason (IR-96). A component no observation states is excluded, not refused | latent | MOD-09, MOD-10 (ODG-FG-04) |
 | IR-110 | **VEC-02 is COMPUTED for rows 1-3, and carries row 4 as a `deferred_rows` entry with its discharge.** The emission contract has two vector states and no partial one, and the S3 designs this vector as partly uncomputable. The completion ledger keeps MOD-09 short of COMPLETE (framework report) | benign | MOD-09 |
 | IR-111 | **The OS-12 variation check counts an operation's call sites in the test text.** An isolation test calling `of` through one helper read as "called once". Workaround: each case writes both calls (framework report) | benign | MOD-09 |
+| IR-112 | **ODG-FG-07 (which Unknown member θ = ⊥ carries) is closed by MOD-09, and the answer is none.** ⊥ is BarValue's tagged `no-bar` variant (ADR-001, IR-01): a value of OBJ-22's codomain, not a member of the Unknown family, which stays closed at five. MOD-01 holds no MOD-09 ruling. C4-anchor-record.md still lists the gate as open; that record is append-only and this line supersedes it | benign | MOD-09 (ODG-FG-07) |
+| IR-113 | **HOOK-03 holds by brand, not by origin, until AE-5 names a lawful rule (K7 round 16).** `Separation.theta` is a plain number, and Bar brands whatever the injected rule returns. So a configured number can reach the Threshold brand through the AE-5 rule seam and nowhere else (IR-108). The owner's AE-5 ruling must therefore say what a lawful rule is, as well as what separation means | latent | MOD-09 (AE-5) |
 
 ## Log
 
@@ -639,3 +641,9 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 - **2026-10-13 — K7 round 15 (MOD-08, FULL; Fable 5.1): PASS, drift 7.** The first gate passed under 2.6.5 (R-66): the k7 receipt and the full-review receipt are ACCEPT. Non-blocking deductions: the pure core is public (IR-104); ODG-FG-03 is uncited (IR-105); a duplicated `SampleSource`; unpinned as-of cases. These are left as they are, so MOD-08's credited content does not change.
 
 - **2026-10-13 — MOD-09 `calibration/` built (R-69..R-71): BUILT, not COMPLETE.** Tests were written first and watched red against typed stubs (17 / 295). AE-5's rule is injected, and the build ships only the stand-in. VEC-02 rows 1-3, VEC-06 and VEC-07 are computed from the implementation; VEC-02 row 4 is deferred to AE-5. 295 / 295.
+
+- **2026-10-13 — K7 round 16 (MOD-09, FULL; Fable 5.1): PASS, drift 8.** The k7 and full-review receipts are ACCEPT. The two registers the verdict asked for are IR-112 (ODG-FG-07 closed) and IR-113 (θ's brand through the AE-5 seam). Non-blocking deductions, left as they are so MOD-09's credited content does not change:
+  - `component()`'s Unknowns are read as excluded (equivalent today, IR-99);
+  - unpinned probes: an observation appended after the height, a candidate at another level, and re-commitment after invalidation;
+  - a faked Candidate in the Bar isolation test;
+  - `Threshold` is hand-listed in the mint rule, and VEC-02's deferred row is outside rederive's sight (IR-106, IR-110).

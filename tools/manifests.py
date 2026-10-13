@@ -40,7 +40,12 @@ from pathlib import Path
 
 JS_EXT = (".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs")
 CODE_EXT = JS_EXT + (".py",)
-JS_SPEC = re.compile(r"""(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|^\s*import\s+)(['"])([^'"\n]+)\1""", re.M)
+# LOCAL FIX (Frame Gate, IR-102): anchored to STATEMENTS. The template's pattern took any `from` before a
+# quote, so a string literal such as "context-and-from" in test code read as a specifier, and every module
+# whose closure held such a test was "unresolved" - never creditable (RD-27). Now: `import`/`export ... from`
+# at a statement start (spanning lines, never past `;` or a quote), a side-effect `import "x"`,
+# `import("x")` and `require("x")`.
+JS_SPEC = re.compile(r"""(?:^[ \t]*(?:import|export)\b[^;'"]*?\bfrom\s*|^[ \t]*import\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)(['"])([^'"\n]+)\1""", re.M)
 NODE_BUILTINS = {"assert", "async_hooks", "buffer", "child_process", "cluster", "console", "constants", "crypto", "dgram",
                  "dns", "events", "fs", "http", "http2", "https", "inspector", "module", "net", "os", "path",
                  "perf_hooks", "process", "punycode", "querystring", "readline", "repl", "stream", "string_decoder",
@@ -233,16 +238,27 @@ def build(root: Path, cfg: dict) -> dict[str, dict]:
                         files.add(x)
                         todo.append(x)
         files_of[m], deps[m], unresolved[m] = files, dep, unres
-    tests = [f for f in tracked if f.startswith("tests/") and f.endswith(CODE_EXT)]
-    for t in tests:                      # a test belongs to every module whose files it imports
-        for kind, x in imports(t):
-            if kind == "file":
-                for m in mods:
-                    if x in files_of[m]:
+    # LOCAL FIX (Frame Gate, IR-101): a test belongs to every module whose files it imports - TRANSITIVELY,
+    # through shared support files, which join a module before the tests importing them can. The template walked
+    # `tracked` (a set) once, so attribution - and every digest - followed Python's per-process hash seed. Now:
+    # sorted, and walked to a fixed point.
+    tests = sorted(f for f in tracked if f.startswith("tests/") and f.endswith(CODE_EXT))
+    grew = True
+    while grew:
+        grew = False
+        for t in tests:
+            for kind, x in imports(t):
+                if kind != "file":
+                    continue
+                for m in sorted(mods):
+                    if x in files_of[m] and t not in files_of[m]:
                         files_of[m].add(t)
-            elif kind == "unresolved":
-                for m in mods:
-                    if any(k == "file" and y in files_of[m] for k, y in imports(t)):
+                        grew = True
+    for t in tests:
+        for kind, x in imports(t):
+            if kind == "unresolved":
+                for m in sorted(mods):
+                    if t in files_of[m]:
                         unresolved[m].add(f"{t}: {x}")
     for m in mods:
         listed = [{"path": f, "sha256": sha((root / f).read_bytes())} for f in sorted(files_of[m])]

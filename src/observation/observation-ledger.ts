@@ -106,12 +106,34 @@ export class ObservationLedger {
     return Object.freeze(out);
   }
 
-  /** An observation, recognised by kind among every module's facts: a candidate, and a list of named, authored components. */
+  /**
+   * An observation OF THIS LEDGER (DR-46, R-67): only what `observe` could have written - EXACTLY the
+   * configured components, in the configured order (R-59), each authored, each value a finite number
+   * (R-58) or a well-formed ABSENT. Anything else is not an observation to this ledger: it is never in
+   * force (R-60), and its marks bind nothing.
+   */
   #isObservation(fact: unknown): fact is { author: Author; payload: ObservationPayload } {
     if (typeof fact !== "object" || fact === null || !("payload" in fact) || !("author" in fact)) return false;
     const payload = (fact as { payload: unknown }).payload;
     if (typeof payload !== "object" || payload === null) return false;
     const p = payload as { kind?: unknown; candidate?: unknown; components?: unknown };
-    return p.kind === "observation" && typeof p.candidate === "number" && Array.isArray(p.components) && p.components.every((c: unknown) => typeof c === "object" && c !== null && typeof (c as { name?: unknown }).name === "string" && typeof (c as { author?: unknown }).author === "string" && "value" in c);
+    if (p.kind !== "observation" || typeof p.candidate !== "number" || !Array.isArray(p.components)) return false;
+    const stated: readonly unknown[] = p.components;
+    if (stated.length !== this.#components.length) return false;
+    return stated.every((c, i) => {
+      if (typeof c !== "object" || c === null) return false;
+      const x = c as { name?: unknown; author?: unknown; value?: unknown };
+      return x.name === this.#components[i] && typeof x.author === "string" && this.#wellFormed(x.value);
+    });
+  }
+
+  /** A value `observe` could have recorded: a finite number, or ABSENT with a well-formed discharge condition. */
+  #wellFormed(value: unknown): boolean {
+    if (typeof value === "number") return Number.isFinite(value);
+    if (typeof value !== "object" || value === null) return false;
+    const a = value as { kind?: unknown; discharge?: unknown };
+    if (a.kind !== "absent" || typeof a.discharge !== "object" || a.discharge === null) return false;
+    const d = a.discharge as { kind?: unknown; task?: unknown; reason?: unknown };
+    return (d.kind === "dischargeable" && typeof d.task === "string") || (d.kind === "undischargeable" && typeof d.reason === "string");
   }
 }

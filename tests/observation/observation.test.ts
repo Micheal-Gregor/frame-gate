@@ -134,6 +134,36 @@ describe("BC-07-4 - the latest observation is in force; undischargeable stays so
   });
 });
 
+describe("DR-46 - the read seam honours R-58..R-60 for what it READS (R-67)", () => {
+  it("test_only_complete_well_formed_vectors_are_read", () => {
+    const w = world();
+    const ok = w.observe(vector(s(0.5)));
+    const good = ok.payload.components;
+    const forge = (components: readonly unknown[]) => w.record.append({ author: "ENGINE", payload: { kind: "observation", candidate: w.k.at, components } });
+    const first = (value: unknown) => good.map((c, i) => (i === 0 ? { ...c, value } : c));
+    const cases: Readonly<Record<string, readonly unknown[]>> = {
+      "a component missing": good.slice(1),
+      "the last component missing": good.slice(0, -1),
+      "an unknown component": [...good, { name: "sound", value: 0.1, author: "ENGINE" }],
+      "the configured order broken": [good[1], good[0], good[2]],
+      "a NaN score": first(Number.NaN),
+      "an infinite score": first(Number.POSITIVE_INFINITY),
+      "a null value": first(null),
+      "a text value": first("high"),
+      "an ABSENT with no discharge": first({ kind: "absent" }),
+      "a malformed discharge": first({ kind: "absent", discharge: { kind: "later" } }),
+      "a component with no author": good.map((c, i) => (i === 0 ? { name: c.name, value: c.value } : c)),
+    };
+    for (const [what, components] of Object.entries(cases)) {
+      const at = forge(components);
+      expect(w.ledger.observationOf(w.k, at), `${what}: read as the observation in force`).toEqual(ok);
+    }
+    // A malformed Undischargeable mark is no mark: the component may still be scored.
+    forge(good.map((c) => (c.name === "motion" ? { ...c, value: { kind: "absent", discharge: { kind: "undischargeable" } } } : c)));
+    expect(isUnknown(w.ledger.observe(w.k, vector(s(0.7)), "ENGINE", w.record.noise())), "a forged mark blocked a score").toBe(false);
+  });
+});
+
 describe("BC-07-5 - an observation is read component by component", () => {
   it("test_an_observation_is_read_component_by_component", () => {
     const w = world();

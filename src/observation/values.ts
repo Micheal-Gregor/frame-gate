@@ -4,8 +4,8 @@
  *
  * HOOK-02 is the TYPE system's: a Score is a branded number and ABSENT a tagged object, so an
  * arithmetic or relational expression over `Score | Absent` does not compile, and `??` / `||` are
- * inert on it. Known limits (IR-94): an explicit coercion - `Number(x)`, unary `+` or `-`, a template -
- * compiles; it is a deliberate conversion, not an arithmetic combination.
+ * inert on it. Known limits (IR-94, IR-98): a coercion - `Number(x)`, unary `+`, `-` or `~`, a template - an
+ * assertion past ABSENT, and an `any`-typed sink compile; equality and a `switch` compile and are tests.
  */
 import { noSubject, refuse, type UnknownValue } from "../kernel/index.js";
 import type { Author } from "../ports/index.js";

@@ -172,6 +172,9 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-94 | **HOOK-02 by type, with coercion as a registered limit.** `+`, `Math.max` and comparisons over a possibly-ABSENT component do not compile; a deliberate coercion (`Number(x)`, unary `+` or `-`, a template) does, pinned by `limit-negate-absent.ts`. A Score cast outside `score()` is not checker-protected (a non-ledger brand, IR-79's policy) | latent | MOD-07 |
 | IR-95 | **Any author may author a component.** Observations are proposals (OBJ-31 takes them and never requires them), so ENGINE and DIRECTOR proposing is their role (SEAM-25). The appended fact's own author is a separate parameter | benign | MOD-07 |
 | IR-96 | **ODG-FG-04 is left to its consumers:** MOD-07 exposes each ABSENT's discharge condition; whether MOD-09's exclusion counts or MOD-10's WithheldReason carries the Undischargeable bound is placed when those are built | latent | MOD-07, MOD-09, MOD-10 |
+| IR-97 | **R-60's permanence is judged as of the caller's `at` (DR-47)**: a stale `at` admits a Score over an Undischargeable mark appended after it. IR-84's single-writer class: the port has no head read; carried as a production concern | latent | MOD-07; production |
+| IR-98 | **HOOK-02's limits, restated (DR-48):** relational operators, `+` and `Math.max` over a possibly-ABSENT component are decided (do not compile). Equality and a `switch` compile, and are TESTS, not arithmetic. Registered limits: a coercion (`Number(x)`, unary `+` or `-`, `~`, a template), an assertion past ABSENT (`as number`), an `any`-typed sink | latent | MOD-07 |
+| IR-99 | **`component` and `authorOf` answer NoSubject for a name the observation does not state (DR-49):** a third outcome beside F3's Score-or-Absent, so an unconfigured name is never mistaken for either | benign | MOD-07 |
 
 ## Log
 

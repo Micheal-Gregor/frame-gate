@@ -212,6 +212,7 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-134 | **WORK ITEM (low; K7 round 19): setup stand-ins name the currency `"c0" as never`** in tools/vectors/run.ts and four test files, bypassing the Currency type where the admission stand-in admits everything. Discharge: a typed stand-in helper | benign | tests, tools |
 | IR-135 | **`advisory(unit)` takes no height (R-83), an interface deviation from S3's `advisory(unit, record_height)`.** Unit features are catalog configuration, not record facts, so a height would change nothing. A height-taking advisory would also look like a fold, which is RFD-01's confusion | benign | MOD-13 (R-83) |
 | IR-136 | **DG-F1 holds by structure, not by a brand.** Nothing in src imports src/advisory (BC-13-2, resolved), so no gate condition, proposal, act or declaration can name an AdvisoryValue. The value itself is unbranded: code outside src (a Phase 5 view) may build one, and is only displaying | benign | MOD-13 (DG-F1) |
+| IR-137 | **BC-13-2's reach, stated and pinned (K7 round 20; supersedes IR-136's "only mechanism" wording).** `tools/checks/advisory-reach.ts` carries a SCOPE (R-15). It decides, in every loadable source file outside src/advisory/, every specifier form RESOLVED for containment: declarations (type-only included), `import =`, `require`, dynamic `import()`, type queries and triple-slash references. A computed specifier is refused. Each form is pinned by a fixture judged at its mirrored src path. LIMIT: an advisory handed in through a structural type at runtime (limit-structural-handoff.ts), which is the composition root's | benign | MOD-13 (DG-F1) |
 
 ## Log
 
@@ -705,3 +706,8 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   - Also noted: `currencyOf`'s Unknown is HOOK-05's one refusal (IR-122, IR-130), and SEAM-26 reaches Ratio only through MOD-05's counts.
 
 - **2026-10-13 — MOD-13 `advisory/` built (R-82, R-83), the last module.** Tests were written first and watched red against a typed stub (4 / 355). BC-13-2 and BC-13-3 are structural and green from the start: nothing imports the advisory, and it joins no family. The stub phase also fixed one type error (`Object.freeze` dropped the plain rule's contextual type). 355 / 355.
+
+- **2026-10-13 — K7 round 20 (MOD-13, FULL; Opus 5.5 under R-85): RETURN, drift 5** (CC-3, CC-6 and CC-7 fail).
+  - **The findings.** BC-13-2's scan read top-level import and export statements in .ts files only. K7 planted three escapes in src/facts - a type query, a dynamic `import()`, and a static import in a .mjs file - and the suite stayed green. The detector had no SCOPE block. BC-13-1 pinned the Unknown by deep equality, not identity.
+  - **The fix round (the builder's one, RD-9).** The detector became `tools/checks/advisory-reach.ts`, every form resolved, with a SCOPE and a fixture per form (IR-137). BC-13-1 now pins the Unknown by identity.
+  - **Verification.** Battery 31 re-plants K7's three escapes, and two more forms, IN src.

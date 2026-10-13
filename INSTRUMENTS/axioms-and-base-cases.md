@@ -755,3 +755,11 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 - **BC-13-4** OS-3: the rule is injected, so a different rule gives a different reading. The value carries its unit, frozen.
 
 **Watched failing (MOD-13):** against a typed stub, 4 / 355 red (BC-13-1, BC-13-4 and both isolation cases); BC-13-2 and BC-13-3 are structural and green from the start; `tsc` clean. After: 355 / 355.
+
+### MOD-13 fix round (K7 round 20) - the detector's reach stated by meaning, its forms enumerated (MF-34)
+
+- **BC-13-2** (restated) REF-01a / S-17 / DG-F1: no LOADABLE source file in src outside src/advisory names a module resolving into it, in ANY specifier form: declaration (type-only included), `import =`, `require`, dynamic `import()`, type query, triple-slash reference. A computed specifier is refused. Each form is pinned by a fixture, and the structural hand-off is a registered limit (IR-137).
+- **BC-13-1** (tightened) the feature source's Unknown is returned as the very value, by identity.
+
+**Watched failing (the fix round):** K7 round 20 demonstrated the red state: E1-E3 planted in src, and the suite stayed green. Battery 31 re-plants them, and two more forms, against the widened detector.
+

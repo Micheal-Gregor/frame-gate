@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 20,
+  "reviewed": {
+    "tree_sha": "c23aae79674e0323769fc22a99f6d357e93b6e61",
+    "commit_sha": "b332ad9b76bf3d2eeb08e52b8288c0eceae3ce81",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-13"
+    ],
+    "scope": [
+      {
+        "module": "MOD-13",
+        "mode": "full",
+        "manifest": "86fcf33254def3046033590be7b236af90c688e4cee9d7f653d10829ce617266",
+        "base": null,
+        "base_round": null,
+        "credit_round": null,
+        "unresolved": [],
+        "deps": [
+          "MOD-01",
+          "MOD-03"
+        ],
+        "importers": []
+      }
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T21:58:03+00:00",
+    "completed_at": "2026-10-13T22:04:38+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 19,
+    "prior_tree_sha": "f9b6492d356542c0514772224a1d71bdc9c25494",
+    "prior_failing_checks": [],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "MOD-13 has three files, and each one traces to an admitted node. src/advisory/index.ts maps to object-model-and-parameters.md:23. src/advisory/difficulty-advisory.ts maps to :56 (OBJ-34; R-82, R-83, DG-F1, RFD-01). src/advisory/plain-rule.ts maps to :57 (R-82). OBJ-34 is assigned to MOD-13 in S3 s2:77 and s3:132. FeatureSource (difficulty-advisory.ts:31-33) is the SEAM-27 target (S3 s4:164), and UnitRegistry.features (catalog/unit-registry.ts:40) satisfies it structurally. I found no orphan code and no S3 node without a destination. MOD-13 owns no refusal, vector, hook or production concern (S3 s11:324)."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "On the running code the carried rules hold. DG-F1 / S-17 'read by nothing': I grepped src outside src/advisory and found only comments naming MOD-13 (catalog/unit-registry.ts:13,22; kernel/index.ts:181) and no import of any form. RFD-01 / R-83: advisory(unit) takes no height (difficulty-advisory.ts:50), never calls asProjection, and PROJECTION_MEMBERS does not list it. Unknown is never collapsed: the registry's Unknown is returned unchanged (difficulty-advisory.ts:52), not coalesced or nulled. The constructor refuses missing or malformed inputs (:40-43, OS-4). No threshold, no height and no stored derivation appear. No gate condition can read difficulty in the present tree. These are the rules' current truth; whether a test keeps them true is CC-6."
+    },
+    "CC-3": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "IR-135 (no height, R-83) and IR-136 (DG-F1 held by structure, the value unbranded) are registered, and the resolutions behind them (R-82, R-83) are recorded as live. The defect is the scope statement of the load-bearing detector. BC-13-2 (axioms-and-base-cases.md:753) says 'No file in src outside src/advisory resolves an import into it'. IR-136 (drift-ledger.md:214) rests DG-F1 on that claim ('BC-13-2, resolved'). Battery A5 (mutation-battery.md:1036) claims 'not even a gate module's type'. The detector that decides the claim (tests/advisory/advisory.test.ts:32-56) has no SCOPE (R-15) block and registers no limits, yet it decides only top-level ImportDeclaration/ExportDeclaration in .ts/.mts/.cts files (:40, :48-49). It never sees import-type queries `import(\"..\").T`, dynamic `import()`, `import x = require`, `require()` or .js/.mjs/.cjs/.tsx sources. The repo's own standard covers those forms: tools/checks/external-isolation.ts:22-25 lists them under DECIDES. So the statement claims forms the detector does not decide and leaves those limits out."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit -p .k7/wt && npx vitest run --root .k7/wt",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": false,
+      "rationale": "N/A-by-absence, stated: S3 s6:216-217 names MOD-13 among the modules that pin no value, and completion-ledger.md:24 agrees. I ran the declared `python3 tools/rederive.py --all`: 7 of 7 re-derived (VEC-01..VEC-07) and none belongs to MOD-13. MOD-13 has no vector that could be stale, hand-written or missing its impl_sha."
+    },
+    "CC-6": {
+      "status": "fail",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx vitest run --root .k7/wt -t \"test_no_write_path_from_difficulty_to_a_gate\"",
+        "exit_code": 0
+      }
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Four-dimension form (the repo's drift ledger has no D1-D6 scoring). Object-model fidelity 9: three files, one object, registered deviations only. Axiom coverage 8: DG-F1, RFD-01 and Unknown-as-itself hold in the code. Extensibility 8: the rule is injected (OS-3), there is no hidden state, and the instance is frozen. Base-case support 5, the worst dimension: the pin for BC-13-2 does not decide its own rule (CC-6 evasions). Also, BC-13-1's 'answered by the registry's own Unknown, as itself' is asserted with toEqual (advisory.test.ts:27), so a fresh structurally equal Unknown would also pass, and the pin is weaker than the claim. Tree integrity: `git status --porcelain` showed the same two entries before and after the battery: STATE.json and one .pipelinegate/lines/*.jsonl file. Both were already modified before I started, and I changed neither. All plantings were made only in the runner's .k7/wt worktree (R-07). They were E1 src/facts/k7-evasion-typequery.ts, E2 src/facts/k7-evasion-dynamic.ts, E3 src/facts/k7-evasion-esm.mjs, a control src/facts/k7-control-static.ts (neutralised afterwards), and edits to src/advisory/{plain-rule,difficulty-advisory}.ts."
+    }
+  },
+  "drift_score": {
+    "value": 5,
+    "basis": [
+      {
+        "check_id": "CC-6",
+        "finding": "WORST DIMENSION: base-case support. In .k7/wt I planted three files in src/facts that reach src/advisory. E1 is a gate condition typed by `import(\"../advisory/index.js\").AdvisoryValue`. E2 is a runtime `await import(\"../advisory/index.js\")`. E3 is a static import from a .mjs source. With all three present, tsc was clean, test_no_write_path_from_difficulty_to_a_gate passed (exit 0), and the full suite flagged none of them. A positive control (a static `import type` in a .ts file) was flagged on its own, so the detector works but its reach stops short of the claim. That claim, BC-13-2 / A5 ('not even a gate module's type'), is the only mechanism IR-136 relies on for DG-F1.",
+        "deduction": 4
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "The load-bearing detector at tests/advisory/advisory.test.ts:32-56 has no SCOPE (R-15) block. BC-13-2, IR-136 and battery A5 state its reach as 'no file in src resolves an import into it', which covers forms it does not decide, and no limits are registered or pinned by limit- fixtures.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "BC-13-1's 'the registry's own Unknown, as itself' is pinned with deep equality (advisory.test.ts:27). A mutation that returns a fresh noSubject() would survive, so the test is weaker than the stated base case.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "The guarded-behaviour mutations were killed by the declared single-test command, and I credit that. With the rule bypassed and the value unfrozen, test_the_rule_is_handed_in went red. With the plain rule handing out the registry's own features, test_the_advisory_reads_the_units_features went red.",
+        "deduction": 0
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-6",
+      "module": "MOD-13",
+      "required_change": "Make the 'nothing in src reads the advisory' detector decide what BC-13-2 claims. It must resolve and test containment for every form by which a src file outside src/advisory can name it: import-type queries in type position, dynamic import(), `import x = require`, require(), and every loadable source extension (.js/.mjs/.cjs/.tsx/.jsx), at any nesting depth, not only top-level statements. Ship violating fixtures for each form. test_no_write_path_from_difficulty_to_a_gate must fail on each of K7's three plantings (E1 type query, E2 dynamic import, E3 .mjs static import) when they are re-planted by someone other than the builder."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-13",
+      "required_change": "Give the BC-13-2 detector a SCOPE (R-15) header stating the forms it DECIDES and every LIMIT it keeps. Pin each limit with a limit- fixture it must not flag. Make sure BC-13-2, IR-136 and battery A5 no longer claim forms the detector does not decide."
+    },
+    {
+      "check_id": "CC-7",
+      "module": "MOD-13",
+      "required_change": "Pin BC-13-1's 'the registry's own Unknown, as itself' by identity, not structural equality. test_the_advisory_reads_the_units_features must fail when advisory() returns a freshly minted, structurally equal Unknown instead of the source's own value."
+    }
+  ],
+  "next_action": "Return MOD-13 to the builder to widen the BC-13-2 detector to every import form, with a stated SCOPE (R-15) block and fixtures, and to pin BC-13-1's Unknown by identity, then re-submit it for K7 re-check."
+}

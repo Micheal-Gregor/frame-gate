@@ -43,6 +43,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-33 WI-08 / IR-59: may a draw context be bound twice? | **ACCEPTED 2026-10-13** (owner, live gate) | One draw, one candidate: a context already bound by a candidate as of the append height refuses `context-spent` (an as-of read; no catalog re-read). An unused old context may still be bound: its declaration IS the draw's |
 | R-34 how MOD-04's refusal names the unit, currency and cheapest BOTTOM predecessor | **ACCEPTED 2026-10-13** (owner, live gate) | In the witness set: the gate answers MOD-05 `refuse("unreachable")` (SEAM-03's shape); ONE evaluation returns the verdict with the predecessor witness set and the cheapest BOTTOM currency. The kernel is unchanged |
 | R-35 how a listed member joins the Projection family (MOD-04 is the first) | **ACCEPTED 2026-10-13** (owner, live gate) | The kernel mints it: MOD-01 gains one ADDITIVE export, `asProjection(member, compute)`, with `member` typed by the ten-name list. It is a join, not a predicate. A detector pins each member joined at most once, only in the module the S3 partition assigns, and never in `advisory/`. MOD-01 work item WI-10 |
+| R-36 how golden vectors are computed and re-derived (VEC-01 first) | **ACCEPTED 2026-10-13** (owner, live gate) | A harness in tools/: `rederive_invoke` becomes `node --import tsx tools/vectors/run.ts {vector_id} {entry} {input_file}`. The entry stays the implementing file (VEC-01: `src/reachability/reachability.ts`), so impl_sha pins the fold. The harness reads the input and calls the real implementation, and src/ names no external (REF-02) |
 
 ---
 
@@ -799,4 +800,18 @@ A detector pins three things:
 An assertion to a Projection type anywhere in `src/` is flagged, because only the kernel mints.
 This is a new work item (WI-10) against MOD-01's closed gate. It is not a reopening, and it is
 reviewed with MOD-04.
+
+## R-36 · Golden vectors run through a harness; the entry is the implementing file
+
+**Owner, 2026-10-13, live gate.** VEC-01 is the first vector this build computes. The declared
+`rederive_invoke`, `node --import tsx {entry} {input_file}`, runs the module's file as a script.
+That file would then have to read the input file, and a file in src/ cannot do so without naming
+an external, which REF-02 forbids outside ports/. **Ruling.** `rederive_invoke` becomes
+`node --import tsx tools/vectors/run.ts {vector_id} {entry} {input_file}`. It still begins with
+`node` (IR-26). `{entry}` stays the IMPLEMENTING file, so `impl_sha` pins what computes the value.
+For VEC-01, the vector's module is the object-model row `MOD-04 · Reachability`, whose file is
+`src/reachability/reachability.ts`. The harness checks that `{entry}` is the file its handler
+derives from, reads the input, builds the fixture record, calls the real implementation and
+prints only the encoded output. This is a change to a declared command K7 runs for CC-5, so it
+takes effect from this record (RD-15).
 

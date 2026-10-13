@@ -16,7 +16,7 @@
 // else - no fold, so MOD-12 never constructs the ledger whose invalidation reader it supplies.
 // Lineage points only backwards (a candidate's `from` and a commitment's candidate are both
 // lower heights), so the walk terminates and nothing above the height is ever reached.
-import { asProjection, type Projection, type RecordHeight } from "../kernel/index.js";
+import { asProjection, compare, type Projection, type RecordHeight } from "../kernel/index.js";
 import type { AcceptingCommitment, DerivedCandidate } from "../facts/index.js";
 
 /** MOD-05's record-only lineage (R-41): the two operations called on it. */
@@ -75,7 +75,7 @@ export class InvalidationScope {
       }
     }
     const inAppendOrder = <T extends { readonly at: RecordHeight }>(found: ReadonlyMap<RecordHeight, T>): readonly T[] =>
-      Object.freeze([...found.values()].sort((a, b) => a.at - b.at));
+      Object.freeze([...found.values()].sort((a, b) => compare(a.at, b.at)));
     const reached = inAppendOrder(candidates);
     return Object.freeze({ commitment, at, candidates: reached, commitments: inAppendOrder(commitments), count: reached.length });
   }

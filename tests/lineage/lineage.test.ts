@@ -305,6 +305,42 @@ describe("BC-12-7 - OBJ-32 as a value; HOOK-04 registered at MOD-12", () => {
   });
 });
 
+describe("DR-37 - HOOK-04 binds the RECORDED commitment, not the caller's copy (R-51)", () => {
+  it("test_a_from_is_the_recorded_commitment_not_a_copy", () => {
+    // K7 round 12, probe k7_p1: a commitment spread-copied with one field changed keeps its brand
+    // and its height. Every field, read off the commitment itself, must make it no `from` - at
+    // the least currency (inheritance, R-40) and above it.
+    const w = lineageWorld();
+    const k0 = w.commitAt(u, w.c0);
+    const kv = w.commitAt(v, w.c0);
+    const copies = (k: Commitment): Readonly<Record<string, Commitment>> => ({
+      author: { ...k, author: "ENGINE" } as unknown as Commitment,
+      kind: { ...k, payload: { ...k.payload, kind: "other" } } as unknown as Commitment,
+      unit: { ...k, payload: { ...k.payload, unit: k.payload.unit === u ? v : u } },
+      currency: { ...k, payload: { ...k.payload, currency: w.c2 } },
+      candidate: { ...k, payload: { ...k.payload, candidate: height(Number(k.payload.candidate) + 1000) } },
+    });
+    expect(Object.keys(copies(k0)).sort(), "a field of the commitment has no copy").toEqual(
+      [...Object.keys(k0).filter((f) => f !== "payload" && f !== "at"), ...Object.keys(k0.payload)].sort(),
+    );
+    for (const [field, copy] of Object.entries(copies(k0))) {
+      const p = w.propose(u, w.c1, copy);
+      const h = w.record.noise();
+      expect(w.signed.appendCandidate(p, w.gate.sign(w.gate.materialOf(p)), h, "ENGINE"), `a copy differing in ${field} was a from`).toEqual(refuse("malformed-from"));
+      nothingAppendedSince(w.record, h);
+    }
+    for (const [field, copy] of Object.entries(copies(kv))) {
+      const p = w.propose(u, w.c0, copy);
+      const h = w.record.noise();
+      expect(w.signed.appendCandidate(p, w.gate.sign(w.gate.materialOf(p)), h, "ENGINE"), `an inherited copy differing in ${field} was a from`).toEqual(refuse("malformed-from"));
+      nothingAppendedSince(w.record, h);
+    }
+    // The genuine ones still are.
+    expect(w.append(w.propose(u, w.c1, k0)).payload.from).toBe(k0.at);
+    expect(w.append(w.propose(u, w.c0, kv)).payload.from).toBe(kv.at);
+  });
+});
+
 describe("BC-12-8 - OBJ-28: the closure over from, through acceptances (R-42)", () => {
   it("test_the_scope_is_the_closure_over_from_through_acceptances", () => {
     const w = lineageWorld();

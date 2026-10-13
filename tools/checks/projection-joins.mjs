@@ -28,7 +28,8 @@
  *          LIMITS: `Object.assign(target, joined)` copies the brand through a library call
  *          whose result type is an intersection (limit-object-assign.ts); `asProjection`
  *          handed to a USER higher-order function that calls it (limit-user-higher-order.ts;
- *          R-39).
+ *          R-39). KNOWN, unpinned (R-51, DR-39): a Projection re-made through the library
+ *          generic `Proxy`.
  *          BOUNDARY: code outside src/ is not read, except this rule's fixtures.
  *
  * Out of process and plain JavaScript for the reasons fixture-compiles.mjs gives (IR-21).

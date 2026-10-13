@@ -21,7 +21,9 @@
  *             LIMITS: a fold written as recursion over the predecessor list
  *             (limit-recursive-fold.ts); a read-wrapping helper whose result is neither boolean
  *             nor a commitment (limit-helper-verdict.ts); a reader called from a USER-written
- *             iteration helper (limit-user-iteration-helper.ts; R-39).
+ *             iteration helper (limit-user-iteration-helper.ts; R-39). KNOWN, unpinned (R-51,
+ *             DR-39): a scan of the raw record or of the unbranded LineageReader; a reader handed
+ *             through `Array.prototype.every.call`.
  *   branch    "No per-currency branch" (S-13: no branch on currency identity). The MEANING:
  *             a currency compared to a PARTICULAR member of the order. DECIDES, in src/, an
  *             equality comparison (`===`, `!==`, `==`, `!=`) or a `case` of a `switch`, whose
@@ -40,7 +42,9 @@
  *             e.g. `new Set([order.least()]).has(c)` (limit-set-membership.ts); a class FIELD
  *             holding a particular member (limit-class-field-least.ts; R-38); a REST element
  *             of the order read back by a literal index (limit-rest-then-index.ts; R-39); more
- *             than one hop of `const`.
+ *             than one hop of `const`. KNOWN, unpinned (R-51, DR-38): a destructuring
+ *             ASSIGNMENT; a `let` hop; the order spread-copied, then destructured; a position
+ *             compared through `indexOf` or picked through `find`; an equality moved into a helper.
  *   BOUNDARY: code outside src/ is not read, except these rules' fixtures.
  *
  * Out of process and plain JavaScript for the reasons fixture-compiles.mjs gives (IR-21).

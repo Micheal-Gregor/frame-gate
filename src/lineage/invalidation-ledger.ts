@@ -18,7 +18,7 @@
 //              DERIVED from the one invalidation, never appended commitment by commitment.
 // MOD-05 asks `isInvalidated` (R-19) and MOD-09 reads `invalidatedAsOf` (S-07); both answer
 // from ONE derivation. Nothing derived is kept: every answer is recomputed from the record.
-import { height, refuse, succeeds, type AppendedFact, type Projection, type RecordHeight, type UnknownValue } from "../kernel/index.js";
+import { compare, height, refuse, succeeds, type AppendedFact, type Projection, type RecordHeight, type UnknownValue } from "../kernel/index.js";
 import type { RendererPort } from "../ports/index.js";
 import type { Commitment, FactRecord } from "../facts/index.js";
 import type { ScopeValue } from "./invalidation-scope.js";
@@ -109,7 +109,7 @@ export class InvalidationLedger {
       // born superseded (R-46).
       for (const accepting of scope.commitments) if (frozen.has(accepting.candidate)) invalidated.add(accepting.at);
     }
-    return Object.freeze([...invalidated].sort((a, b) => a - b));
+    return Object.freeze([...invalidated].sort(compare));
   }
 
   /** This ledger's invalidations at or below `at`, minted by position (IR-31). */

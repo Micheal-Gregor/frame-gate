@@ -234,13 +234,13 @@ export class CandidateLedger {
     if (immediate === undefined) {
       if ("payload" in proposal.from) {
         // Inheritance (R-40): another unit's - never this unit's own, at any currency - and in
-        // force as of `at`. The fold is asked for the pair the commitment names; agreement by
-        // height means the record holds exactly that commitment, in force, for that pair.
+        // force as of `at`. The fold is asked for the pair the commitment names, and must answer
+        // exactly this commitment (DR-37: field for field, not by height alone).
         const donor = proposal.from.payload;
         if (donor.unit === proposal.unit) return refuse("malformed-from");
         const inForce = this.#commitments.effectiveCommitment(donor.unit, donor.currency, at);
         if (isUnknown(inForce)) return inForce.kind === "no-subject" ? refuse("malformed-from") : inForce;
-        return inForce.at === proposal.from.at ? "WELL-FORMED" : refuse("malformed-from");
+        return this.#isRecorded(inForce, proposal.from) ? "WELL-FORMED" : refuse("malformed-from");
       }
       const license = this.#independence.independenceAt(proposal.unit, at);
       if (isUnknown(license)) return license.kind === "no-subject" ? refuse("malformed-from") : license;
@@ -249,7 +249,21 @@ export class CandidateLedger {
     if (!("payload" in proposal.from)) return refuse("malformed-from");
     const effective = this.#commitments.effectiveCommitment(proposal.unit, immediate, at);
     if (isUnknown(effective)) return effective.kind === "no-subject" ? refuse("malformed-from") : effective;
-    return effective.at === proposal.from.at ? "WELL-FORMED" : refuse("malformed-from");
+    return this.#isRecorded(effective, proposal.from) ? "WELL-FORMED" : refuse("malformed-from");
+  }
+
+  /**
+   * DR-37 (R-51): `from` must BE the commitment the record holds, every field equal - a copy
+   * that keeps the brand and the height but changes a field is not. Because this check runs
+   * before the signature (R-31), HOOK-04's lineage digest is then the recorded commitment's.
+   */
+  #isRecorded(recorded: Commitment, from: Commitment): boolean {
+    const same = (a: unknown, b: unknown): boolean => {
+      if (typeof a !== "object" || a === null || typeof b !== "object" || b === null) return a === b;
+      const keys = Object.keys(a);
+      return keys.length === Object.keys(b).length && keys.every((k) => same((a as Readonly<Record<string, unknown>>)[k], (b as Readonly<Record<string, unknown>>)[k]));
+    };
+    return same(recorded, from);
   }
 
   /** This ledger's candidates at or below `at` that `keep` selects, minted by position (IR-31). */

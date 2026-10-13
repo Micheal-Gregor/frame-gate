@@ -1,0 +1,49 @@
+{
+  "module": "MOD-13",
+  "manifest": "sha256:ca7f071f04076dcac3570ded86c7efa72bf264fa049380dbc570e2098ba451a7",
+  "commit": "be0c869",
+  "mutations": [
+    {
+      "id": "D1",
+      "claim": "K7 round 20 E1: a gate module typed by a type query into MOD-13",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "D2",
+      "claim": "K7 round 20 E2: a runtime dynamic import of MOD-13 from a gate module",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "D3",
+      "claim": "K7 round 20 E3: a static import of MOD-13 from a .mjs source in src",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "D4",
+      "claim": "a CommonJS require of MOD-13 in src",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "D5",
+      "claim": "a computed specifier in src is refused, never assumed elsewhere",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "D6",
+      "claim": "BC-13-1: the feature source's Unknown is returned as the very value",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

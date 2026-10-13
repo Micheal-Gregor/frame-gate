@@ -1037,3 +1037,18 @@ On `2071c4f`; restores verified.
 
 **5 / 5.** Schema record `INSTRUMENTS/battery-records/MOD-13-round-30.json` (manifest `sha256:86fcf332…`), handed to battery_complete@1.
 
+## Round 31 — the MOD-13 fix round: K7 round 20's escapes re-planted in src
+
+On `be0c869`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| D1 | MOD-13: K7 round 20 E1: a gate module typed by a type query into MOD-13 | KILLED (test) | `test_no_write_path_from_difficulty_to_a_gate` |
+| D2 | MOD-13: K7 round 20 E2: a runtime dynamic import of MOD-13 from a gate module | KILLED (test) | `test_no_write_path_from_difficulty_to_a_gate` |
+| D3 | MOD-13: K7 round 20 E3: a static import of MOD-13 from a .mjs source in src | KILLED (test) | `test_no_write_path_from_difficulty_to_a_gate` |
+| D4 | MOD-13: a CommonJS require of MOD-13 in src | KILLED (test) | `test_no_write_path_from_difficulty_to_a_gate` |
+| D5 | MOD-13: a computed specifier in src is refused, never assumed elsewhere | KILLED (test) | `test_no_write_path_from_difficulty_to_a_gate` |
+| D6 | MOD-13: BC-13-1: the feature source's Unknown is returned as the very value | KILLED (test) | `test_the_advisory_reads_the_units_features` |
+
+**6 / 6.** Schema record `INSTRUMENTS/battery-records/MOD-13-round-31.json` (manifest `sha256:ca7f071f…`), handed to battery_complete@1. Planted files were removed with `git clean -- src` on each restore; the tree was clean at the start.
+

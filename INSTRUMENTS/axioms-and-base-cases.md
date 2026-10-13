@@ -676,3 +676,14 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 - **BC-06-7** MOD-05 work item: the lineage reader reads every candidate and every HUMAN commitment, as of a height (IR-90).
 
 **Watched failing (MOD-06):** against typed stubs, 19 tests red plus `condition.test.ts` red at collection (7 cases; a module-level `identityOf` hit the stub), `tsc` clean. After: 245 / 245.
+
+
+## MOD-07 `observation/` (R-58..R-60; written before the module, watched failing; one line each, R-50)
+
+- **BC-07-1** OBJ-08: a Score is any finite number; NaN and the infinities answer `refuse("not-finite")`; no range is imposed (R-58).
+- **BC-07-2** REF-09 / HOOK-02: an expression over a possibly-ABSENT component does not compile (`+`, `Math.max`, unary minus, a comparison); arithmetic over the scored components alone does. An all-ABSENT vector is accepted and stored, with nothing coerced.
+- **BC-07-3** every configured component and only those: a missing one answers `refuse("missing-component")`, an unknown one `refuse("unknown-component")`, nothing appended; stored in the configured order, each with its own author (R-59).
+- **BC-07-4** the latest observation as of a height is in force, NoSubject before any; a later vector may not score an Undischargeable component (`refuse("undischargeable")`); only well-formed entries are read (R-60).
+- **BC-07-5** read component by component: a value, or NoSubject for an unconfigured name; `isAbsent`; the discharge condition; each component's author; the scored components (ABSENT omitted, never zeroed); `isAllAbsent`.
+
+**Watched failing (MOD-07):** against typed stubs, 6 MOD-07 cases red, the isolation file red at collection, and the append-path map red; `tsc` clean once one test line was narrowed. After: 257 / 257.

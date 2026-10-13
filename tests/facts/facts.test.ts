@@ -175,7 +175,7 @@ describe("BC-05-6 - every ledger is listed, so every ledger rule reaches it (RD-
     ) as { ledgers: { discovered: Fact[]; unlisted: Fact[]; misowned: Fact[]; unbranded: Fact[]; fixtures: Record<string, Record<string, Fact[]>> } };
     // Discovered from every AppendedFact<_, P> alias in src/, never listed here; these are
     // only kinds that must be among them, so a discovery that finds none fails.
-    expect(out.ledgers.discovered.map((x) => x.kind)).toEqual(expect.arrayContaining(["declaration", "commitment", "draw-context", "resolution-label", "candidate", "invalidation", "prompt-revision"]));
+    expect(out.ledgers.discovered.map((x) => x.kind)).toEqual(expect.arrayContaining(["declaration", "commitment", "draw-context", "resolution-label", "candidate", "invalidation", "prompt-revision", "observation"]));
     expect(out.ledgers.unlisted, "a ledger kind no rule protects").toEqual([]);
     expect(out.ledgers.misowned, "a ledger kind owned by another root").toEqual([]);
     expect(out.ledgers.unbranded, "a ledger fact whose brand no mint rule knows").toEqual([]);
@@ -519,6 +519,7 @@ describe("BC-05-15 - one guarded append; an unreachable draw costs nothing (S-01
       "draw-context": ["DrawContextLog.recordDraw"],
       independence: ["IndependenceLedger.declareIndependence"],
       invalidation: ["InvalidationLedger.invalidate"],
+      observation: ["ObservationLedger.observe"],
       "prompt-revision": ["RevisionLog.revise"],
       "resolution-label": ["DrawContextLog.label"],
     });

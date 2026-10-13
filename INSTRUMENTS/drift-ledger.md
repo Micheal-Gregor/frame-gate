@@ -165,6 +165,9 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-91 | **`samplesFor` reads a unit's identities off its OBJ-16 draw contexts** (a MOD-05 read F3 does not list for MOD-06). It is exhaustive: every candidate binds a context of its own condition (R-31's context check), so no candidate's identity is missed | benign | MOD-06, MOD-05 |
 | IR-92 | **IR-47 revisited: MOD-05's ResolutionLabel `REVISION` stays an independent per-draw label.** OBJ-17 PromptRevision is the condition change, and neither reads nor writes the label | benign | MOD-05, MOD-06 |
 | IR-93 | **A condition identity writes every number exactly** (DR-43): NaN, Infinity, -Infinity and -0 are distinct, and a number differs from its text | benign | MOD-06 |
+| IR-94 | **HOOK-02 by type, with coercion as a registered limit.** `+`, `Math.max` and comparisons over a possibly-ABSENT component do not compile; a deliberate coercion (`Number(x)`, unary `+` or `-`, a template) does, pinned by `limit-negate-absent.ts`. A Score cast outside `score()` is not checker-protected (a non-ledger brand, IR-79's policy) | latent | MOD-07 |
+| IR-95 | **Any author may author a component.** Observations are proposals (OBJ-31 takes them and never requires them), so ENGINE and DIRECTOR proposing is their role (SEAM-25). The appended fact's own author is a separate parameter | benign | MOD-07 |
+| IR-96 | **ODG-FG-04 is left to its consumers:** MOD-07 exposes each ABSENT's discharge condition; whether MOD-09's exclusion counts or MOD-10's WithheldReason carries the Undischargeable bound is placed when those are built | latent | MOD-07, MOD-09, MOD-10 |
 
 ## Log
 
@@ -603,3 +606,5 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 - **2026-10-13 — MOD-06 `condition/` built (R-52..R-56).** Tests first, red against stubs; the sole-site rule flagged Chains' in-force read per commitment, and the owner ruled one exception by declaration (R-56) over narrowing the rule. `conditionOf` became a free function: it needs nothing handed in (OS-12). 245 / 245.
 
 - **2026-10-13 — K7 round 13 (MOD-06; Fable 5.1): RETURN, drift 6.** CC-1, CC-4 and CC-6 pass; CC-5 not applicable. Two real defects (DR-42, DR-43), one checker-reach item (DR-44), and registration and style (DR-45). Round 1 of 2 under RD-9.
+
+- **2026-10-13 — MOD-07 `observation/` built (R-58..R-60).** Tests first, red against stubs. An old MOD-03 forge fixture used `observation` as its example of a kind no ledger owns; it now uses `telemetry`, keeping its intent. Unary minus over ABSENT compiles (a coercion), so it is registered as a limit beside `Number(x)` (IR-94). 257 / 257.

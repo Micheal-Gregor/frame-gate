@@ -247,6 +247,8 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
       "src/condition/conforming-builds-revision.ts": [],
       "src/condition/violating-builds-commitment.ts": ["catalog-kind-literal"],
       "src/lineage/conforming-builds-invalidation.ts": [],
+      "src/observation/conforming-builds-observation.ts": [],
+      "src/observation/violating-builds-commitment.ts": ["catalog-kind-literal"],
       "src/lineage/violating-builds-commitment.ts": ["catalog-kind-literal"],
     });
     const { flagged, conforming, limits } = byIntent(forge.fixtures);
@@ -288,7 +290,7 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
       expect(s.fabricated, `${root}: a read uses a made-up height`).toEqual([]);
       expect(s.held, `${root}: a class holds mutable state`).toEqual([]);
     }
-    expect(Object.keys(surface.ledgers)).toEqual(["src/catalog", "src/facts", "src/lineage", "src/condition"]);
+    expect(Object.keys(surface.ledgers)).toEqual(["src/catalog", "src/facts", "src/lineage", "src/condition", "src/observation"]);
     const cases = Object.entries(surface.fixtures);
     expect(cases.length).toBeGreaterThan(1);
     for (const [name, v] of cases) {

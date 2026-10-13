@@ -6,12 +6,12 @@
   "head": "c87fef61251aad06fbdb0eabfdeff770dfde2c38",
   "tree": "7eacb5cd9ba9632e3246cbce574805cd8c9e882e",
   "dirty": false,
-  "current_module": "MOD-06",
+  "current_module": "MOD-07",
   "k7_round": 12,
   "last_gate_tag": "closed-by-owner-11",
   "seal_tag": "",
-  "next_action": "MOD-06 gate closed by owner triage (R-61; owner tags closed-by-owner-13 on 297fffa); fixes 52a508d, battery 22 4/4. Next: MOD-07 observation (R-58..R-60 ruled).",
+  "next_action": "MOD-07 observation built (R-58..R-60), 257/257. Next: battery 23 (sized to MOD-07), then K7 round 14 (scope to rule).",
   "blocked_on": null,
-  "updated_at": "2026-10-13T07:49:51+00:00",
+  "updated_at": "2026-10-13T07:58:27+00:00",
   "updated_by": "manual"
 }

@@ -484,3 +484,11 @@ before the classes, and watched failing.
 > resolution, with fixtures judged at the path they mirror.
 
 **BC-04-8 — OS-12, both classes in isolation.**
+
+**BC-04-9 — VEC-01, computed from MOD-04 and re-derived (R-36).**
+> Over a three-currency order c1 < c2 < c3, for commitment sets {}, {c1}, {c1,c2} × requested c1,
+> c2, c3, admission holds iff every currency strictly below the requested one carries a commitment,
+> vacuously at the least: {} → ADMIT, R, R; {c1} → ADMIT, ADMIT, R; {c1,c2} → ADMIT, ADMIT, ADMIT.
+> The vector is COMPUTED by the harness from the real fold, never hand-written. Its `impl_sha`
+> pins `src/reachability/reachability.ts`, and `rederive.py VEC-01` recomputes it. A harness
+> handed the wrong entry refuses to run.

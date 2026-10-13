@@ -1,0 +1,78 @@
+/**
+ * The golden-vector harness (R-36). rederive.py runs it as the declared `rederive_invoke`:
+ *
+ *     node --import tsx tools/vectors/run.ts {vector_id} {entry} {input_file}
+ *
+ * Each vector has a handler that names the ONE implementing file it derives from. A run handed a
+ * different `{entry}` refuses (exit 2): impl_sha pins `{entry}`, so the file pinned and the file
+ * that computes must be the same. The handler reads the encoded input, builds its fixture record,
+ * calls the REAL implementation, and prints only the encoded output. Nothing here decides a
+ * value: the vector is computed, never written by hand (CC-5).
+ *
+ * It lives in tools/ because reading the input names an external (node:fs), which REF-02 allows
+ * only outside src/ (outside ports/) - the reason R-36 exists.
+ */
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { height, isUnknown, type RecordHeight } from "../../src/kernel/index.js";
+import type { RecordPort } from "../../src/ports/index.js";
+import { CurrencyOrder, type Currency, type Unit } from "../../src/catalog/index.js";
+import { CommitmentLedger } from "../../src/facts/index.js";
+import { Reachability, ReachabilityGate } from "../../src/reachability/index.js";
+
+/** A record for a fixture: append-only, read as of a height (IR-31). */
+function fixtureRecord(): RecordPort<unknown, RecordHeight> {
+  const facts: unknown[] = [];
+  return {
+    append: (fact: unknown): RecordHeight => {
+      facts.push(fact);
+      return height(facts.length);
+    },
+    readAsOf: (at: RecordHeight): readonly unknown[] => facts.slice(0, at),
+  };
+}
+
+type Handler = { readonly entry: string; readonly run: (input: string) => string };
+
+const HANDLERS: Readonly<Record<string, Handler>> = {
+  /** VEC-01 (MOD-04): the reachability truth table over a three-currency order. */
+  "VEC-01": {
+    entry: "src/reachability/reachability.ts",
+    run: (input) => {
+      const spec = JSON.parse(input) as {
+        readonly currencies: readonly string[];
+        readonly commitmentSets: readonly (readonly string[])[];
+        readonly requested: readonly string[];
+      };
+      const order = new CurrencyOrder({ currencies: [...spec.currencies] });
+      const unit = "u" as Unit;
+      const table: Record<string, Record<string, string>> = {};
+      for (const set of spec.commitmentSets) {
+        const row: Record<string, string> = {};
+        for (const requested of spec.requested) {
+          const record = fixtureRecord();
+          const commitments = new CommitmentLedger({ record, invalidations: { isInvalidated: () => false } });
+          for (const c of set) commitments.commit(unit, c as Currency, "HUMAN");
+          const gate = new ReachabilityGate({ reachability: new Reachability({ currencies: order, commitments }) });
+          const at = record.append({ kind: "fixture-height" });
+          const answer = gate.admit(unit, requested as Currency, at);
+          row[requested] = isUnknown(answer) ? (answer.kind === "refuse" ? `Refuse(${answer.guard})` : answer.kind) : answer;
+        }
+        table[`{${set.join(",")}}`] = row;
+      }
+      return JSON.stringify(table);
+    },
+  },
+};
+
+const [vectorId, entry, inputFile] = process.argv.slice(2);
+const handler = vectorId === undefined ? undefined : HANDLERS[vectorId];
+if (handler === undefined || entry === undefined || inputFile === undefined) {
+  process.stderr.write(`run.ts: no handler for ${String(vectorId)} (usage: run.ts <VEC-ID> <entry> <input_file>)\n`);
+  process.exit(2);
+}
+if (resolve(entry) !== resolve(handler.entry)) {
+  process.stderr.write(`run.ts: ${vectorId} derives from ${handler.entry}, but was handed ${entry}; impl_sha would pin the wrong file\n`);
+  process.exit(2);
+}
+process.stdout.write(handler.run(readFileSync(inputFile, "utf8")));

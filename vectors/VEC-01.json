@@ -1,0 +1,12 @@
+{
+  "id": "VEC-01",
+  "module": "MOD-04 · Reachability",
+  "rule": "admission holds iff every currency strictly below the requested one carries a non-⊥ effective commitment (IR-42: a commitment, not merely not-BOTTOM); vacuously true at the least currency",
+  "encoding": "utf8-json",
+  "input": "{\"currencies\":[\"c1\",\"c2\",\"c3\"],\"commitmentSets\":[[],[\"c1\"],[\"c1\",\"c2\"]],\"requested\":[\"c1\",\"c2\",\"c3\"]}",
+  "output": "{\"{}\":{\"c1\":\"ADMIT\",\"c2\":\"Refuse(unreachable)\",\"c3\":\"Refuse(unreachable)\"},\"{c1}\":{\"c1\":\"ADMIT\",\"c2\":\"ADMIT\",\"c3\":\"Refuse(unreachable)\"},\"{c1,c2}\":{\"c1\":\"ADMIT\",\"c2\":\"ADMIT\",\"c3\":\"ADMIT\"}}",
+  "state": "COMPUTED",
+  "computed_at": "2026-10-13T02:32:18+00:00",
+  "impl_sha": "249288db61af2d6b7c062e9eb26d7d149f67fc17c31e4f4f60c93869ae570566",
+  "computed_by": "node --import tsx tools/vectors/run.ts VEC-01 src/reachability/reachability.ts <input> (R-36)"
+}

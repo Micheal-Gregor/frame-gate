@@ -4,8 +4,11 @@
  *     reachable(u, c)  <=>  for all c' < c : effective_commitment(u, c') IS a commitment
  */
 import { describe, expect, it } from "vitest";
-import { execFileSync } from "node:child_process";
-import { dirname, resolve } from "node:path";
+import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { asProjection, isUnknown, noSubject, refuse, uncomputable, type RecordHeight } from "../../src/kernel/index.js";
 import { CurrencyOrder, DeclarationLedger, IndependenceLedger, type Currency, type Unit } from "../../src/catalog/index.js";
@@ -224,3 +227,37 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
     });
   });
 });
+
+describe("BC-04-9 - VEC-01, computed from MOD-04 and re-derived (R-36)", () => {
+  type Vector = { id: string; module: string; input: string; output: string; state: string; impl_sha: string };
+  const vec = () => JSON.parse(readFileSync(resolve(repo, "vectors/VEC-01.json"), "utf8")) as Vector;
+  const harness = (entry: string, input: string) => {
+    const file = join(mkdtempSync(join(tmpdir(), "vec01-")), "in.json");
+    writeFileSync(file, input, "utf8");
+    return spawnSync(process.execPath, ["--import", "tsx", "tools/vectors/run.ts", "VEC-01", entry, file], { cwd: repo, encoding: "utf8" });
+  };
+
+  it("test_vec_01_re_derives_from_the_fold", () => {
+    const v = vec();
+    expect(v.state).toBe("COMPUTED");
+    expect(v.module, "the vector is not bound to the fold's object-model row").toBe("MOD-04 · Reachability");
+    const r = harness("src/reachability/reachability.ts", v.input);
+    expect(r.status).toBe(0);
+    expect(JSON.parse(r.stdout), "VEC-01 does not re-derive from the current fold").toEqual(JSON.parse(v.output));
+    const sha = createHash("sha256").update(readFileSync(resolve(repo, "src/reachability/reachability.ts"))).digest("hex");
+    expect(v.impl_sha, "VEC-01's impl_sha does not pin the current fold").toBe(sha);
+    // The rule, read off the computed value - every cheaper currency committed, vacuous at the least.
+    const R = "Refuse(unreachable)";
+    expect(JSON.parse(v.output)).toEqual({
+      "{}": { c1: "ADMIT", c2: R, c3: R },
+      "{c1}": { c1: "ADMIT", c2: "ADMIT", c3: R },
+      "{c1,c2}": { c1: "ADMIT", c2: "ADMIT", c3: "ADMIT" },
+    });
+  });
+
+  it("test_the_harness_refuses_a_wrong_entry", () => {
+    const r = harness("src/reachability/index.ts", vec().input);
+    expect(r.status, "the harness computed a vector whose impl_sha would pin another file").toBe(2);
+  });
+});
+

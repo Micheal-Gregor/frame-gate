@@ -3,15 +3,15 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "00a654f5eb862e3abadd298157d54298cbbf39cc",
-  "tree": "f8257c4d53e439940c38da60008936f5c670bbc4",
-  "dirty": false,
+  "head": "7700e42498acfd64c2b65b6e724665726365d44d",
+  "tree": "1e583a2874328255254910697e292cbc0b2b9486",
+  "dirty": true,
   "current_module": "MOD-05",
-  "k7_round": 8,
-  "last_gate_tag": "closed-by-owner-7",
+  "k7_round": 10,
+  "last_gate_tag": "k7-pass-9",
   "seal_tag": "",
   "next_action": "MOD-04 BUILT (178/178, VEC-01 re-derived, battery 15 21/21). K7 round 10 running on MOD-04, MOD-05, MOD-01 (R-37, Fable 5.1). PASS -> owner tags k7-pass-10 and pushes; then MOD-12 lineage / MOD-06 condition.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T02:43:57+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-10-13T03:17:46+00:00",
+  "updated_by": "refresh"
 }

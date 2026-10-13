@@ -46,6 +46,9 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | WI-08 | MOD-05 · `candidate-ledger.ts:164` (IR-59) | New work item from K7 round 9 (CC-2, deduction 2; an owner question, not a breach). `appendCandidate` accepts any context not newer than the append height. A candidate appended after a re-declaration may therefore bind a context recorded before it, and carry the earlier declaration as its "declaration at draw time". Whether a context may be reused, and for how long, is the owner's question | (K7 round 9, CC-2) | REMEDIATED (R-33, IR-62) — one draw, one candidate: `context-spent`; awaiting review |
 | WI-09 | MOD-05 · `candidate-ledger.ts:58-70`; F2-gate.md:345 | Cosmetic observations from K7 round 9 (CC-1, deduction 2). `CandidatePayload` repeats the unit and condition its bound context already carries, which is redundant but checked equal at the append. F2:345 still names REF-05's facet test, which IR-12 and SP-1 govern | (K7 round 9, CC-1) | OPEN — cosmetic |
 | WI-10 | MOD-01 · `src/kernel/index.ts` (OBJ-02) | New work item (R-35): the kernel gains `asProjection(member, compute)`, the one door into the Projection family, named by the ten-name list. It is additive: no existing export changes, and no membership predicate is added | (R-35) | OPEN — built with MOD-04, reviewed with it |
+| DR-30 | MOD-04 · `tools/checks/reach-checks.mjs` `branch` (SCOPE :16-26; `particular()` :147-163) | **An evasion INSIDE the stated DECIDES.** The rule claims "a `const` initialised by one of those (one hop)", including an indexed member. The destructuring spelling of exactly that, `const [least] = order.currencies(); return c === least;`, was not flagged: `particular()` resolves a VariableDeclaration with an initializer, never a BindingElement. Planted in `src/reachability/` with only that probe live, the whole declared suite ran 178/178. This is the forbidden per-currency branch, in the module that owns the concept, in its most idiomatic spelling | **6** (K7 round 10, CC-6, deduction 4; CC-7 extensibility 6, the worst dimension) | OPEN — blocking |
+| DR-31 | MOD-04 · `INSTRUMENTS/completion-ledger.md:16`; `object-model-and-parameters.md:14-15` | **PC-05 is assigned to MOD-04 (S3 §11:315, §8:268) and recorded as "n/a".** PC-05 reads "every refusal is attributable by construction". Under R-34, `ReachabilityGate.admit` computes the attributable evaluation (witnesses, `cheapestUnmet`) and DROPS it when it answers MOD-05 `refuse("unreachable")`, so a refusal stream would have to evaluate again. That consequence is unrecorded. Cosmetic: the MOD-04 module row still reads NOT_STARTED with scaffold placeholders, and MOD-05's reads BUILDING after `k7-pass-9` | **6** (K7 round 10, CC-1, deduction 3; CC-2, deduction 2) | OPEN — blocking |
+| DR-32 | `reach-checks.mjs` `soleSite` (LIMITS :14-15), `projection-joins.mjs` (LIMITS :19-20) | **Omitted limits on load-bearing detectors (DR-26's and DR-29's shape).** The sole-site rule names recursion only, and three more forms evaded it: a commitment read wrapped in a boolean helper called from `Array.every`; `Array.from(below, mapFn)`, which is "a library Array method" by the statement's own words but excluded by the `/^(Readonly)?Array$/` owner test; and iteration through `Set.prototype.forEach`. projection-joins names `Object.assign` only, and two more evaded it: a generic launder `launder<Projection<number>>(obj)`, and `asProjection.call(undefined, "Ratio", ...)`. This build already names both of those forms as doors elsewhere (catalog-mint's generic-launder rule; spawn-resolve's call/apply) | **6** (K7 round 10, CC-3, deduction 3) | OPEN — blocking (decide or register, owner's choice) |
 
 ## Interpretation Register (decisions the handoff did not make)
 
@@ -444,4 +447,21 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   `{}` of VEC-01's set notation in the prose. It also discarded the raw output. The runner is
   fixed, and raw output is now always kept. No verdict file exists for this attempt, so the
   cap counter is unchanged and the re-run is round 10 under R-37.
+
+- **2026-10-13 — K7 round 10 (MOD-04 + MOD-05 + MOD-01, R-37, Fable 5.1): RETURN, drift 6.**
+  Reviewed `7700e42` (tree `1e583a2`). CC-2, CC-4, CC-5 PASS: VEC-01 re-derives, and HOOK-01 is
+  falsifiable on the real orchestrated path (six divergence and ordering mutants, every one killed
+  by a test).
+  - **DR-30 (blocking, CC-6):** the `branch` detector is evaded inside its own DECIDES by the
+    destructured least currency.
+  - **DR-31 (blocking, CC-1):** PC-05 is marked n/a for MOD-04, and the attributable evaluation
+    is dropped on the refusing path. Stale module rows.
+  - **DR-32 (blocking, CC-3):** five omitted detector forms.
+  - **Also noted:** REF-03's one §5 test name does not reach the orchestrated path. The isolation
+    tests assert only "differs", which is the standard's form.
+  - **Not found:** any defect in MOD-04's fold or gate. Every carried rule holds in running code.
+    WI-07, WI-08 (MOD-05) and WI-10 (MOD-01) were reviewed with no finding against them.
+
+  **Cap position (RD-9).** This is MOD-04's first K7 round. One builder fix round and one
+  re-check remain before owner triage. Drift 6 is below 7, so the next module does not open.
 

@@ -45,6 +45,9 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
     expect(gate.admit(u, c2, h), "a draw at c2 with nothing committed at c1 was admitted").toEqual(refuse("unreachable"));
     const e = gate.evaluate(u, c2, h);
     expect(!isUnknown(e) && e.verdict === "unreachable" && e.cheapestUnmet, "the refusal does not name the cheapest unmet currency").toBe(c1);
+    // Two unmet (c1 and c2 below c3): the refusal names the CHEAPEST, not the dearest.
+    const e3 = gate.evaluate(u, c3, h);
+    expect(!isUnknown(e3) && e3.verdict === "unreachable" && e3.cheapestUnmet, "the dearest unmet currency was named").toBe(c1);
   });
 
   it("test_the_candidate_append_asks_the_gate_first_hook_01", () => {
@@ -205,10 +208,12 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
     const out = reach();
     expect(out.soleSite.src, "a second reachability check in src/").toEqual([]);
     expect(out.soleSite.fixtures).toEqual({
+      "src/facts/conforming-commits-in-a-loop.ts": [],
       "src/facts/conforming-one-fold-read.ts": [],
       "src/facts/limit-recursive-fold.ts": [],
       "src/facts/violating-every-callback.ts": ["second-reachability-check"],
       "src/reachability/conforming-the-one-check.ts": [],
+      "src/spend/violating-classic-for.ts": ["second-reachability-check"],
       "src/spend/violating-for-loop.ts": ["second-reachability-check"],
     });
   });
@@ -219,6 +224,7 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
     expect(out.branch.fixtures).toEqual({
       "src/reachability/conforming-lookup-equality.ts": [],
       "src/reachability/limit-set-membership.ts": [],
+      "src/reachability/violating-at-member.ts": ["currency-branch"],
       "src/reachability/violating-indexed-member.ts": ["currency-branch"],
       "src/reachability/violating-least-branch.ts": ["currency-branch"],
       "src/reachability/violating-literal-branch.ts": ["currency-branch"],

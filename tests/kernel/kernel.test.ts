@@ -234,6 +234,15 @@ describe("BC-01-6 - the kernel mints Projection membership, by name (R-35, WI-10
     expect(Object.isFrozen(p), "a joined Projection can be edited").toBe(true);
   });
 
+  it("test_the_brand_never_leaves_the_kernel", async () => {
+    // R-35 rests on one door: if the brand symbol were exported, any module could mint
+    // { [PROJECTION]: "Reachability", compute } with no assertion and no spread for
+    // projection-joins to see. Pinned before battery 15.
+    const kernel = (await import("../../src/kernel/index.js")) as Record<string, unknown>;
+    expect(Object.values(kernel).filter((x) => typeof x === "symbol"), "the kernel exports a symbol").toEqual([]);
+    expect(Object.keys(kernel), "the brand is exported by name").not.toContain("PROJECTION");
+  });
+
   it("test_joining_adds_no_membership_predicate", () => {
     // R-35: a join, never a question. The kernel still exports nothing that answers
     // "is this a Projection?" (BC-01-2), now that it exports asProjection.

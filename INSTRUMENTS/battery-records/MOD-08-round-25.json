@@ -1,0 +1,98 @@
+{
+  "module": "MOD-08",
+  "manifest": "sha256:96d0c9d8cc3c486696d0ec82d39f6ecfc1011173ae89b5e2bad8fd7cd732a16d",
+  "commit": "29a638e",
+  "mutations": [
+    {
+      "id": "E1",
+      "claim": "BC-08-1 / REF-08: below THREE scored members, Undetermined(AE-3)",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E2",
+      "claim": "R-63: the SAMPLE standard deviation (n - 1)",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E3",
+      "claim": "BC-08-2 / VEC-03 rule iii: one canonical order, so the multiset alone decides",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E4",
+      "claim": "BC-08-3 / rule iv: an ABSENT component contributes nothing",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E5",
+      "claim": "BC-08-3: an unobserved member contributes nothing",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E6",
+      "claim": "BC-08-7: an observation source's Unknown other than NoSubject is the answer",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E7",
+      "claim": "BC-08-4 / R-65: a sample closed by a revision is void",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E8",
+      "claim": "BC-08-4 / J3: a sample closed by a COMMITMENT is still measured",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E9",
+      "claim": "BC-08-5 / OBJ-21: location needs no floor",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E10",
+      "claim": "BC-08-3 / BC-08-5: the centre of nothing is NoSubject, not 0",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E11",
+      "claim": "BC-08-1: available tests the floor",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E12",
+      "claim": "BC-08-7 / SEAM-12: the sample's Unknown propagates as itself",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "E13",
+      "claim": "IR-100: location is void for a revised sample",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

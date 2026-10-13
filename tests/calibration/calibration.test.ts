@@ -268,8 +268,11 @@ describe("BC-09-7 - OBJ-23: Accepted, and PassedOver read from closed samples on
     w.commit(a);
     const [c, d] = w.round(w3, w.c1, [0.8, 0.2]) as [Candidate, Candidate];
     w.commit(c);
+    // A later sample of v: found with v's first sample, but read in candidate-height order.
+    const [r] = w.round(v, w.c0, [0.35]) as [Candidate];
+    w.commit(r);
     const pops = w.pops();
-    expect(heights(pops.accepted)).toEqual([a.at, c.at]);
+    expect(heights(pops.accepted), "the populations are not in candidate-height order").toEqual([a.at, c.at, r.at]);
     expect(heights(pops.passedOver)).toEqual([p.at, q.at, d.at]);
   });
 });

@@ -1,0 +1,13 @@
+{
+  "id": "VEC-03",
+  "module": "MOD-08 · scores",
+  "rule": "(i) |S| < 3 gives Undetermined(AE-3) and no numeric field; (ii) |S| >= 3 gives a value in the statistic's codomain; (iii) a function of the member multiset alone; (iv) an ABSENT component contributes nothing and is no member for the floor; (v) nothing coalesced, defaulted or widened",
+  "statistic": "sample-sd",
+  "encoding": "utf8-json",
+  "input": "{\"statistic\":\"sample-sd\",\"scores\":[0.42,0.57,0.61,0.38],\"cardinalities\":[2,3,4]}",
+  "output": "[{\"n\":2,\"scores\":[0.42,0.57],\"expect\":\"UNDETERMINED(AE-3)\"},{\"n\":3,\"scores\":[0.42,0.57,0.61],\"expect\":0.10016652800877812},{\"n\":4,\"scores\":[0.42,0.57,0.61,0.38],\"expect\":0.1121011448053349}]",
+  "state": "COMPUTED",
+  "computed_at": "2026-10-13T08:29:31+00:00",
+  "impl_sha": "076c7a0204aab53b50d95574b2f644591e794e4c62fbb3967228a4f18f55edd8",
+  "computed_by": "node --import tsx tools/vectors/run.ts VEC-03 src/statistics/scores.ts <input> (R-36); statistic sample-sd (R-63); re-derived in BC-08-6 by pairwise differences"
+}

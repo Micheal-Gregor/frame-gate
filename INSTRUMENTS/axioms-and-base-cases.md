@@ -687,3 +687,16 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 - **BC-07-5** read component by component: a value, or NoSubject for an unconfigured name; `isAbsent`; the discharge condition; each component's author; the scored components (ABSENT omitted, never zeroed); `isAllAbsent`.
 
 **Watched failing (MOD-07):** against typed stubs, 6 MOD-07 cases red, the isolation file red at collection, and the append-path map red; `tsc` clean once one test line was narrowed. After: 257 / 257.
+
+
+## MOD-08 `statistics/` (R-63..R-65; written before the module, watched failing; one line each, R-50)
+
+- **BC-08-1** REF-08: below three scored members, dispersion is `Undetermined(AE-3)` and no number; the floor is data (three, in one place); `available` tests it.
+- **BC-08-2** VEC-03 rule iii: a function of the member multiset alone, bit for bit, whatever the order; a member contributing nothing leaves it unchanged.
+- **BC-08-3** R-64 / rule iv: per component; ABSENT and unobserved members count for nothing; the observation in force (R-60) is the one read.
+- **BC-08-4** R-65 / J3: a sample closed by a revision is void here (NoSubject, both axes, IR-100); one closed by a commitment is measured.
+- **BC-08-5** OBJ-21: location is the mean of the scored members, available alone (no floor), NoSubject with nothing scored; it takes no threshold (a fifth argument does not compile).
+- **BC-08-6** VEC-03: computed from MOD-08 at n = 2, 3, 4 and re-derived by a second method (pairwise differences); the n = 2 row has no number.
+- **BC-08-7** an unknown handed in propagates as itself; Dispersion and Location each join the family once, in MOD-08.
+
+**Watched failing (MOD-08):** against typed stubs, 16 / 274 red (BC-08-1..7 and both isolation tests), `tsc` clean. After: 274 / 274.

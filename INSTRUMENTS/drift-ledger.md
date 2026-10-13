@@ -175,6 +175,7 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-97 | **R-60's permanence is judged as of the caller's `at` (DR-47)**: a stale `at` admits a Score over an Undischargeable mark appended after it. IR-84's single-writer class: the port has no head read; carried as a production concern | latent | MOD-07; production |
 | IR-98 | **HOOK-02's limits, restated (DR-48):** relational operators, `+` and `Math.max` over a possibly-ABSENT component are decided (do not compile). Equality and a `switch` compile, and are TESTS, not arithmetic. Registered limits: a coercion (`Number(x)`, unary `+` or `-`, `~`, a template), an assertion past ABSENT (`as number`), an `any`-typed sink | latent | MOD-07 |
 | IR-99 | **`component` and `authorOf` answer NoSubject for a name the observation does not state (DR-49):** a third outcome beside F3's Score-or-Absent, so an unconfigured name is never mistaken for either | benign | MOD-07 |
+| IR-100 | **MOD-08 reads a revised sample as void on BOTH axes** (J3: "MOD-08 reads it as voiding"), so location answers NoSubject as dispersion does (R-65). `Dispersion.available` is "the floor is met on a sample that is not void". A component name no observation states contributes nothing; it is not refused | benign | MOD-08 |
 
 ## Log
 
@@ -620,3 +621,4 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 
 - **2026-10-13 — MetaFramework 2.6.5 adopted in place (R-66).** RD-27 (credited, diff-scoped review) and RD-28 (receipted gates). The 2.6.5 runner still reads the verdict with the greedy regex (MF-33), so `k7-run.py` was MERGED, not copied, and the MetaFramework session has the finding. `new-object.py` now writes LF itself (F7).
 
+- **2026-10-13 — MOD-08 `statistics/` built (R-63..R-65), the first module under 2.6.5 (R-66).** Tests first, red against stubs (16 / 274). F3's `location(sample, threshold)` is superseded by the S3's own OBJ-21 row ("does not take θ"), so the comparison with θ is MOD-10's. VEC-03 is computed from the implementation and re-derived by a second method. 274 / 274.

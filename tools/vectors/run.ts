@@ -22,6 +22,8 @@ import { CurrencyOrder, DeclarationLedger, IndependenceLedger, type Currency, ty
 import { BOTTOM, CandidateLedger, CommitmentLedger, DrawContextLog, type Commitment } from "../../src/facts/index.js";
 import { Reachability, ReachabilityGate } from "../../src/reachability/index.js";
 import { SignatureGate, type SignatureMaterial } from "../../src/lineage/index.js";
+import { score } from "../../src/observation/index.js";
+import { spread } from "../../src/statistics/index.js";
 
 /** A record for a fixture: append-only, read as of a height (IR-31). */
 function fixtureRecord(): RecordPort<unknown, RecordHeight> {
@@ -88,6 +90,29 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
         table[`{${set.join(",")}}`] = row;
       }
       return JSON.stringify(table);
+    },
+  },
+  /**
+   * VEC-03 (MOD-08): one fixed score set read at nested cardinalities. Below the floor the row
+   * carries the unknown's token and NO number; at or above it, the statistic's value at full
+   * emitted precision. The statistic's identity rides in the input (R-63).
+   */
+  "VEC-03": {
+    entry: "src/statistics/scores.ts",
+    run: (input) => {
+      const spec = JSON.parse(input) as { readonly statistic: string; readonly scores: readonly number[]; readonly cardinalities: readonly number[] };
+      if (spec.statistic !== "sample-sd") throw new Error(`VEC-03: no statistic '${spec.statistic}' (R-63)`);
+      const scores = spec.scores.map((n) => {
+        const v = score(n);
+        if (isUnknown(v)) throw new Error(`VEC-03 fixture: ${n} is not a Score`);
+        return v;
+      });
+      return JSON.stringify(
+        spec.cardinalities.map((n) => {
+          const r = spread(scores.slice(0, n));
+          return { n, scores: spec.scores.slice(0, n), expect: isUnknown(r) ? (r.kind === "undetermined" ? `UNDETERMINED(${r.ae})` : r.kind) : r };
+        }),
+      );
     },
   },
   /**

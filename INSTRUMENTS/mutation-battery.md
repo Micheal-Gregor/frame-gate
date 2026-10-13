@@ -848,3 +848,7 @@ On `677b0e8`; restores verified.
 
 **11 / 11.**
 
+## Correction note (R-67, DR-49): rounds 19, 21 and 23's "Killed by" column
+
+Those tables were transcribed by a parser that split `KILLED (test) (test_name)` at the FIRST parenthesis, so each "Result" cell reads `KILLED` and each "Killed by" cell reads `` `test) (test_name` ``. Read the result as `KILLED (test)` (`+tsc` where the cell shows it), and the killing test as the name after `(`. The rows are left as written; the verdicts they record are unchanged. Later tables are parsed by the full line pattern.
+

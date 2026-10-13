@@ -73,6 +73,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-63 DG-F5: the dispersion and centre statistics (MOD-08) | **ACCEPTED 2026-10-13** (owner, live gate) | Dispersion = the SAMPLE standard deviation (n-1); location's centre = the arithmetic MEAN. VEC-03's statistic identity: "sample-sd" |
 | R-64 which scores the statistics summarize (MOD-08) | **ACCEPTED 2026-10-13** (owner, live gate) | PER COMPONENT: a member counts for a component only if its observation in force scores it (VEC-03 rule iv); ABSENT contributes nothing |
 | R-65 dispersion of a sample closed by a revision (J3) | **ACCEPTED 2026-10-13** (owner, live gate) | `NoSubject` - the distribution no longer obtains; distinct from the floor's `Undetermined(AE-3)`. A sample closed by a COMMITMENT is still measured |
+| R-67 K7 round 14 triage (RETURN, drift 6): MOD-07's gate closes | **ACCEPTED 2026-10-13** (owner, live gate) | FIX NOW, test-first: DR-46 (an entry is this ledger's observation only if it states exactly the configured components, each a finite number or a well-formed ABSENT). REGISTERED, one line each (R-50): DR-47 (IR-84's single-writer class), DR-48, DR-49. The battery tables' transcription artefact is corrected by an appended note. A small battery; NO re-check. Tag `closed-by-owner-14` on this commit |
 
 ---
 

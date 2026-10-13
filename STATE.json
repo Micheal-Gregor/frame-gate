@@ -10,8 +10,8 @@
   "k7_round": 16,
   "last_gate_tag": "closed-by-owner-14",
   "seal_tag": "",
-  "next_action": "MOD-10 PASSED (round 17, drift 7; MOD-05's R-76 work item PASSED with it). Owner: tag k7-pass-17 on 26d8591 (and k7-pass-15/16 if not yet placed). Next: MOD-11 spend - owner rulings on expiry, dispatch charging, the stop condition, the cost estimate.",
+  "next_action": "MOD-11 BUILT (R-77..R-81, MOD-05's R-78 work item). Next: battery 28 (receipts), then K7 round 18 (MOD-11 FULL, MOD-05 DIFF). Owner: tags k7-pass-15/16/17 if not yet placed.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T18:10:18+00:00",
+  "updated_at": "2026-10-13T20:30:12+00:00",
   "updated_by": "manual"
 }

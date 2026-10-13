@@ -69,7 +69,7 @@ function lineageWorld({ record = inMemoryRecord(), renderer }: { readonly record
     independence: w.independence,
     admission: { admit: () => "ADMIT" },
     signatures: gate,
-    ceiling: { admitsDraw: () => "WITHIN" },
+    ceiling: { admitsCandidate: () => "WITHIN" },
   });
   const [c0, c1, c2] = w.order.currencies() as readonly [Currency, Currency, Currency];
   /** A proposal for (unit, currency) from `from`, under a draw recorded now. */
@@ -165,7 +165,7 @@ describe("BC-12-3 - a mismatch is malformed-signature, asked in MOD-05's order (
       independence: w.independence,
       admission: { admit: () => (asked.push("admission"), "ADMIT") },
       signatures: { check: (p, s) => (asked.push("signature"), w.gate.check(p, s)) },
-      ceiling: { admitsDraw: () => (asked.push("ceiling"), "WITHIN") },
+      ceiling: { admitsCandidate: () => (asked.push("ceiling"), "WITHIN") },
     });
     const k0 = w.commitAt(u, w.c0);
     const p = w.propose(u, w.c1, k0);

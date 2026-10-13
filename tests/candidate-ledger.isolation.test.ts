@@ -30,7 +30,7 @@ function world(): { inputs: CandidateLedgerInputs; record: TestRecord; at: Recor
   independence.declareIndependence(u, true, "HUMAN");
   // R-41: k0 accepts a real candidate at c0 (BOTTOM, licensed), appended through a setup ledger.
   const h0 = record.noise();
-  const draws = new DrawContextLog({ record, declarations });
+  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
   const ctx0 = draws.recordDraw(u, { colour: "red" }, h0, "setup", h0, "ENGINE");
   if (!("payload" in ctx0)) throw new Error("setup: the draw was refused");
   const setup = new CandidateLedger({
@@ -40,7 +40,7 @@ function world(): { inputs: CandidateLedgerInputs; record: TestRecord; at: Recor
     independence,
     admission: { admit: () => "ADMIT" },
     signatures: { check: () => "VERIFIED" },
-    ceiling: { admitsDraw: () => "WITHIN" },
+    ceiling: { admitsCandidate: () => "WITHIN" },
   });
   const s0 = setup.appendCandidate({ context: ctx0, unit: u, currency: c0, condition: "setup", seed: "s", from: BOTTOM }, "sig", record.noise(), "ENGINE");
   if (!("payload" in s0)) throw new Error("setup: the candidate was refused");
@@ -55,7 +55,7 @@ function world(): { inputs: CandidateLedgerInputs; record: TestRecord; at: Recor
     independence,
     admission: { admit: () => "ADMIT" },
     signatures: { check: () => "VERIFIED" },
-    ceiling: { admitsDraw: () => "WITHIN" },
+    ceiling: { admitsCandidate: () => "WITHIN" },
   };
   return { inputs, record, at: record.noise(), proposal: { context, unit: u, currency: c1, condition: "k", seed: "s", from: k0 } };
 }
@@ -107,7 +107,7 @@ describe("CandidateLedger in isolation", () => {
   it("appendCandidate answers differently when ceiling differs", () => {
     const one = world();
     const two = world();
-    const a = new CandidateLedger({ ...one.inputs, ceiling: { admitsDraw: () => refuse("scope-exceeded") } }).appendCandidate(one.proposal, "sig", one.at, "ENGINE");
+    const a = new CandidateLedger({ ...one.inputs, ceiling: { admitsCandidate: () => refuse("scope-exceeded") } }).appendCandidate(one.proposal, "sig", one.at, "ENGINE");
     const b = new CandidateLedger(two.inputs).appendCandidate(two.proposal, "sig", two.at, "ENGINE");
     expect(a).not.toEqual(b);
   });

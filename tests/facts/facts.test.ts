@@ -248,7 +248,7 @@ describe("BC-05-5 - REF-06: no act signature accepts a diagnostic", () => {
 function drawWorld() {
   const record = inMemoryRecord();
   const declarations = new DeclarationLedger({ record, levels: ["easy", "hard"] });
-  const draws = new DrawContextLog({ record, declarations });
+  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
   const scope = record.noise(); // some appended fact; MOD-05 never looks at it (R-23)
   return { record, declarations, draws, scope };
 }
@@ -280,7 +280,7 @@ describe("BC-05-8 - REF-05: a draw with no declaration in force is refused (R-21
     const odd = uncomputable("reader-boundary");
     const reader: DeclarationReader = { declarationAt: () => odd };
     const h = record.noise();
-    const got = new DrawContextLog({ record, declarations: reader }).recordDraw(u, features, h, "cond", h, "ENGINE");
+    const got = new DrawContextLog({ record, declarations: reader, scopes: { admitsDraw: () => "WITHIN" } }).recordDraw(u, features, h, "cond", h, "ENGINE");
     expect(got, "an Unknown from the reader was collapsed into the refusal").toEqual(odd);
     expect(Number(record.noise()), "an unanswerable draw appended something").toBe(Number(h) + 1);
   });
@@ -436,7 +436,7 @@ function candidateWorld(answers: Answers = {}) {
   const declarations = new DeclarationLedger({ record, levels: ["easy", "hard"] });
   declarations.declare(u, "easy", "HUMAN");
   declarations.declare(v, "easy", "HUMAN");
-  const draws = new DrawContextLog({ record, declarations });
+  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
   const commitments = new CommitmentLedger({ record, invalidations: none });
   const independence = new IndependenceLedger({ record });
   const asked: string[] = [];
@@ -455,7 +455,7 @@ function candidateWorld(answers: Answers = {}) {
         return answers.signature ?? "VERIFIED";
       },
     },
-    ceiling: { admitsDraw: () => (asked.push("ceiling"), answers.ceiling ?? "WITHIN") },
+    ceiling: { admitsCandidate: () => (asked.push("ceiling"), answers.ceiling ?? "WITHIN") },
   });
   // SETUP commitments (R-41) are drawn through a second ledger over the same record whose deciders
   // always pass, under condition `setup`: they are never what a test asks about, and they never
@@ -467,7 +467,7 @@ function candidateWorld(answers: Answers = {}) {
     independence,
     admission: { admit: () => "ADMIT" },
     signatures: { check: () => "VERIFIED" },
-    ceiling: { admitsDraw: () => "WITHIN" },
+    ceiling: { admitsCandidate: () => "WITHIN" },
   });
   const drawAt = (unit: Unit, currency: Currency): Candidate => {
     const below = order.predecessors(currency);
@@ -529,6 +529,7 @@ describe("BC-05-15 - one guarded append; an unreachable draw costs nothing (S-01
       observation: ["ObservationLedger.observe"],
       "prompt-revision": ["RevisionLog.revise"],
       "resolution-label": ["DrawContextLog.label"],
+      scope: ["ScopeLedger.authorize"],
     });
     expect(Object.fromEntries(Object.entries(out.paths.fixtures).map(([k, v]) => [k, v.map((x) => `${x.kind} ${x.fn}`).sort()]))).toEqual({
       "src/facts/limit-destructured-relay.ts": [],
@@ -548,7 +549,7 @@ describe("BC-05-23 - REF-05 on the path that costs: no candidate without a decla
     // DrawContext exists; a proposal without one does not compile, and none can be minted
     // outside DrawContextLog (BC-05-6). So no candidate can be appended for that draw.
     const record = inMemoryRecord();
-    const draws = new DrawContextLog({ record, declarations: new DeclarationLedger({ record, levels: ["easy"] }) });
+    const draws = new DrawContextLog({ record, declarations: new DeclarationLedger({ record, levels: ["easy"] }), scopes: { admitsDraw: () => "WITHIN" } });
     const h = record.noise();
     expect(isRefusal(draws.recordDraw(u, features, h, "cond", h, "ENGINE"), "no-declaration"), "a draw context was minted with no declaration").toBe(true);
     const out = JSON.parse(
@@ -673,7 +674,7 @@ describe("BC-05-16 - from is the effective commitment immediately below, as of t
       independence: w.independence,
       admission: { admit: () => "ADMIT" },
       signatures: { check: () => "VERIFIED" },
-      ceiling: { admitsDraw: () => "WITHIN" },
+      ceiling: { admitsCandidate: () => "WITHIN" },
     });
     const fromA = w.propose(c1, a);
     const fromB = w.propose(c1, b);
@@ -729,7 +730,7 @@ describe("BC-05-16 - from is the effective commitment immediately below, as of t
       independence: w.independence,
       admission: { admit: () => "ADMIT" },
       signatures: { check: () => "VERIFIED" },
-      ceiling: { admitsDraw: () => "WITHIN" },
+      ceiling: { admitsCandidate: () => "WITHIN" },
     });
     const p = w.propose(c0, kv);
     expect(malformed(ledger.appendCandidate(p, "sig", w.record.noise(), "ENGINE")), "a superseded commitment of another unit was inherited").toBe(true);

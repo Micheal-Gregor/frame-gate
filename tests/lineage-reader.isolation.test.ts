@@ -39,6 +39,18 @@ describe("LineageReader in isolation", () => {
     expect(real.commitmentsAsOf(h)).not.toEqual(empty.commitmentsAsOf(h));
   });
 
+  it("drawsUnder answers differently when record differs (R-78)", () => {
+    const w = world();
+    const k = w.drawAt(u, c0);
+    const h = w.record.noise();
+    // The test world records each draw under a scope height of its own; read that one back.
+    const scope = w.draws.drawsAsOf(u, h).find((d) => d.at === k.payload.context)?.payload.scope;
+    if (scope === undefined) throw new Error("setup");
+    const a = new LineageReader({ record: w.record }).drawsUnder(scope, h);
+    const b = new LineageReader({ record: inMemoryRecord() }).drawsUnder(scope, h);
+    expect(a).not.toEqual(b);
+  });
+
   it("acceptedBy answers differently when record differs", () => {
     const w = world();
     const k0 = w.commitAt(u, c0);

@@ -153,6 +153,7 @@ const LEDGERS = [
   { root: "src/lineage", payloads: [["src/lineage/invalidation-ledger.ts", "InvalidationPayload"]] },
   { root: "src/condition", payloads: [["src/condition/revision-log.ts", "RevisionPayload"]] },
   { root: "src/observation", payloads: [["src/observation/observation-ledger.ts", "ObservationPayload"]] },
+  { root: "src/spend", payloads: [["src/spend/scope-ledger.ts", "ScopePayload"]] },
 ];
 /** Each ledger root's parse-level fixtures, tests/fixtures/<root's name>/ - discovered from LEDGERS (RD-12). */
 const FIXTURES = LEDGERS.flatMap((l) => walk(fx(l.root.slice(l.root.lastIndexOf("/") + 1)), /\.ts$/));
@@ -241,6 +242,7 @@ const BRANDS = [
   { owner: "src/lineage/invalidation-ledger.ts", name: "Invalidation", key: brandKey("src/lineage/invalidation-ledger.ts", "Invalidation") },
   { owner: "src/condition/revision-log.ts", name: "PromptRevision", key: brandKey("src/condition/revision-log.ts", "PromptRevision") },
   { owner: "src/observation/observation-ledger.ts", name: "Observation", key: brandKey("src/observation/observation-ledger.ts", "Observation") },
+  { owner: "src/spend/scope-ledger.ts", name: "Scope", key: brandKey("src/spend/scope-ledger.ts", "Scope") },
   // Not a ledger fact, but REF-07's parse half rests on it (R-48): a DisplayedScope minted outside
   // MOD-12 would let an invalidation skip its display. Listed by hand - see IR-79.
   { owner: "src/lineage/invalidation-ledger.ts", name: "DisplayedScope", key: brandKey("src/lineage/invalidation-ledger.ts", "DisplayedScope") },
@@ -249,6 +251,8 @@ const BRANDS = [
   { owner: "src/calibration/bar.ts", name: "Threshold", key: brandKey("src/calibration/bar.ts", "Threshold") },
   // Nor this: a DiagnosticValue minted outside MOD-10 could drop its withheld entries (PC-07, R-76).
   { owner: "src/diagnostic/diagnostic.ts", name: "DiagnosticValue", key: brandKey("src/diagnostic/diagnostic.ts", "DiagnosticValue") },
+  // Nor this: a form minted outside MOD-11 need not carry the ratio it shows (HOOK-09, R-81).
+  { owner: "src/spend/authorization.ts", name: "AuthorizationForm", key: brandKey("src/spend/authorization.ts", "AuthorizationForm") },
 ];
 const HEIGHT = brandKey("src/kernel/index.ts", "RecordHeight");
 const CURRENCY = brandKey("src/catalog/currency-order.ts", "Currency");

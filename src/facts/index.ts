@@ -23,6 +23,7 @@ export { LineageReader, type AcceptingCommitment, type DerivedCandidate, type Li
 export {
   DrawContextLog,
   type DeclarationReader,
+  type DrawScopeGate,
   type DrawContext,
   type DrawContextPayload,
   type Resolution,

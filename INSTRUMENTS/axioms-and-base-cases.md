@@ -727,3 +727,16 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 - **BC-10-8** VEC-04 is computed from MOD-10 and re-derived. Its (absent, absent) row reproduces MWE step 6: a sample of one and both populations empty, so no axis and two withheld entries, with AE-5 never engaged. The rows needing a present θ are carried deferred (AE-5).
 
 **Watched failing (MOD-10, with R-76's MOD-05 work item):** against typed stubs, 16 / 311 red (BC-10-1..8, every operation case of the isolation test, BC-05-5 REF-06, BC-03-2 REF-01), `tsc` clean. After: 311 / 311.
+
+## MOD-11 `spend/` (R-77..R-81, with MOD-05's R-78 work item; written before the module, watched failing; one line each, R-50)
+
+- **BC-11-1** REF-16 / HOOK-05 / R-77 / R-78: the draw itself is gated. Under a governing Scope of ceiling N, N draws are admitted. The (N+1)th is Refuse(scope-exceeded) with no draw context appended, so there is no candidate and no cost. Every draw recorded under the scope counts whether or not a candidate returns. A superseded scope admits no draw, and a later one starts afresh.
+- **BC-11-2** R-78 (R-25 amended): a candidate's unit and currency must be its draw's scope's, or Refuse(scope-mismatch). The ceiling is not counted again at the append, so a scope superseded between draw and return still admits that draw's candidate.
+- **BC-11-3** REF-15 / R-79: a stop condition requested while θ = ⊥ at the unit's level in force is Refuse(no-bar), with nothing appended. With θ present, the member exists and records only its component. With none requested, the member does not exist (I-5).
+- **BC-11-4** REF-17: a Scope is spent, never edited. Its value is frozen, and the ledger's one append is `authorize`, which takes no Scope. A second Scope is accepted: the only path to more permission.
+- **BC-11-5** REF-18: the ratio is a vector over the currency order - arity the currency set, zeros included - computed per read. A quotient in its place does not compile, and MOD-11 offers no scalar of it.
+- **BC-11-6** REF-19 / HOOK-09 / R-81: a form carries its ratio at every currency. One without the ratio does not compile, and one minted outside MOD-11 is flagged. `authorize` takes a form built at the same height (Refuse(form-before-act) otherwise). The decision stays the human's: authorizing from a form is admitted, and declining appends nothing.
+- **BC-11-7** I-2 / I-3 / R-80: the governing scope is the latest one, and remaining is its ceiling minus the draws charged against it, as of a height. With no scope it is NoSubject. A ceiling that is not a positive integer is Refuse(malformed-ceiling). The estimate is recorded exactly as given.
+- **BC-11-8** Ratio joins the family once, in MOD-11. `ScopeLedger.authorize` is the one append path for the scope kind (S-01). A scope-kind entry built outside src/spend is a forge, and a Scope or AuthorizationForm minted outside its owner is flagged.
+
+**Watched failing (MOD-11, with R-78's MOD-05 work item):** against typed stubs, 29 / 344 red: BC-11-1..8; every case of the five isolation tests; `drawsUnder`'s isolation case; BC-05-6, BC-05-15 and BC-03-2 (the registrations). `tsc` clean. After: 344 / 344.

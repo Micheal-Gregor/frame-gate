@@ -14,7 +14,9 @@ import {
   DrawContextLog,
   type Candidate,
   type Commitment,
+  type DrawScopeGate,
   type InvalidationReader,
+  type ScopeCeiling,
 } from "../../src/facts/index.js";
 import { inMemoryRecord, type TestRecord } from "../catalog/in-memory-record.js";
 
@@ -28,20 +30,36 @@ export interface FactWorld {
   readonly independence: IndependenceLedger;
   readonly commitments: CommitmentLedger;
   readonly candidates: CandidateLedger;
-  /** A candidate for (unit, currency), drawn through the real path under `condition` (default `setup`). */
-  drawAt(unit: Unit, currency: Currency, condition?: string): Candidate;
+  /** A candidate for (unit, currency), drawn through the real path under `condition` (default `setup`), charged to `scope`. */
+  drawAt(unit: Unit, currency: Currency, condition?: string, scope?: RecordHeight): Candidate;
   /** A commitment for (unit, currency), accepting a candidate drawn through the real path. */
   commitAt(unit: Unit, currency: Currency): Commitment;
 }
 
+/** Setup stand-ins for MOD-11's gate (R-78): every draw and every candidate is within scope. */
+const anyScope: DrawScopeGate & ScopeCeiling = { admitsDraw: () => "WITHIN", admitsCandidate: () => "WITHIN" };
+
 /**
  * `record`, when given, is the one the world appends to - so an invalidation reader built over it
- * (MOD-12's ledger) can be handed in before the fold that reads it.
+ * (MOD-12's ledger) can be handed in before the fold that reads it. `scopes` and `ceiling`, when
+ * given, are MOD-11's real gate (R-78); otherwise every draw is within scope.
  */
-export function factWorld({ currencies, invalidations, record = inMemoryRecord() }: { readonly currencies: readonly string[]; readonly invalidations: InvalidationReader; readonly record?: TestRecord }): FactWorld {
+export function factWorld({
+  currencies,
+  invalidations,
+  record = inMemoryRecord(),
+  scopes = anyScope,
+  ceiling = anyScope,
+}: {
+  readonly currencies: readonly string[];
+  readonly invalidations: InvalidationReader;
+  readonly record?: TestRecord;
+  readonly scopes?: DrawScopeGate;
+  readonly ceiling?: ScopeCeiling;
+}): FactWorld {
   const order = new CurrencyOrder({ currencies: [...currencies] });
   const declarations = new DeclarationLedger({ record, levels: ["easy", "hard"] });
-  const draws = new DrawContextLog({ record, declarations });
+  const draws = new DrawContextLog({ record, declarations, scopes });
   const independence = new IndependenceLedger({ record });
   const commitments = new CommitmentLedger({ record, invalidations });
   const candidates = new CandidateLedger({
@@ -51,10 +69,10 @@ export function factWorld({ currencies, invalidations, record = inMemoryRecord()
     independence,
     admission: { admit: () => "ADMIT" },
     signatures: { check: () => "VERIFIED" },
-    ceiling: { admitsDraw: () => "WITHIN" },
+    ceiling,
   });
   const now = (): RecordHeight => record.noise();
-  const drawAt = (unit: Unit, currency: Currency, condition = "setup"): Candidate => {
+  const drawAt = (unit: Unit, currency: Currency, condition = "setup", scope?: RecordHeight): Candidate => {
     if (isUnknown(declarations.declarationAt(unit, now()))) declarations.declare(unit, "easy", "HUMAN");
     const below = order.predecessors(currency);
     if (isUnknown(below)) throw new Error(`setup: ${currency} is not in the order`);
@@ -69,7 +87,7 @@ export function factWorld({ currencies, invalidations, record = inMemoryRecord()
       from = k;
     }
     const h = now();
-    const context = draws.recordDraw(unit, { setup: true }, h, condition, h, "ENGINE");
+    const context = draws.recordDraw(unit, { setup: true }, scope ?? h, condition, h, "ENGINE");
     if (isUnknown(context)) throw new Error(`setup: the draw answered ${context.kind}`);
     const k = candidates.appendCandidate({ context, unit, currency, condition, seed: "setup", from }, "sig", now(), "ENGINE");
     if (isUnknown(k)) throw new Error(`setup: the candidate answered ${k.kind}`);

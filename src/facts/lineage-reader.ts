@@ -18,6 +18,7 @@ import { height, type RecordHeight } from "../kernel/index.js";
 import type { Currency, Unit } from "../catalog/index.js";
 import { isCandidateEntry, type Bottom } from "./candidate-ledger.js";
 import { isCommitmentEntry, type FactRecord } from "./commitment-ledger.js";
+import { isDrawContextEntry } from "./draw-context-log.js";
 
 /** A candidate derived from a commitment, by its height - unbranded (the mint rule). */
 export interface DerivedCandidate {
@@ -83,6 +84,15 @@ export class LineageReader {
     this.#record.readAsOf(at).forEach((fact, position) => {
       if (!isCommitmentEntry(fact)) return;
       out.push(Object.freeze({ at: height(position + 1), unit: fact.payload.unit, currency: fact.payload.currency, candidate: fact.payload.candidate }));
+    });
+    return Object.freeze(out);
+  }
+
+  /** R-78: the draw contexts recorded under the scope at `scope`, at or below `at`, by height - charged by dispatch. */
+  drawsUnder(scope: RecordHeight, at: RecordHeight): readonly RecordHeight[] {
+    const out: RecordHeight[] = [];
+    this.#record.readAsOf(at).forEach((fact, position) => {
+      if (isDrawContextEntry(fact) && fact.payload.scope === scope) out.push(height(position + 1));
     });
     return Object.freeze(out);
   }

@@ -81,7 +81,7 @@ function calibrationFixture(script: Script) {
   const order = new CurrencyOrder({ currencies: [...script.currencies] });
   const declarations = new DeclarationLedger({ record, levels: [...script.levels] });
   const independence = new IndependenceLedger({ record });
-  const draws = new DrawContextLog({ record, declarations });
+  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
   const lineage = new LineageReader({ record });
   const invalidations = new InvalidationLedger({ record, scopes: new InvalidationScope({ lineage }), renderer: { present: () => undefined } });
   const commitments = new CommitmentLedger({ record, invalidations });
@@ -92,7 +92,7 @@ function calibrationFixture(script: Script) {
     independence,
     admission: { admit: () => "ADMIT" },
     signatures: { check: () => "VERIFIED" },
-    ceiling: { admitsDraw: () => "WITHIN" },
+    ceiling: { admitsCandidate: () => "WITHIN" },
   });
   const revisions = new RevisionLog({ record });
   const samples = new Samples({ candidates, draws, revisions, lineage });
@@ -197,7 +197,7 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
           // BOTTOM (licensed) at the least currency, then the commitment below.
           const declarations = new DeclarationLedger({ record, levels: ["fixture"] });
           const independence = new IndependenceLedger({ record });
-          const draws = new DrawContextLog({ record, declarations });
+          const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
           const setup = new CandidateLedger({
             record,
             commitments,
@@ -205,7 +205,7 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
             independence,
             admission: { admit: () => "ADMIT" },
             signatures: { check: () => "VERIFIED" },
-            ceiling: { admitsDraw: () => "WITHIN" },
+            ceiling: { admitsCandidate: () => "WITHIN" },
           });
           declarations.declare(unit, "fixture", "HUMAN");
           independence.declareIndependence(unit, true, "HUMAN");
@@ -381,7 +381,7 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
       const commitments = new CommitmentLedger({ record, invalidations: { isInvalidated: () => false } });
       const declarations = new DeclarationLedger({ record, levels: ["fixture"] });
       const independence = new IndependenceLedger({ record });
-      const draws = new DrawContextLog({ record, declarations });
+      const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
       const setup = new CandidateLedger({
         record,
         commitments,
@@ -389,7 +389,7 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
         independence,
         admission: { admit: () => "ADMIT" },
         signatures: gate,
-        ceiling: { admitsDraw: () => "WITHIN" },
+        ceiling: { admitsCandidate: () => "WITHIN" },
       });
       declarations.declare(unit, "fixture", "HUMAN");
       independence.declareIndependence(unit, true, "HUMAN");

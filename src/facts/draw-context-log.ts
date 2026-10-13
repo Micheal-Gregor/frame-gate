@@ -71,11 +71,20 @@ export interface DeclarationReader {
   declarationAt(unit: Unit, at: RecordHeight): Declaration | UnknownValue;
 }
 
+/**
+ * R-78 / HOOK-05 @before-draw: MOD-11's ScopeGate, asked before a draw is recorded - a scope is
+ * spent by dispatch, not by return (DG-F3, cited). Declared by the operation called on it (OS-1).
+ */
+export interface DrawScopeGate {
+  admitsDraw(unit: Unit, scope: RecordHeight, at: RecordHeight): "WITHIN" | UnknownValue;
+}
+
 export class DrawContextLog {
   readonly #record: FactRecord;
   readonly #declarations: DeclarationReader;
+  readonly #scopes: DrawScopeGate;
 
-  constructor({ record, declarations }: { readonly record: FactRecord; readonly declarations: DeclarationReader }) {
+  constructor({ record, declarations, scopes }: { readonly record: FactRecord; readonly declarations: DeclarationReader; readonly scopes: DrawScopeGate }) {
     if (record === undefined || record === null) throw new TypeError("DrawContextLog requires record");
     // OS-1: an object input is a declared slot - the operations called on it are named
     // and checked here, never discovered inside a method.
@@ -86,8 +95,11 @@ export class DrawContextLog {
     if (typeof declarations.declarationAt !== "function") {
       throw new TypeError("declarations must offer declarationAt (SEAM-05, R-21)");
     }
+    if (scopes === undefined || scopes === null) throw new TypeError("DrawContextLog requires scopes");
+    if (typeof scopes.admitsDraw !== "function") throw new TypeError("scopes must offer admitsDraw (MOD-11 ScopeGate, R-78)");
     this.#record = record;
     this.#declarations = declarations;
+    this.#scopes = scopes;
     Object.freeze(this);
   }
 
@@ -101,6 +113,10 @@ export class DrawContextLog {
       // passed through unchanged: collapsing it into the refusal would lose which it was.
       return declaration.kind === "no-subject" ? refuse("no-declaration") : declaration;
     }
+    // HOOK-05 @before-draw (R-78): MOD-11 is asked before anything is recorded, so a refused draw
+    // leaves no context, no candidate and no cost.
+    const within = this.#scopes.admitsDraw(unit, scope, at);
+    if (within !== "WITHIN") return within;
     const payload: DrawContextPayload = Object.freeze({
       kind: "draw-context",
       unit,
@@ -156,8 +172,7 @@ export class DrawContextLog {
    * src/facts (BC-05-6) - and, at runtime, on PC-02's identity binding.
    */
   #isDrawOf(fact: unknown, unit: Unit): fact is { author: Author; payload: DrawContextPayload } {
-    const payload = this.#payloadOf(fact);
-    return payload !== undefined && payload["kind"] === "draw-context" && payload["unit"] === unit;
+    return isDrawContextEntry(fact) && fact.payload.unit === unit;
   }
 
   /** A resolution label on the draw context at `context`. */
@@ -176,4 +191,15 @@ export class DrawContextLog {
     const payload = (fact as { payload: unknown }).payload;
     return typeof payload === "object" && payload !== null ? (payload as Readonly<Record<string, unknown>>) : undefined;
   }
+}
+
+/**
+ * A draw context, recognised by kind among every module's facts - the ONE rule, shared by this log
+ * and the lineage reader (R-78's charges). Provenance rests on the static forge guard and PC-02.
+ * MOD-05-internal: not re-exported from facts/index.ts.
+ */
+export function isDrawContextEntry(fact: unknown): fact is { author: Author; payload: DrawContextPayload } {
+  if (typeof fact !== "object" || fact === null || !("payload" in fact) || !("author" in fact)) return false;
+  const payload = (fact as { payload: unknown }).payload;
+  return typeof payload === "object" && payload !== null && (payload as Readonly<Record<string, unknown>>)["kind"] === "draw-context";
 }

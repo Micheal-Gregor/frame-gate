@@ -62,7 +62,7 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
     const { record, commitments, gate, commitAt } = world();
     const declarations = new DeclarationLedger({ record, levels: ["easy"] });
     declarations.declare(u, "easy", "HUMAN");
-    const draws = new DrawContextLog({ record, declarations });
+    const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
     const asked: string[] = [];
     const ledger = new CandidateLedger({
       record,
@@ -71,7 +71,7 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
       independence: new IndependenceLedger({ record }),
       admission: gate,
       signatures: { check: () => (asked.push("signature"), "VERIFIED") },
-      ceiling: { admitsDraw: () => (asked.push("ceiling"), "WITHIN") },
+      ceiling: { admitsCandidate: () => (asked.push("ceiling"), "WITHIN") },
     });
     const h0 = record.noise();
     const context = draws.recordDraw(u, { k: "v" }, h0, "cond", h0, "ENGINE");
@@ -90,7 +90,7 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
     const { record, commitments, gate, commitAt } = world();
     const declarations = new DeclarationLedger({ record, levels: ["easy"] });
     declarations.declare(u, "easy", "HUMAN");
-    const draws = new DrawContextLog({ record, declarations });
+    const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
     const asked: string[] = [];
     const ledger = new CandidateLedger({
       record,
@@ -99,7 +99,7 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
       independence: new IndependenceLedger({ record }),
       admission: gate,
       signatures: { check: () => (asked.push("signature"), "VERIFIED") },
-      ceiling: { admitsDraw: () => (asked.push("ceiling"), "WITHIN") },
+      ceiling: { admitsCandidate: () => (asked.push("ceiling"), "WITHIN") },
     });
     const h0 = record.noise();
     const context = draws.recordDraw(u, { k: "v" }, h0, "cond", h0, "ENGINE");

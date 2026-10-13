@@ -101,9 +101,9 @@ export interface AdmissionDecider {
 export interface SignatureCheck {
   check(proposal: CandidateProposal, signature: string, at: RecordHeight): "VERIFIED" | UnknownValue;
 }
-/** MOD-11's scope ceiling (R-25, SEAM-04, REF-16). */
+/** MOD-11's scope check on the append (R-25 as amended by R-78): the candidate is its draw's scope's (unit, currency). */
 export interface ScopeCeiling {
-  admitsDraw(unit: Unit, currency: Currency, at: RecordHeight): "WITHIN" | UnknownValue;
+  admitsCandidate(unit: Unit, currency: Currency, scope: RecordHeight, at: RecordHeight): "WITHIN" | UnknownValue;
 }
 
 export interface CandidateLedgerInputs {
@@ -142,7 +142,7 @@ export class CandidateLedger {
     slot("independence", independence, ["independenceAt"]);
     slot("admission", admission, ["admit"]);
     slot("signatures", signatures, ["check"]);
-    slot("ceiling", ceiling, ["admitsDraw"]);
+    slot("ceiling", ceiling, ["admitsCandidate"]);
     this.#record = record;
     this.#commitments = commitments;
     this.#currencies = currencies;
@@ -176,8 +176,9 @@ export class CandidateLedger {
     // 4. SIGNATURE (MOD-12): over the whole proposal, `from` included; MOD-12 digests it (R-27).
     const verified = this.#signatures.check(proposal, signature, at);
     if (verified !== "VERIFIED") return verified;
-    // 5. CEILING (MOD-11, REF-16).
-    const within = this.#ceiling.admitsDraw(proposal.unit, proposal.currency, at);
+    // 5. SCOPE (MOD-11, R-78): the draw was charged against its scope when it was recorded (HOOK-05);
+    // here the candidate must be that scope's unit and currency. The ceiling is not counted again.
+    const within = this.#ceiling.admitsCandidate(proposal.unit, proposal.currency, context.payload.scope, at);
     if (within !== "WITHIN") return within;
 
     const payload: CandidatePayload = Object.freeze({

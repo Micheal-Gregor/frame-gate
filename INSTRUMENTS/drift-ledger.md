@@ -108,6 +108,7 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-58 | **The candidate binds its draw context (R-31; DR-27, DR-28).** `CandidateProposal.context` is the `DrawContext` the candidate was drawn under, a nominal type that only `recordDraw` mints, and only when a declaration is in force. REF-05 therefore holds on the path that costs BY CONSTRUCTION: a proposal without a context does not compile (`candidate-without-context.ts`, TS2345 naming `context`), a context cannot be minted elsewhere (BC-05-6), and none exists for an undeclared unit. The append refuses `context-mismatch` for a context of another unit or condition, or one newer than the append height (`succeeds`, R-09), and appends nothing. The candidate records the context by height, so SEAM-10's declaration-at-draw-time is recovered per candidate by key. The declaration is never re-read on this path (F1 S-14). R-28's order is amended: admission → context → from → signature → ceiling | benign | MOD-05 (REF-05, SEAM-10, S-14; R-31) |
 | IR-59 | **A draw context may be bound by more than one candidate.** The S3 does not say whether a draw yields one candidate or several. The append checks that the context is this unit's, this condition's and not newer, but not that it is unused. A later candidate binding an older context records the declaration in force at THAT draw, which is S-08's semantics. Whether one draw may cover several candidates, and for how long, is open. Refusing reuse would be a read of the record ("already bound as of h?"), which is decidable if the owner wants it | latent | MOD-05 (OBJ-11 ↔ OBJ-16); MOD-09 reads per candidate |
 | IR-60 | **`paths` decides generic relays; act-signatures registers library members (R-31, DR-29).** A RELAY is a function handing one of its own parameters, typed so it carries no kind, to `RecordPort.append`, directly or through another relay, found to a fixed point. A call handing a relay an argument that carries a kind is an append path of that kind at the caller. A relay whose parameter already carries a kind is itself the path and is not followed further, so nothing is counted twice. Pinned: one- and two-level relay backfills (`violating-generic-relay.ts`); registered limit, `.call` on a relay (`limit-indirect-relay.ts`). act-signatures recurses only into user-declared members, and now registers that limit: an act taking `Error` is unflagged (`limit-library-member.ts`) | benign | local; S-01, REF-06 |
+| IR-61 | **SEAM-17 and SEAM-18 are honoured at MOD-12's invalidation append, not at `commit`.** SEAM-17 says "the scope is derived before the append, never after", and SEAM-18 "the human sees the count before the commitment is appended". REF-07, refusing an append before the scope is derived, is MOD-12's. Under R-19 a commitment is superseded only by MOD-12's invalidation, appended after its scope is derived and displayed (RC-4). MOD-05's `commit` is not gated by that ordering. Its side is R-20: a re-commitment appended before its invalidation folds to `uncomputable("two-effective-commitments")`, so reachability refuses until the invalidation lands, and a premature re-commit can never be read as in force. Found by the module-close clause map (`INSTRUMENTS/MOD-05-clause-map.md`); it was implied by R-19 and stated by no IR | latent | MOD-05 → MOD-12 (SEAM-17/18, REF-07; R-19, R-20) |
 
 ## Log
 
@@ -371,4 +372,18 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   - **Green:** 147/147, `tsc` clean, every mechanical check clean apart from the nine
     `module_file_absent` entries.
   - **New latent point:** IR-59, a draw context may be bound by more than one candidate.
+
+- **2026-10-12 — Before K7 round 9: battery 13 (14/14) and the module-close clause map.** Battery
+  13 covered R-31's fix round. Two pins were added before it ran: a context AT the append height
+  is this draw's (the strict edge), and the typed-helper path residue was registered under R-15.
+  All 14 were killed by a test.
+
+  Then every row the S3 carries for MOD-05 was split into clauses and each clause mapped to the
+  test that turns red (`INSTRUMENTS/MOD-05-clause-map.md`; framework trial MF-32). The map found
+  two gaps:
+  - **SEAM-19's "malformed at parse" was unpinned.** Nothing turned red if `from` became
+    optional. Pinned by `test_a_candidate_without_from_is_malformed_at_parse`, watched red on an
+    optional `from` and restored by hash.
+  - **SEAM-17/18's derive-before-append was honoured elsewhere without an IR.** Registered as
+    IR-61.
 

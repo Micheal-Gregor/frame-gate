@@ -10,8 +10,8 @@
   "k7_round": 8,
   "last_gate_tag": "closed-by-owner-7",
   "seal_tag": "",
-  "next_action": "MOD-05 BUILT (3 slices; batteries 10-12 all killed; 143/143). Next: owner picks round 8's reviewer model and rules on IR-53; then mechanical checks and K7 round 8 on MOD-05 (k7-run.py --modules MOD-05). MOD-04 follows, honouring IR-42.",
+  "next_action": "MOD-05 fix round (R-31) done: candidate binds its draw context, relays decided, battery 13 14/14, clause map + IR-61, 148/148. K7 round 9 (the one re-check, RD-9) running on Fable 5.1. PASS -> owner tags k7-pass-9; else owner triage.",
   "blocked_on": null,
-  "updated_at": "2026-10-12T23:51:18+00:00",
-  "updated_by": "refresh"
+  "updated_at": "2026-10-13T00:09:40+00:00",
+  "updated_by": "manual"
 }

@@ -496,6 +496,18 @@ describe("BC-05-23 - REF-05 on the path that costs: no candidate without a decla
   });
 });
 
+describe("SEAM-19 - omitting the commitment a candidate binds is malformed at parse (clause map)", () => {
+  it("test_a_candidate_without_from_is_malformed_at_parse", () => {
+    const out = JSON.parse(
+      execFileSync(process.execPath, [resolve(repo, "tools/checks/ledger-checks.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }),
+    ) as { fixtures: Record<string, { codes: number[]; messages: string[] }> };
+    const without = out.fixtures["tests/fixtures/facts/candidate-without-from.ts"];
+    expect(without?.codes, "a candidate proposal without `from` compiled").toEqual([2345]);
+    expect(without?.messages.join(" "), "the refusal at parse is not about the missing from").toContain("'from'");
+    expect(out.fixtures["tests/fixtures/facts/candidate-with-context.ts"]?.codes, "the positive control no longer compiles").toEqual([]);
+  });
+});
+
 describe("BC-05-24 - the bound context must be this draw's (R-31)", () => {
   const mismatch = (x: unknown) => isRefusal(x, "context-mismatch");
 

@@ -538,3 +538,30 @@ static surface rule saw it. E12–E14 would have survived without the pre-batter
 third round in a row where checking "what would no test notice?" before the run found the gaps
 the run would otherwise have reported.
 
+## Round 13 — MOD-05's fix round (R-31), before K7 round 9
+
+Run on committed tree `5b7e653` with the round-5 discipline. Two pins were added before the run:
+the strict height edge (a context AT the append height is this draw's), and the typed-helper
+path residue, registered with a `limit-` fixture.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| F1 | the context check removed: any draw context binds | KILLED (test) | `test_the_bound_context_must_be_this_draws` |
+| F2 | another unit's context accepted | KILLED (test) | same |
+| F3 | another condition's context accepted | KILLED (test) | same |
+| F4 | a context newer than the append height accepted | KILLED (test) | same |
+| F5 | a context AT the append height refused (non-strict) | KILLED (test) | same (the pre-battery equal-height case) |
+| F6 | the context checked AFTER `from` (R-31's order) | KILLED (test) | `test_refusals_answer_in_order_and_later_deciders_are_not_asked` |
+| F7 | the candidate records the append height, not its context's (SEAM-10's key) | KILLED (test) | `test_a_candidate_identifies_the_declaration_it_was_drawn_under` |
+| F8 | the context made optional, past the compiler with `!`: REF-05 at parse lost | KILLED (test), +tsc | `test_no_candidate_without_a_declaration_in_force` |
+| F9 | the context check skipped for a BOTTOM `from` (DR-27's shape, re-entered) | KILLED (test) | `test_refusals_answer_in_order_and_later_deciders_are_not_asked` |
+| F10 | `paths`: relays no longer followed | KILLED (test) | `test_each_ledger_kind_has_exactly_one_append_path` |
+| F11 | `paths`: relays found one level deep only (no fixed point) | KILLED (test) | same (the two-level relay) |
+| F12 | `paths`: a TYPED helper followed too (the registered residue silently changed) | KILLED (test) | same (the `limit-typed-helper` pin) |
+| F13 | **a REGISTERED LIMIT closed silently** (act-signatures recurses library members) | KILLED (test) | `test_no_act_signature_accepts_diagnostic` (the `limit-library-member` pin) |
+| F14 | `COMMIT_GATE` closed by something other than a HUMAN act | KILLED (test), +tsc | `test_commit_gate_states_obj_31` |
+
+**Fourteen of fourteen killed on the first pass.** F8 and F14 also failed `tsc`, but each was
+killed by its test as well, so neither rests on the compiler. After the run, the module-close
+clause map added the SEAM-19 parse pin and IR-61.
+

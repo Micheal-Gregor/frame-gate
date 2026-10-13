@@ -10,8 +10,8 @@
   "k7_round": 20,
   "last_gate_tag": "closed-by-owner-14",
   "seal_tag": "",
-  "next_action": "K7 round 20 RETURNED MOD-13 (drift 5): the fix round (BC-13-2's detector widened) is built; battery 31, then the one re-check (round 21).",
+  "next_action": "R-86's fix applied (MOD-13). Next: battery 32, then the owner tags closed-by-owner-21; then the seal (owner's word, and the full-review backstop ruling).",
   "blocked_on": null,
-  "updated_at": "2026-10-13T22:11:56+00:00",
-  "updated_by": "session-start:startup"
+  "updated_at": "2026-10-13T23:36:01+00:00",
+  "updated_by": "manual"
 }

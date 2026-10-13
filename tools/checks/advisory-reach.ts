@@ -7,18 +7,24 @@
  * SCOPE (R-15) - what this checker decides, and what it registers. K7 scores it against this
  * statement; a limit is pinned by a `limit-` fixture it must NOT flag.
  *   DECIDES, in every loadable source file given (.ts/.mts/.cts/.tsx/.js/.mjs/.cjs/.jsx) outside the
- *   target root: every module specifier - an import or re-export declaration (type-only included),
- *   `import x = require(...)`, `require(...)`, a dynamic `import(...)`, a type query
- *   `import("...").T`, and a triple-slash `/// <reference path=...>` - quoted or backtick, RESOLVED
- *   (RD-13, never name-matched) and tested for CONTAINMENT in the target root. A computed specifier
- *   (a dynamic import or require of anything but a literal) is refused as unresolvable, so the rule
- *   stays checkable.
- *   LIMITS: an advisory handed in at runtime through a structural type, which no specifier names
- *   (limit-structural-handoff.ts) - DG-F1 against a composed object is the composition root's
- *   (Phase 5).
- *   BOUNDARY: the files handed in; a fixture is judged AS IF at the src/ path it mirrors.
+ *   target root: these specifier forms - an import or re-export declaration (type-only included),
+ *   `import x = require(...)`, a call whose callee is the identifier `require`, a dynamic
+ *   `import(...)`, a type query `import("...").T`, and a triple-slash `/// <reference path=...>` -
+ *   quoted or backtick, RESOLVED (RD-13, never name-matched) and tested for CONTAINMENT in the
+ *   target root on the FILE's identity: its real path, in its true case, so a case-variant spelling
+ *   on a case-insensitive host is the same file (K7 round 21, F3). A computed specifier in a dynamic
+ *   import or a `require` call is refused as unresolvable, so the rule stays checkable.
+ *   LIMITS, each pinned by a limit- fixture it must not flag: an advisory handed in at runtime
+ *   through a structural type, which no specifier names (limit-structural-handoff.ts; DG-F1 against
+ *   a composed object is the composition root's, Phase 5); `require` is decided by its callee's NAME,
+ *   so an aliased require (limit-aliased-require.cjs), a `createRequire` result
+ *   (limit-create-require.mjs) and `module.require` (limit-module-require.cjs) are not read.
+ *   BOUNDARY: the files handed in - the caller hands no .d.ts, and src/ holds none (the mint rule
+ *   refuses a hand-written declaration file, DR-23); a fixture is judged AS IF at the src/ path it
+ *   mirrors.
  */
 import ts from "typescript";
+import { realpathSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { contains, resolveSpecifier } from "./external-isolation.js";
 
@@ -61,9 +67,10 @@ function specifiersOf(file: string, text: string): { readonly form: ReachFinding
  */
 export function reachesInto(target: string, files: readonly { readonly path: string; readonly text: string }[], judgedAt: (path: string) => string = (p) => p): ReachFinding[] {
   const out: ReachFinding[] = [];
+  const root = identity(target);
   for (const { path, text } of files) {
     const at = judgedAt(path);
-    if (contains(target, at)) continue;
+    if (contains(root, identity(at))) continue;
     for (const { form, specifier } of specifiersOf(path, text)) {
       if (specifier === null) {
         out.push({ file: path, specifier: "(computed)", form, reason: "unresolvable" });
@@ -71,8 +78,17 @@ export function reachesInto(target: string, files: readonly { readonly path: str
       }
       // A triple-slash reference names a FILE path, not a module: resolved as a path.
       const resolved = form === "reference" ? resolve(dirname(at), specifier) : resolveSpecifier(at, specifier).resolved;
-      if (resolved !== null && contains(target, resolved)) out.push({ file: path, specifier, form, reason: "reaches-target" });
+      if (resolved !== null && contains(root, identity(resolved))) out.push({ file: path, specifier, form, reason: "reaches-target" });
     }
   }
   return out;
+}
+
+/** A path as the file system knows it - its real path, in its true case - or as spelled, when there is no such file. */
+function identity(path: string): string {
+  try {
+    return realpathSync.native(path);
+  } catch {
+    return path;
+  }
 }

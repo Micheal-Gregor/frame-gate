@@ -56,7 +56,11 @@ describe("BC-13-2 - REF-01a / S-17 / DG-F1: nothing reads the advisory", () => {
     const byFile = (name: string) => found.filter((x) => basename(x.file) === name).map((x) => `${x.form} ${x.reason}`);
     expect(Object.fromEntries(all.map((f) => basename(f.path)).sort().map((n) => [n, byFile(n)]))).toEqual({
       "conforming-elsewhere.ts": [],
+      "limit-aliased-require.cjs": [],
+      "limit-create-require.mjs": [],
+      "limit-module-require.cjs": [],
       "limit-structural-handoff.ts": [],
+      "violating-case-variant.mjs": ["declaration reaches-target"],
       "violating-computed.ts": ["dynamic-import unresolvable"],
       "violating-dynamic-import.ts": ["dynamic-import reaches-target"],
       "violating-import-equals.ts": ["import-equals reaches-target"],

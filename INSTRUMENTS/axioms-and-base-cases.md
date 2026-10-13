@@ -763,3 +763,9 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 
 **Watched failing (the fix round):** K7 round 20 demonstrated the red state: E1-E3 planted in src, and the suite stayed green. Battery 31 re-plants them, and two more forms, against the widened detector.
 
+### MOD-13 triage fix (K7 round 21 -> R-86) - written before the change, watched failing
+
+- **BC-13-2** (restated again) the reach is containment on the FILE's identity, its real path in its true case, so a case-variant spelling is the same module (F3). `require` is read by its callee's name; an aliased require, `createRequire` and `module.require` are registered limits, each pinned by a limit- fixture (IR-138).
+
+**Watched failing:** the case-variant fixture's pin, red (the detector returned nothing for it); the limit fixtures pinned unflagged.
+

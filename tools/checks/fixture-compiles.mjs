@@ -24,12 +24,15 @@
  * proving nothing. The base cases pin the code.
  */
 import ts from "typescript";
+import { readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const dir = resolve(repo, "tests/fixtures/kernel");
-const fixtures = ["mutate-fact.ts", "gate-without-onfail.ts", "gate-well-formed.ts"];
+// Every fixture in the directory, discovered (RD-12): a hand list of three let a fourth
+// fixture sit uncompiled and its base case read "fixture not compiled" (WI-10, R-35).
+const fixtures = readdirSync(dir).filter((f) => f.endsWith(".ts") && !f.endsWith(".d.ts")).sort();
 
 const program = ts.createProgram(
   fixtures.map((f) => resolve(dir, f)),

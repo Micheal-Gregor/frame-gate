@@ -430,3 +430,57 @@ Written before the change, and watched failing.
 > `Refuse(context-spent)`, and nothing is appended. Context checks run in order (another unit,
 > another condition, or newer → `context-mismatch`; then spent), all before `from`. An unused
 > older context still binds, carrying its own draw's declaration.
+
+### MOD-01 work item WI-10 (R-35) — written before the change, watched failing
+
+**BC-01-6 — the kernel mints Projection membership, by name.**
+> `asProjection(member, compute)` is the one door into the family. `member` is typed by the
+> ten-name list, so `asProjection("DifficultyAdvisory", ...)` fails to compile (TS2345) while a
+> listed member compiles. The joined value computes at a height and is frozen. The kernel still
+> exports no membership predicate and no height arithmetic. The fixture compiler discovers every
+> kernel fixture instead of naming three (RD-12).
+
+
+## MOD-04 `reachability/` — OBJ-24 Reachability, OBJ-29 ReachabilityGate (the concept)
+
+Carried: REF-03 (`test_draw_without_cheaper_commitment_is_refused`), HOOK-01, VEC-01, SEAM-01/02/03,
+F1 S-13, IR-42's forward constraint, R-34 (naming in the witness set), R-35 (the join). Written
+before the classes, and watched failing.
+
+**BC-04-1 — REF-03: a draw with no commitment below it is refused, before anything costs.**
+> When any currency strictly cheaper than `c` lacks a commitment for `u` as of `h`, the gate
+> answers `Refuse(unreachable)`. Composed with MOD-05 (HOOK-01 at the candidate append), no
+> candidate is appended and no later decider is asked.
+
+**BC-04-2 — the fold: reachable iff every strictly cheaper currency HAS a commitment (IR-42).**
+> Every predecessor's answer must BE a Commitment: `NoSubject` (BOTTOM) and
+> `uncomputable("two-effective-commitments")` (R-20) both leave the currency unmet. At the least
+> currency the predecessor set is empty and the fold answers reachable. That is the identity of
+> the fold, not a branch: no code compares a currency to a particular member of the order.
+
+**BC-04-3 — one evaluation, with its witnesses (R-34, F2).**
+> One evaluation answers the verdict, one witness per strictly cheaper currency in cost order
+> (its effective commitment, or the Unknown the fold gave), and, when unreachable, the cheapest
+> unmet currency. The gate's `admit` derives from that same evaluation, never a second one.
+
+**BC-04-4 — as of a height, recomputed per call (OBJ-24 is a Projection).**
+> A commitment appended after `h` does not make `c` reachable at `h`, and it does at its own
+> height. Reachability joins the family through the kernel (`asProjection("Reachability", ...)`,
+> R-35) and stores nothing.
+
+**BC-04-5 — a currency outside the order is not "unreachable".**
+> MOD-03's refusal for a currency it does not know passes through unchanged. It is never
+> collapsed into `Refuse(unreachable)`.
+
+**BC-04-6 — OBJ-29 as a value.**
+> `REACHABILITY_GATE` states: condition `reachable(u, c) = true`, closed by `DERIVATION`, no
+> proposals, records `Candidate`, on failure `refuse("unreachable")`. It is frozen, and the
+> gate's refusal equals its `onFail`.
+
+**BC-04-7 — one reachability site, and no per-currency branch (CLAUDE.md; F2 OBJ-29; S-13).**
+> Outside `src/reachability/`, no code folds effective commitments over currencies: a read
+> returning a Commitment, inside an iteration. Nowhere in `src/` is a currency compared to a
+> PARTICULAR member of the order (the least, an indexed member, a literal). Both are decided by
+> resolution, with fixtures judged at the path they mirror.
+
+**BC-04-8 — OS-12, both classes in isolation.**

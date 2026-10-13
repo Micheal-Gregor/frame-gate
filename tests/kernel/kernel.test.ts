@@ -12,6 +12,7 @@ import { execFileSync } from "node:child_process";
 import ts from "typescript";
 import {
   PROJECTION_MEMBERS,
+  asProjection,
   compare,
   height,
   isUnknown,
@@ -218,6 +219,59 @@ describe("BC-01-2 - no Projection membership predicate", () => {
  * breakage - a bad import path, a typo - which left the base case green while it
  * proved nothing. Exactly one diagnostic, with the code and the subject named.
  */
+describe("BC-01-6 - the kernel mints Projection membership, by name (R-35, WI-10)", () => {
+  it("test_only_a_listed_member_joins_the_family", () => {
+    const d = diagnosticsFor("join-unlisted.ts");
+    // TS2345: "DifficultyAdvisory" is not assignable to ProjectionMember.
+    expect(d.codes, "an unlisted name joined the Projection family").toEqual([2345]);
+    expect(d.messages.join(" ")).toContain("DifficultyAdvisory");
+    expect(diagnosticsFor("join-listed.ts").messages, "a listed member could not join").toEqual([]);
+  });
+
+  it("test_a_joined_projection_computes_at_a_height_and_is_frozen", () => {
+    const p = asProjection("Reachability", (at) => Number(at) * 10);
+    expect(p.compute(height(3))).toBe(30);
+    expect(Object.isFrozen(p), "a joined Projection can be edited").toBe(true);
+  });
+
+  it("test_joining_adds_no_membership_predicate", () => {
+    // R-35: a join, never a question. The kernel still exports nothing that answers
+    // "is this a Projection?" (BC-01-2), now that it exports asProjection.
+    const out = JSON.parse(
+      execFileSync(process.execPath, [resolve(repo, "tools/checks/kernel-exports.mjs"), kernelPath], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }),
+    ) as Record<string, { membership: string[]; heightArithmetic: string[] }>;
+    const k = Object.values(out)[0];
+    expect(k?.membership).toEqual([]);
+    expect(k?.heightArithmetic).toEqual([]);
+  });
+});
+
+describe("BC-01-7 - who joins the Projection family, and where (R-35)", () => {
+  it("test_projection_joins_follow_the_s3_partition", () => {
+    type Finding = { file: string; line: number; how: string; member?: string };
+    const out = JSON.parse(
+      execFileSync(process.execPath, [resolve(repo, "tools/checks/projection-joins.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }),
+    ) as { partition: Record<string, string | null>; joins: string[]; src: Finding[]; fixtures: Record<string, string[]> };
+    // The partition is READ from the frozen S3, never restated: every one of the ten members
+    // is assigned a module, and the two this build knows are where the S3 puts them.
+    expect(Object.keys(out.partition).sort()).toEqual([...PROJECTION_MEMBERS].sort());
+    expect(Object.values(out.partition).filter((d) => d === null), "a listed member has no module").toEqual([]);
+    expect(out.partition["Reachability"]).toBe("src/reachability");
+    expect(out.partition["Sample"]).toBe("src/condition");
+    expect(out.src, "a Projection joined outside the rule in src/").toEqual([]);
+    expect(out.fixtures).toEqual({
+      "src/advisory/limit-object-assign.ts": [],
+      "src/advisory/violating-advisory-join.ts": ["advisory-join"],
+      "src/advisory/violating-spread-join.ts": ["spread-join"],
+      "src/condition/violating-dynamic-member.ts": ["dynamic-member"],
+      "src/facts/violating-wrong-module.ts": ["wrong-module"],
+      "src/reachability/conforming-one-join.ts": [],
+      "src/reachability/violating-joined-twice.ts": ["joined-twice"],
+      "src/statistics/violating-assertion.ts": ["assertion-join"],
+    });
+  });
+});
+
 describe("BC-01-3 - AppendedFact has no mutator", () => {
   it("test_assigning_to_an_appended_fact_field_does_not_compile", () => {
     const d = diagnosticsFor("mutate-fact.ts");

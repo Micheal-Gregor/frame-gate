@@ -154,7 +154,8 @@ export const PROJECTION_MEMBERS = [
 
 export type ProjectionMember = (typeof PROJECTION_MEMBERS)[number];
 
-declare const PROJECTION: unique symbol;
+// A real symbol, still unexported (R-35): the kernel is the only place that can mint the brand.
+const PROJECTION: unique symbol = Symbol("Projection");
 
 /**
  * Computed per read from the record as of a height, and stored nowhere.
@@ -170,6 +171,17 @@ declare const PROJECTION: unique symbol;
 export interface Projection<T> {
   readonly [PROJECTION]: ProjectionMember;
   compute(at: RecordHeight): T;
+}
+
+/**
+ * R-35 (WI-10): the ONE door into the family. `member` is typed by the ten-name list, so only a
+ * listed name compiles - OBJ-34 DifficultyAdvisory cannot be named, and DG-F1 holds at parse.
+ * This is a JOIN, never a membership predicate: nothing here answers "is this a Projection?"
+ * (BC-01-2). Which module may join which member - each at most once, only where the S3
+ * partition puts it, never in advisory/ - is decided by tools/checks/projection-joins.mjs.
+ */
+export function asProjection<T>(member: ProjectionMember, compute: (at: RecordHeight) => T): Projection<T> {
+  return Object.freeze({ [PROJECTION]: member, compute });
 }
 
 /* ─── OBJ-01 AppendedFact - append-only by ABSENCE ──────────────────────────

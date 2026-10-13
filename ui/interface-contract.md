@@ -9,7 +9,7 @@ listing, not an explanation. NOT-YET-WRITTEN
 *Build-time note (Frame Gate, 2026-10-12).* The library is not sealed. Rows are added module by
 module as each is built, because `gate.py` compares signatures against this file at every commit.
 The marker above stays until the seal writes the whole page. MOD-01 and MOD-02 export no classes
-(see the object model), so they have no rows here. MOD-03 and MOD-05 rows are below.
+(see the object model), so they have no rows here (MOD-01's one join, `asProjection`, R-35, is internal plumbing a UI never calls). MOD-03, MOD-04 and MOD-05 rows are below.
 
 ## Objects
 
@@ -25,6 +25,9 @@ The marker above stays until the seal writes the whole page. MOD-01 and MOD-02 e
 | ResolutionLabel (OBJ-16) | `DRAW` or `REVISION`, attached to a draw context after the fact | yes, once appended |
 | Candidate (OBJ-11) | A drawn candidate: the draw context it was drawn under (by height — so the declaration at draw time is recoverable per candidate), unit, currency, condition identity, seed, signature, and `from` (the commitment immediately below it derives from, by height, or BOTTOM) | yes, once appended — never updated, never deleted |
 | BOTTOM | The `from` of a candidate at the least currency of an independent unit; `NoSubject` in the Unknown family (IR-42) | yes — a fixed value |
+| Reachability (OBJ-24) | THE CONCEPT: reachable(u, c) as of a height iff every strictly cheaper currency has a commitment; a Projection | yes — derived per read, stored nowhere |
+| ReachabilityEvaluation | One evaluation: the verdict, one witness per strictly cheaper currency (its commitment, or what the fold answered), and — when refused — the cheapest unmet currency (R-34) | yes — derived |
+| ReachabilityGate (OBJ-29) | The one admission decision on the reachability axis; ON_FAIL `refuse("unreachable")` | yes — a fixed descriptor |
 
 ## Actions
 
@@ -55,6 +58,9 @@ operation legitimately ignores — the only way an OS-12 two-call test may retur
 | CandidateLedger.candidatesAsOf | MOD-05 | The candidates for a unit and currency under one condition identity, at or below a height (S-09) | unit, currency, condition, at | readonly Candidate[] | none — none is an empty list | none — reads the record | deterministic for a given record prefix | commitments, currencies, independence, admission, signatures, ceiling |
 | CandidateLedger.derivedFrom | MOD-05 | The candidates whose `from` is a given commitment, at or below a height (MOD-12's lineage) | commitment, at | readonly Candidate[] | none — none is an empty list | none — reads the record | deterministic for a given record prefix | commitments, currencies, independence, admission, signatures, ceiling |
 | CandidateLedger.countsAsOf | MOD-05 | One candidate count per currency for a unit, in currency order, zeros included (SEAM-22) — never summed, never divided | unit, at | readonly CurrencyCount[] | none | none — reads the record | deterministic for a given record prefix and currency order | commitments, independence, admission, signatures, ceiling |
+| Reachability.of | MOD-04 | Reachability of a unit in a currency, as a Projection computed at a height (R-35) | unit, currency | Projection<ReachabilityEvaluation> | none — a currency outside the order makes `compute` answer MOD-03's Unknown, never "unreachable" | none — reads the commitment fold | deterministic for a given record prefix | none |
+| ReachabilityGate.evaluate | MOD-04 | The ONE evaluation: the verdict, the witnesses, and when refused the cheapest unmet currency (R-34) | unit, currency, at | ReachabilityEvaluation | Unknown for a currency outside the order (MOD-03's, passed through) | none — reads the fold | deterministic for a given record prefix | none |
+| ReachabilityGate.admit | MOD-04 | MOD-05's injected admission (R-18, HOOK-01): ADMIT or Refuse(unreachable), from one evaluation | unit, currency, at | "ADMIT", or Unknown | Unknown `refuse("unreachable")` when any strictly cheaper currency lacks a commitment as of `at` (REF-03), no other failure outcome; MOD-03's Unknown for a currency outside the order | none — reads the fold | deterministic for a given record prefix | none |
 
 ## Error states
 
@@ -69,3 +75,5 @@ operation legitimately ignores — the only way an OS-12 two-call test may retur
 | TypeError "CommitmentLedger requires invalidations" / "invalidations must offer isInvalidated" | CommitmentLedger constructor | the invalidation reader (MOD-12, R-19) is missing or does not answer isInvalidated |
 | TypeError "DrawContextLog requires declarations" / "declarations must offer declarationAt" | DrawContextLog constructor | the declaration reader (MOD-03, R-21) is missing or does not answer declarationAt |
 | TypeError "CandidateLedger requires <input>" / "<input> must offer <operations>" | CandidateLedger constructor | one of its seven inputs is missing, or does not offer the operation MOD-05 asks of it (R-18, R-25) |
+| TypeError "Reachability requires <input>" / "currencies must offer predecessors" / "commitments must offer effectiveCommitment" | Reachability constructor | the currency order (MOD-03) or the commitment fold (MOD-05) is missing or does not offer what MOD-04 asks |
+| TypeError "ReachabilityGate requires reachability" / "reachability must offer of" | ReachabilityGate constructor | OBJ-24 is missing or does not answer `of` |

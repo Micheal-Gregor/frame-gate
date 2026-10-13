@@ -147,6 +147,15 @@ describe("BC-05-4 / BC-05-31 - commit is a HUMAN act, and names the candidate it
     expect(w.commitments.effectiveCommitment(v, c1, k.at)).toEqual(k);
   });
 
+  it("test_a_commitment_accepts_only_a_minted_candidate", () => {
+    // R-41 at parse: a look-alike with every field but the brand does not compile (pinned
+    // before battery 18). Compiled by the ledger checker.
+    const out = JSON.parse(
+      execFileSync(process.execPath, [resolve(repo, "tools/checks/ledger-checks.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }),
+    ) as { fixtures: Record<string, { codes: number[]; messages: string[] }> };
+    expect(out.fixtures["tests/fixtures/facts/commit-a-look-alike.ts"]?.codes, "a look-alike candidate was committed").toEqual([2345]);
+  });
+
   it("test_a_non_human_author_cannot_commit", () => {
     // OBJ-31 closed_by HUMAN_ACT, at parse: TS2345 for ENGINE; a mayDecide-narrowed
     // author compiles (positive control). Compiled by the ledger checker.
@@ -725,6 +734,10 @@ describe("BC-05-16 - from is the effective commitment immediately below, as of t
     w.commitAt(u, c0);
     const ku1 = w.commitAt(u, c1);
     expect(malformed(ledger.appendCandidate(w.propose(c0, ku1), "sig", w.record.noise(), "ENGINE")), "the unit's own commitment above was inherited").toBe(true);
+    // In force BY HEIGHT: kv2 is now in force for (v, c0), and kv - superseded - is still no
+    // inheritance, though v HAS a commitment in force there (pinned before battery 18).
+    expect(malformed(ledger.appendCandidate(w.propose(c0, kv), "sig", w.record.noise(), "ENGINE")), "a superseded commitment was inherited while its successor was in force").toBe(true);
+    expect(candidate(ledger.appendCandidate(w.propose(c0, kv2), "sig", w.record.noise(), "ENGINE")).payload.from).toBe(kv2.at);
   });
 
   it("test_an_unanswerable_from_check_passes_the_unknown_through", () => {
@@ -737,6 +750,14 @@ describe("BC-05-16 - from is the effective commitment immediately below, as of t
     const h = record.noise();
     expect(ledger.appendCandidate(p, "sig", h, "ENGINE")).toEqual(uncomputable("two-effective-commitments"));
     nothingAppendedSince(record, h);
+    // ...and on the inheritance branch (R-40): another unit with two in force at the least
+    // currency (pinned before battery 18).
+    const kv = commitAt(v, c0);
+    commitAt(v, c0);
+    const q = propose(c0, kv);
+    const h2 = record.noise();
+    expect(ledger.appendCandidate(q, "sig", h2, "ENGINE")).toEqual(uncomputable("two-effective-commitments"));
+    nothingAppendedSince(record, h2);
   });
 
   it("test_a_bottom_from_is_recorded_as_a_fresh_value", () => {
@@ -878,6 +899,10 @@ describe("BC-05-32 - the lineage reader, record-only (R-41)", () => {
     expect(lineage.acceptedBy(b.at, h), "a candidate nobody accepted").toEqual([]);
     expect(lineage.acceptedBy(a.at, before), "an acceptance visible before it was made").toEqual([]);
     expect(lineage.derivedFrom(k1.at, h), "nothing derives from k1 yet").toEqual([]);
+    // The reader reads what the fold reads (IR-76): a non-HUMAN commitment-kind entry naming b
+    // accepts nothing (pinned before battery 18).
+    const forged = w.record.append({ author: "ENGINE", payload: { kind: "commitment", unit: u, currency: c1, candidate: b.at } });
+    expect(lineage.acceptedBy(b.at, forged), "a forged acceptance was read").toEqual([]);
   });
 });
 

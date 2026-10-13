@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 13,
+  "reviewed": {
+    "tree_sha": "7eacb5cd9ba9632e3246cbce574805cd8c9e882e",
+    "commit_sha": "c87fef61251aad06fbdb0eabfdeff770dfde2c38",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-06"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T07:17:56+00:00",
+    "completed_at": "2026-10-13T07:35:28+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 12,
+    "prior_tree_sha": "b6c41a4eb150790d818876861903a6c10f728def",
+    "prior_failing_checks": [
+      "CC-1",
+      "CC-2",
+      "CC-3",
+      "CC-6",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Trace holds in both directions. src/condition/condition-identities.ts -> OBJ-07 (S3 s3:110; R-52), revision-log.ts -> OBJ-17 (s3:111; IR-88), samples.ts -> OBJ-19 (s3:112; REF-10 s5:180, HOOK-06 s7:229; R-53, R-55), chains.ts -> OBJ-27 (s3:113; R-54, R-56); each has an object-model row (object-model-and-parameters.md:37-40) with declared slots matching the constructors, and Samples carries Decides YES for HOOK-06. F3 s2's nine plain-language signatures all resolve: condition_identity_of -> conditionOf (condition-identities.ts:35), revisions/condition_in_force (revision-log.ts:54,:65), same_condition (:58), sample -> Samples.of(...).compute(at) (samples.ts:81), closure -> SampleValue.closure (:35; the third variant closed-by-commitment is R-53's), samples_for (:87), append_revision -> revise (revision-log.ts:45), chains -> Chains.chains().compute(at) (chains.ts:68). Both Projections join once through the kernel in MOD-06 (projection-joins readout: 'Chain src/condition/chains.ts', 'Sample src/condition/samples.ts'); no orphan file in src/condition; index.ts re-exports exactly the four classes and their types. s11:317's destinations exist: REF-10 (condition.test.ts:112), HOOK-06 (:179), PC-01 enumerated with its mechanism (completion-ledger.md:18), VEC n/a-by-absence (S3 s6:216). Dependencies in scope under R-57: LineageReader.candidatesAsOf/commitmentsAsOf (lineage-reader.ts:69,:81; IR-90; BC-06-7) and the R-56 exception (reach-checks.mjs:212). Trace citations R-52..R-57 resolve to ACCEPTED live rows (RESOLUTION_RECORD.md:62-67); IR-87..IR-90 present (drift-ledger.md:157-160). Two bookkeeping gaps, deducted under CC-7 rather than failed here: IR-47 (drift-ledger.md:117) says 'revisit if MOD-06's PromptRevision ... owns the label' and MOD-06 records no revisit - the relation between MOD-05's ResolutionLabel REVISION and OBJ-17 is left unstated; and samplesFor's dependency on OBJ-16 draw contexts (samples.ts:44-47, :89) is a hard read of an object F3 s2 does not list among MOD-06's dependencies (OBJ-11, OBJ-12 only), stated in a code comment and in no IR."
+    },
+    "CC-2": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Read as code paths and re-verified live in .k7/wt (c87fef6, byte-identical to the repository before my probes; git worktree list). HELD: J1/INV-SAMPLE - membership is the candidate read by identity (samples.ts:101 -> candidate-ledger.ts:200-203), no window, recency or cap; samplesFor is disjoint and exhaustive because every candidate binds a draw context of its own unit and condition (candidate-ledger.ts:166) so the unit's draws enumerate every identity (samples.ts:89); OBJ-17 as the only way a condition changes - one HUMAN append at parse (revision-log.ts:45; revise-as-engine.ts -> TS2345), read as of a height, nothing stored; R-53 closure - the earliest of a revision to another identity strictly after the first member or an acceptance of a member (samples.ts:111-118), not reopened by an invalidation (acceptedBy reads the record, not the fold); R-55 off-condition draws join their own sample; SEAM-07 cardinality travels with the set (:104); R-54 edges only from the commitment the fold answers in force (chains.ts:84-85), least currency by 'no predecessors' (:82), self-inheritance excluded (:89), paths maximal from heads (:96-108), no cycle possible since lineage points to lower heights; nothing derived is stored (every read refolds; Object.freeze(this)); no threshold, no declaration read, no current read in src/condition (every read takes the caller's at). FAIL on one carried rule, demonstrated live on the real path (probe k7_p1, .k7/wt/tests/k7/k7-probes.test.ts, run by the declared single-test command): 'Do not collapse the five Unknown outcomes into one another, into null, or into a boolean' (CLAUDE.md; OBJ-04 kernel/index.ts:51-65; RC-1 'the unknown propagates as itself'). With two commitments in force for (v, c0) through CommitmentLedger.commit, effectiveCommitment(v, c0, h) answers uncomputable('two-effective-commitments') (R-20) and Chains.chains().compute(h) answers [] - v's inheritance silently vanishes, indistinguishable from 'v is independent'. chains.ts:85 `if (isUnknown(inForce) || ...) continue` and :82 `if (isUnknown(below) || ...) continue` render uncomputable, refuse and no-subject alike as 'no edge', a boolean collapse; Chains' return type Projection<readonly Chain[]> cannot carry an Unknown at all, while Samples (the sibling Projection) propagates its Unknown (samples.ts:93). R-54 rules 'one predecessor at most' and says nothing about the two-in-force state; no IR registers the reading. Not halt-class: no owner text in this S3 declares the rule 'a HALT, not a trade-off', and round 5 (DR-13, the same collapse class) was triaged as a RETURN. Lesser, also demonstrated (k7_p2): ConditionIdentities canonicalises through JSON.stringify (condition-identities.ts:52), so {strength: NaN}, {strength: Infinity} and {strength: -Infinity} carry ONE identity, as do {strength: 0} and {strength: -0}; DrawInput admits number (:25) and F3 OBJ-07 forbids 'normalization to a canonical form that discards a component' and requires identity iff 'every component ... is identical'; R-52 says 'every component kept, only key order fixed'. N/A-by-absence, stated: thresholds, populations and exclusion counts, ratio arithmetic, observation components, scope expiry, difficulty (nothing in src/condition reaches UnitRegistry.features - reach findings empty)."
+    },
+    "CC-3": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Registered and honoured: IR-87 (REF-10 by type: sample-of-two-conditions.ts -> [2345], sample-of-one-condition.ts -> []), IR-88 (HUMAN at parse; only the new condition recorded), IR-89 (refuse('mixed-conditions')), IR-90 (the two LineageReader reads, unbranded, one recognizer per kind), R-52..R-56 live. No unregistered mechanism the tests DEPEND ON to pass. FAIL on a SCOPE (R-15) statement, probed in .k7/wt with tsc clean: tools/checks/ledger-checks.mjs `surface` (SCOPE :20-27) DECIDES, 'per ledger root', 'a height handed to a read (directly or through any wrapper in the root) that is not the caller's parameter', and src/condition was registered as a ledger root at this gate (LEDGERS :152; the test pins the four roots, catalog.test.ts:291, and asserts fabricated=[] for each, :288). But the READS are an enumerated list resolved by declaration (isBaseRead :416-432: MOD-03's and MOD-05's methods and MOD-05's injected reader interfaces), and none of MOD-06's reads or injected readers is in it - CandidateReads.candidatesAsOf, DrawReads.drawsAsOf, RevisionReads.revisions, AcceptanceReads.acceptedBy (samples.ts:41-55), RevisionLog.revisions/conditionInForce, LineageReader.candidatesAsOf/commitmentsAsOf/acceptedBy/derivedFrom, ChainLineage.*. Probe D4: a Samples method handing height(1)/height(3) to candidatesAsOf and acceptedBy compiled, test_no_operation_answers_the_current_declaration stayed green, and the readout showed `src/condition fabricated=[]`. For this root the 'fabricated' half is vacuous except for RecordPort.readAsOf in revision-log.ts, while its statement claims the form: a CC-3 defect under R-15 (a statement claiming a form the detector does not decide). Live src/condition has no made-up height (every read takes the caller's at), so this is a verification gap, not a live breach. Two unregistered interpretations, benign: samplesFor enumerates a unit's identities from OBJ-16 draw contexts (a DrawReads slot; F3 lists OBJ-11/OBJ-12 as MOD-06's MOD-05 dependencies), stated only in a code comment (samples.ts:88); and TextEncoder as the encoding's byte source (condition-identities.ts:52) is covered by IR-80 for MOD-12 only. R-56's exception is true to its statement: probe D1 (the same in-loop fold read in #edges of ANOTHER class inside src/condition/chains.ts) was flagged at :119 and test_reachability_is_decided_in_one_place went red; the two fixtures pin the file/class/member forms. Independence: none of round 12's prescribed closures (DR-37/40/41) is in this round's scope; R-57 names MOD-06 only, and I judged the LineageReader reads and the R-56 exception as dependencies, not re-scored MOD-12."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit && npx vitest run   (run as its two declared commands in sequence on the repository at c87fef6: tsc exit 0 with no diagnostics; vitest 28 files, 245/245 passed, exit 0; tests/spec/s5-names.test.ts green, so every built module's s5 name selects exactly one case). Then the s5 join under the declared single-test command: npx vitest run -t \"test_cross_condition_sample_query_is_empty\" -> 1 passed | 244 skipped (REF-10, condition.test.ts:112); the F3 positive counterpart npx vitest run -t \"same_condition_draws_form_one_sample\" -> 1 passed | 244 skipped (:136). Genuine forbidden input: at parse, a sample asked for two identities (tests/fixtures/condition/sample-of-two-conditions.ts) pinned to [2345] with its positive control pinned to [] (:114-115); at runtime, X and Y drawn through MOD-05's real path for one (unit, currency) intersect to [] and samplesFor is disjoint and exhaustive (:116-131). N/A-by-absence, stated: MOD-06 pins no further s5 row (S3 s11:317).",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (exit 0: 'ok VEC-01 MOD-04 \u00c2\u00b7 Reachability re-derived'; 'ok VEC-05 MOD-12 \u00c2\u00b7 SignatureGate re-derived'; '2 vector(s), all re-derived'). MOD-06 pins no golden vector: S3 s6:216 names MOD-06 N/A-by-absence and F3 s5 explains why (an empty intersection is structural, discharged by REF-10). Provenance of the two live vectors checked independently of the tool: Get-FileHash SHA256 src/lineage/signature-gate.ts = 710E1C96...7A3083 = vectors/VEC-05.json:10 impl_sha; src/reachability/reachability.ts = 249288DB...70566 = VEC-01.json:10 impl_sha; both state COMPUTED, computed_by naming the R-36 harness with the implementing file as entry. VEC-02/03/04/06/07 remain DEFERRED against unbuilt modules with discharge conditions (completion-ledger.md:31-36).",
+        "exit_code": 0
+      }
+    },
+    "CC-6": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "All experiments ran in the runner's R-07 worktree .k7/wt (git worktree list: detached at c87fef6 = repository HEAD; git diff --no-index --stat src/tests/tools vs .k7/wt empty before the battery), with npx tsc --noEmit -p .k7/wt clean before every run and npx vitest run --root .k7/wt -t <name>; the repository was never written (git status --porcelain = ' M STATE.json' before and after). HOOK-06 is FALSIFIABLE on both mandatory experiments. (a) Divergence-injection on the real orchestrated path: M4 made the GUARDED COMPONENT misbehave - CandidateLedger.candidatesAsOf (src/facts) with its identity filter deleted (candidate-ledger.ts:202) - and Samples.of(u, c1, X).compute(h) over the real world answered refuse('mixed-conditions'): test_cross_condition_sample_query_is_empty went red at 'the sample answered refuse' (condition.test.ts:54), a refusal, never a union. (b) Mutation: M1 deleted the guarded check (samples.ts:103) -> test_an_assembly_of_mixed_conditions_is_rejected_hook_06 red (a SampleValue of cardinality 2 where refuse was due); M3 inverted the closure precedence (:115, a revision wins over an earlier acceptance) -> test_a_sample_closes_by_a_revision_or_a_commitment_whichever_is_first red (closed-by-revision 29 vs closed-by-commitment 28); M2 dropped Chains' in-force check (chains.ts:84-85) -> test_chains_are_maximal_paths_of_inheriting_units red ([u,x] reappeared after kx's invalidation). Every mutant compiled, so each kill is the test's. Detector pins, positive controls: D1 (a second class's #edges with the same in-loop fold read in the excepted file) -> flagged 'second-reachability-check' chains.ts:119, test_reachability_is_decided_in_one_place red, so R-56's exception is by declaration as stated; D2 (a second asProjection('Sample') in src/condition) -> 'joined-twice', test_projection_joins_follow_the_s3_partition red; D3 (a prompt-revision-kind literal in src/facts) -> 'catalog-kind-literal', test_only_the_catalog_builds_or_appends_a_catalog_entry red, so the new ledger root is reached by forge; paths readout pins 'prompt-revision': ['RevisionLog.revise'] alone. D4 (made-up heights handed to MOD-06's injected reads) was NOT flagged - inside the surface rule's stated DECIDES, so it is scored under CC-3 as an untrue statement, not here. Trace citations conditional on live register status: R-52..R-57 ACCEPTED (RESOLUTION_RECORD.md:62-67), IR-87..IR-90 (drift-ledger.md:157-160), battery 21 recorded (mutation-battery.md:794-816; P7 and P11 are the hook's mutants, both killed; its 'Killed by' column carries a transcription artefact 'test) (test_...' in every row - cosmetic). Closed gates stay closed: nothing here re-scores MOD-04, MOD-05 or MOD-12."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form (the drift ledger scores per entry). Object-model fidelity 8: four classes to the Object Writing Standard with OS-1 declared slots checked by operation, one OBJ per file, conditionOf as a free function with its reason (OS-12), both Projections joined once through the kernel, OBJ-17 a nominal AppendedFact with one append path; deductions for samplesFor's unregistered OBJ-16 dependency (samples.ts:44-47) and IR-47's unrecorded revisit. Axiom coverage 6 (WORST): Chains renders an uncomputable (and a refused or absent) fold answer as 'no edge' (chains.ts:82,:85), demonstrated live by k7_p1 on the real commit path - the closed-Unknown rule collapsed into a boolean on a Projection a human reads as the critical path; and the identity is not injective over its admitted domain (NaN/\u00c2\u00b1Infinity and 0/-0 collide, k7_p2) against OBJ-07's 'iff every component is identical'. Base-case support 7: BC-06-1..7 written first and watched red (axioms-and-base-cases.md:668-678), every claim pinned with a positive control, the parse fixture pinned both ways; deduction because no base case asks what Chains answers when the fold answers uncomputable (chains.isolation.test.ts:45 injects only no-subject) and none covers the numeric edge of DrawInput. Extensibility 7: detectors reach the new root (forge, paths, joins, the R-56 exception all flagged my probes) but the surface rule's 'fabricated' half is vacuous for src/condition while its SCOPE claims it (D4); cosmetic drift - chains.ts imports the kernel twice (:15, :18); height arithmetic in a test comparator `.sort((a, b) => a - b)` (condition.test.ts:131), DR-41's shape that R-51 just removed from src; `void k` masking an unused binding (samples.isolation.test.ts:51); TextEncoder reused without MOD-06's own registration. No unused imports in src/condition, no dead code, no hidden state, no vacuous assertion in the module's tests. MIN = 6: below the floor of 7, so MOD-06 does not pass on this tree."
+    }
+  },
+  "drift_score": {
+    "value": 6,
+    "basis": [
+      {
+        "check_id": "CC-2",
+        "finding": "Worst dimension: axiom coverage. Chains collapses the closed Unknown family into 'no edge': chains.ts:85 `if (isUnknown(inForce) || inForce.at !== k.at) continue` (and :82 for the order's refusal) treats uncomputable('two-effective-commitments'), refuse and no-subject alike, and Projection<readonly Chain[]> cannot carry an Unknown. Probe k7_p1 on the real path: two commitments in force for (v, c0) -> effectiveCommitment answers uncomputable, chains().compute(h) answers [] - v's inheritance vanishes, indistinguishable from independence. Unregistered; R-54 is silent on the state.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Extensibility / verification strength: the surface rule's SCOPE (ledger-checks.mjs:20-27) claims, per ledger root, every height handed to a read, but its reads are an enumerated declaration list (:416-432) naming no MOD-06 read or injected reader; probe D4 (height(1)/height(3) handed to candidatesAsOf and acceptedBy inside Samples) compiled, was not flagged, and test_no_operation_answers_the_current_declaration stayed green with `src/condition fabricated=[]`. Untrue statement for the root registered at this gate.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-2",
+        "finding": "Axiom coverage: ConditionIdentities canonicalises through JSON.stringify (condition-identities.ts:52), so distinct draw-input sets collide - {strength: NaN} = {strength: Infinity} = {strength: -Infinity}, {strength: 0} = {strength: -0} (probe k7_p2) - against F3 OBJ-07's 'identical iff every component is identical' and R-52's 'every component kept'. DrawInput admits number (:25).",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Object-model fidelity / code quality: samplesFor's hard read of OBJ-16 draw contexts (samples.ts:44-47,:89) is stated in a comment and no IR while F3 lists only OBJ-11/OBJ-12; IR-47's 'revisit if MOD-06's PromptRevision owns the label' has no recorded revisit; chains.ts imports the kernel twice (:15,:18); height arithmetic in a test comparator (condition.test.ts:131); `void k` at samples.isolation.test.ts:51; battery 21's 'Killed by' column carries a transcription artefact in every row.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-2",
+      "module": "MOD-06",
+      "required_change": "Chains must propagate the fold's Unknown as itself, never as the absence of an edge: when effectiveCommitment (or the order's predecessors) answers any Unknown other than no-subject for a least-currency commitment under consideration, chains().compute(at) must surface that member (the Projection's value type must be able to carry it, as Samples.of's does), and only no-subject may mean 'no commitment in force, no edge'. The test that must fail first, on the real path: two HUMAN commitments accepting two candidates for one (unit, least currency), then chains().compute(h) - today it answers [] (probe k7_p1); it must answer the fold's uncomputable. Register the reading (what a two-in-force least-currency commitment means for OBJ-27) in the Interpretation Register, linked to R-20 and R-54."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-06",
+      "required_change": "Make the surface rule's SCOPE (tools/checks/ledger-checks.mjs:20-27) true for the root registered at this gate: either decide a 'read' by TYPE for every ledger root - any call on a declared slot that takes a RecordHeight parameter, so MOD-06's injected readers (CandidateReads, DrawReads, RevisionReads, AcceptanceReads, ChainLineage) and RevisionLog/LineageReader reads are reads - with a violating- fixture under tests/fixtures/catalog-surface/ that turns test_no_operation_answers_the_current_declaration red while the detector is unchanged (today a made-up height to candidatesAsOf/acceptedBy inside Samples is unflagged, probe D4); or, under R-50, state as a registered limit in the SCOPE block that the fabricated-height rule reaches only the enumerated MOD-03/MOD-05 reads and RecordPort.readAsOf, pinned by a limit- fixture the test asserts unflagged."
+    },
+    {
+      "check_id": "CC-2",
+      "module": "MOD-06",
+      "required_change": "ConditionIdentities.identityOf must be injective over DrawInputs up to key order, or its domain must be narrowed to where it is: either DrawInput excludes non-finite numbers and negative zero at parse, or identityOf refuses them (a typed refusal, nothing minted), or the normalisation is registered as a limit in the Interpretation Register with its consequence (two distributions pooled) stated. The test that must fail first: identityOf({strength: NaN}) and identityOf({strength: Infinity}) answering the same identity (probe k7_p2); 0 and -0 likewise, decided one way or the other."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-06",
+      "required_change": "Register in the Interpretation Register, one line each (R-50): that samplesFor enumerates a unit's identities from OBJ-16 draw contexts (a MOD-05 read F3 does not list among MOD-06's dependencies) and why it is exhaustive (every candidate binds a context of its own condition, candidate-ledger.ts:166); and the IR-47 revisit - whether MOD-05's ResolutionLabel REVISION relates to OBJ-17 PromptRevision or stays an independent label."
+    }
+  ],
+  "next_action": "Return MOD-06 for one fix round that makes Chains surface the fold's Unknown instead of dropping the edge (two in-force least-currency commitments watched red on chains().compute first), makes the surface rule's fabricated-height statement true for src/condition or registers its limit with a fixture, and decides or registers the non-finite-number identity collision."
+}

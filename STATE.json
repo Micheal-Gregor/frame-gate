@@ -3,15 +3,15 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "826fd19cda414db569aa03dd771b59b0b1b3f9fc",
-  "tree": "b6c41a4eb150790d818876861903a6c10f728def",
+  "head": "c87fef61251aad06fbdb0eabfdeff770dfde2c38",
+  "tree": "7eacb5cd9ba9632e3246cbce574805cd8c9e882e",
   "dirty": false,
   "current_module": "MOD-06",
-  "k7_round": 11,
+  "k7_round": 12,
   "last_gate_tag": "closed-by-owner-11",
   "seal_tag": "",
   "next_action": "MOD-06 built, battery 21 15/15; R-57: K7 round 13 on MOD-06. Owner: closed-by-owner-12 on 13a8210 is not in this clone or on origin - re-place and push.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T07:17:40+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-10-13T07:18:06+00:00",
+  "updated_by": "session-start:startup"
 }

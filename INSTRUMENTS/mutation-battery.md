@@ -815,3 +815,16 @@ On `3da66a6`; restores verified. P13 (Chains' least-currency check dropped) was 
 
 **15 / 15.**
 
+## Round 22 — R-61's fix-now items, sized to the change (R-50)
+
+On `52a508d`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| Q1 | DR-42 undone: an uncomputable fold read as no edge | KILLED (test) | `test_chains_surface_the_folds_unknown` |
+| Q2 | DR-42 undone for the order: its refusal read as not-least | KILLED (test) | `test_chains_surface_the_folds_unknown` |
+| Q3 | DR-43 undone: numbers through JSON again | KILLED (test) | `test_a_condition_identity_is_the_digest_of_the_whole_input_set` |
+| Q4 | DR-43 half-done: -0 written as 0 | KILLED (test) | `test_a_condition_identity_is_the_digest_of_the_whole_input_set` |
+
+**4 / 4.** MOD-06's gate is closed by owner triage (R-61).
+

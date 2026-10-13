@@ -1,0 +1,91 @@
+{
+  "module": "MOD-11",
+  "manifest": "sha256:648acb86fe41113764da79b23f5849c916230ce882870e9c77a22bd2f1a46b89",
+  "commit": "fa0e7e8",
+  "mutations": [
+    {
+      "id": "H1",
+      "claim": "REF-16: the (N+1)th draw is refused - remaining must be above zero",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H2",
+      "claim": "R-77: a superseded scope admits no draw",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H4",
+      "claim": "R-78: draws recorded under a scope are charged against it",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H5",
+      "claim": "R-78 (R-25 amended): a candidate is its draw's scope's currency",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H6",
+      "claim": "REF-15: a stop condition while \u03b8 = \u22a5 is Refuse(no-bar)",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H7",
+      "claim": "R-79 / AE-05: with none requested, the stop member does not exist",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H8",
+      "claim": "I-5: hasStopCondition reads the member's presence",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H9",
+      "claim": "R-81: a Scope is authorized only from a form of the same height",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H10",
+      "claim": "IR-123: a ceiling below one is malformed",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H11",
+      "claim": "R-77 / I-2: the governing scope is the latest appended",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H12",
+      "claim": "REF-18: the ratio's arity is the currency set, zeros included",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "H13",
+      "claim": "HOOK-09: with no ratio there is no form",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

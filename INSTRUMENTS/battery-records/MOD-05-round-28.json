@@ -1,0 +1,28 @@
+{
+  "module": "MOD-05",
+  "manifest": "sha256:379bc9f1fb92a39710b7829efa7a0978350d2ca796ed570f177a15a2dec23ba7",
+  "commit": "fa0e7e8",
+  "mutations": [
+    {
+      "id": "F1",
+      "claim": "R-78 / HOOK-05: the draw asks the scope gate before anything is recorded",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "F2",
+      "claim": "R-78: the candidate append checks its DRAW's scope",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "F3",
+      "claim": "R-78: drawsUnder charges only the draws recorded under that scope",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

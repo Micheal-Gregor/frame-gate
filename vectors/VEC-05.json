@@ -1,0 +1,12 @@
+{
+  "id": "VEC-05",
+  "module": "MOD-12 · SignatureGate",
+  "rule": "a candidate's signature is a function of its material INCLUDING the digest of the commitment named by `from`, and is sensitive to it: omitting (or changing) the lineage digest changes the signature; omission is malformed at parse, so the 'without' value exists only as a constructed artefact (REF-04)",
+  "encoding": "hex-sha256",
+  "input": "{\"digest\":\"sha256-hex\",\"currencies\":[\"c0\",\"c1\"],\"condition\":\"fixture\",\"seed\":\"fixture\"}",
+  "output": "{\"digest\":\"sha256-hex\",\"with\":\"ecb663da827638ccce8d1ef9db02ae98bd6e8ec6b0c21591be6e3b2a3e0d6723\",\"without\":\"7efa3efbd8644d9eb5f2574fb26db16520849a044de2b91cc8c8ea9642671479\"}",
+  "state": "COMPUTED",
+  "computed_at": "2026-10-13T05:46:02+00:00",
+  "impl_sha": "710e1c96d72e09ab7cb870871e7b8a0cfb7e340dd23b6e0e16e982c5ad7a3083",
+  "computed_by": "node --import tsx tools/vectors/run.ts VEC-05 src/lineage/signature-gate.ts <input> (R-36); OBJ-39 bound in the harness to sha256, hex (IR-06)"
+}

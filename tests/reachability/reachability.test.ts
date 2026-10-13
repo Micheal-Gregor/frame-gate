@@ -204,7 +204,8 @@ describe("BC-04-4 - as of a height, recomputed per call (a Projection, R-35)", (
     const out = JSON.parse(
       execFileSync(process.execPath, [resolve(repo, "tools/checks/projection-joins.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }),
     ) as { joins: string[]; src: unknown[] };
-    expect(out.joins).toEqual(["Reachability src/reachability/reachability.ts"]);
+    // Its OWN join (OBJ-28 joins too, in MOD-12): once, in the fold's file.
+    expect(out.joins.filter((j) => j.startsWith("Reachability "))).toEqual(["Reachability src/reachability/reachability.ts"]);
     expect(out.src).toEqual([]);
   });
 });

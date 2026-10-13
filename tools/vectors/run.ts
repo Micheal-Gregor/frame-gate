@@ -10,8 +10,10 @@
  * value: the vector is computed, never written by hand (CC-5).
  *
  * It lives in tools/ because reading the input names an external (node:fs), which REF-02 allows
- * only outside src/ (outside ports/) - the reason R-36 exists.
+ * only outside src/ (outside ports/) - the reason R-36 exists. For the same reason it is where
+ * OBJ-39 is BOUND for a vector: the system chooses no digest, and a vector names the one it used.
  */
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { height, isUnknown, type RecordHeight } from "../../src/kernel/index.js";
@@ -19,6 +21,7 @@ import type { RecordPort } from "../../src/ports/index.js";
 import { CurrencyOrder, DeclarationLedger, IndependenceLedger, type Currency, type Unit } from "../../src/catalog/index.js";
 import { BOTTOM, CandidateLedger, CommitmentLedger, DrawContextLog, type Commitment } from "../../src/facts/index.js";
 import { Reachability, ReachabilityGate } from "../../src/reachability/index.js";
+import { SignatureGate, type SignatureMaterial } from "../../src/lineage/index.js";
 
 /** A record for a fixture: append-only, read as of a height (IR-31). */
 function fixtureRecord(): RecordPort<unknown, RecordHeight> {
@@ -85,6 +88,56 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
         table[`{${set.join(",")}}`] = row;
       }
       return JSON.stringify(table);
+    },
+  },
+  /**
+   * VEC-05 (MOD-12): one candidate's material, held fixed, signed WITH the digest of the
+   * commitment it derives from and WITHOUT it. The "without" form cannot be emitted (REF-04: the
+   * material requires its lineage), so it is constructed here, as an artefact, from the same
+   * material with the lineage removed. The digest is bound from the input's identifier (IR-06).
+   */
+  "VEC-05": {
+    entry: "src/lineage/signature-gate.ts",
+    run: (input) => {
+      const spec = JSON.parse(input) as { readonly digest: string; readonly currencies: readonly string[]; readonly condition: string; readonly seed: string };
+      if (spec.digest !== "sha256-hex") throw new Error(`VEC-05: no binding for the digest '${spec.digest}'`);
+      const gate = new SignatureGate({ digests: { digest: (bytes) => createHash("sha256").update(bytes).digest("hex") } });
+      const record = fixtureRecord();
+      const order = new CurrencyOrder({ currencies: [...spec.currencies] });
+      const [least, next] = order.currencies() as readonly [Currency, Currency];
+      const unit = "u" as Unit;
+      const commitments = new CommitmentLedger({ record, invalidations: { isInvalidated: () => false } });
+      const declarations = new DeclarationLedger({ record, levels: ["fixture"] });
+      const independence = new IndependenceLedger({ record });
+      const draws = new DrawContextLog({ record, declarations });
+      const setup = new CandidateLedger({
+        record,
+        commitments,
+        currencies: order,
+        independence,
+        admission: { admit: () => "ADMIT" },
+        signatures: gate,
+        ceiling: { admitsDraw: () => "WITHIN" },
+      });
+      declarations.declare(unit, "fixture", "HUMAN");
+      independence.declareIndependence(unit, true, "HUMAN");
+      const drawn = (at: RecordHeight) => {
+        const context = draws.recordDraw(unit, {}, at, spec.condition, at, "ENGINE");
+        if (isUnknown(context)) throw new Error(`VEC-05 fixture: draw refused (${context.kind})`);
+        return context;
+      };
+      // The commitment the candidate derives from: u at the least currency, from BOTTOM.
+      const h0 = record.append({ kind: "fixture-height" });
+      const first = { context: drawn(h0), unit, currency: least, condition: spec.condition, seed: spec.seed, from: BOTTOM };
+      const accepted = setup.appendCandidate(first, gate.sign(gate.materialOf(first)), record.append({ kind: "fixture-height" }), "ENGINE");
+      if (isUnknown(accepted)) throw new Error(`VEC-05 fixture: candidate refused (${accepted.kind})`);
+      const k: Commitment = commitments.commit(accepted, "HUMAN");
+      // The candidate whose signature the vector pins: at the next currency, from k.
+      const h1 = record.append({ kind: "fixture-height" });
+      const material = gate.materialOf({ context: drawn(h1), unit, currency: next, condition: spec.condition, seed: spec.seed, from: k });
+      const { lineage, ...without } = material;
+      void lineage;
+      return JSON.stringify({ digest: spec.digest, with: gate.sign(material), without: gate.sign(without as unknown as SignatureMaterial) });
     },
   },
 };

@@ -34,8 +34,11 @@ export interface FactWorld {
   commitAt(unit: Unit, currency: Currency): Commitment;
 }
 
-export function factWorld({ currencies, invalidations }: { readonly currencies: readonly string[]; readonly invalidations: InvalidationReader }): FactWorld {
-  const record = inMemoryRecord();
+/**
+ * `record`, when given, is the one the world appends to - so an invalidation reader built over it
+ * (MOD-12's ledger) can be handed in before the fold that reads it.
+ */
+export function factWorld({ currencies, invalidations, record = inMemoryRecord() }: { readonly currencies: readonly string[]; readonly invalidations: InvalidationReader; readonly record?: TestRecord }): FactWorld {
   const order = new CurrencyOrder({ currencies: [...currencies] });
   const declarations = new DeclarationLedger({ record, levels: ["easy", "hard"] });
   const draws = new DrawContextLog({ record, declarations });

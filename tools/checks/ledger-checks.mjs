@@ -65,9 +65,9 @@
  * MOD-05 made the catalog's rules everyone's (BC-05-6): a forged commitment is the same
  * defect as a forged declaration (DR-18).
  *
- *   fixtures  Compile tests/fixtures/catalog/*.ts and tests/fixtures/facts/*.ts and
- *             report each one's diagnostic CODES (BC-03-2 REF-01, BC-03-3 HOOK-07,
- *             BC-05-4 OBJ-31). A base case pins the one diagnostic its fixture exists
+ *   fixtures  Compile tests/fixtures/<ledger root>/*.ts - one directory per LEDGERS root,
+ *             discovered - and report each one's diagnostic CODES (BC-03-2 REF-01,
+ *             BC-03-3 HOOK-07, BC-05-4 OBJ-31, BC-12-1 REF-04, BC-12-9 REF-07). A base case pins the one diagnostic its fixture exists
  *             to produce (DR-09).
  *   mint      REF-01's reach (K7 round 6, DR-19): every way a value of a branded
  *             ledger type (Declaration, IndependenceAct, Commitment) can come into
@@ -139,7 +139,6 @@ const fx = (name) => resolve(repo, "tests/fixtures", name);
 
 const SRC = walk(resolve(repo, "src"), SOURCE);
 const CATALOG_DIR = resolve(repo, "src/catalog");
-const FIXTURES = [...walk(fx("catalog"), /\.ts$/), ...walk(fx("facts"), /\.ts$/)];
 /** Every ledger module: its root, and the payload types whose `kind` it owns. */
 const LEDGERS = [
   { root: "src/catalog", payloads: [["src/catalog/declaration-ledger.ts", "DeclarationPayload"], ["src/catalog/independence-ledger.ts", "IndependencePayload"]] },
@@ -149,7 +148,10 @@ const LEDGERS = [
     ["src/facts/draw-context-log.ts", "ResolutionLabelPayload"],
     ["src/facts/candidate-ledger.ts", "CandidatePayload"],
   ] },
+  { root: "src/lineage", payloads: [["src/lineage/invalidation-ledger.ts", "InvalidationPayload"]] },
 ];
+/** Each ledger root's parse-level fixtures, tests/fixtures/<root's name>/ - discovered from LEDGERS (RD-12). */
+const FIXTURES = LEDGERS.flatMap((l) => walk(fx(l.root.slice(l.root.lastIndexOf("/") + 1)), /\.ts$/));
 const MINT = walk(fx("catalog-mint"), /\.ts$/);
 /** Hand-written declaration files: an ambient declaration can assert any type (DR-23). */
 function declarationFiles(dir) {
@@ -232,6 +234,10 @@ const BRANDS = [
   { owner: "src/facts/draw-context-log.ts", name: "DrawContext", key: brandKey("src/facts/draw-context-log.ts", "DrawContext") },
   { owner: "src/facts/draw-context-log.ts", name: "ResolutionLabel", key: brandKey("src/facts/draw-context-log.ts", "ResolutionLabel") },
   { owner: "src/facts/candidate-ledger.ts", name: "Candidate", key: brandKey("src/facts/candidate-ledger.ts", "Candidate") },
+  { owner: "src/lineage/invalidation-ledger.ts", name: "Invalidation", key: brandKey("src/lineage/invalidation-ledger.ts", "Invalidation") },
+  // Not a ledger fact, but REF-07's parse half rests on it (R-48): a DisplayedScope minted outside
+  // MOD-12 would let an invalidation skip its display. Listed by hand - see IR-79.
+  { owner: "src/lineage/invalidation-ledger.ts", name: "DisplayedScope", key: brandKey("src/lineage/invalidation-ledger.ts", "DisplayedScope") },
 ];
 const HEIGHT = brandKey("src/kernel/index.ts", "RecordHeight");
 const CURRENCY = brandKey("src/catalog/currency-order.ts", "Currency");

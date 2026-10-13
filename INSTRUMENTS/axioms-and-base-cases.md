@@ -579,3 +579,88 @@ from-checked, so no test can commit what the system could never commit.
   at c1 is now refused as an inheritance at c0. (3) Added: a HUMAN commitment-kind entry naming no
   candidate is not read as a commitment (the recognizer's R-41 clause).
 - **After the change:** `tsc` clean, **188 / 188**; VEC-01 re-derives unchanged.
+
+
+## MOD-12 `lineage/` — slices B and C, one rung (R-43..R-48), written before the classes, watched failing
+
+**BC-12-1 — REF-04 (INV-SIG): a signature omitting the lineage digest is refused.**
+> At parse: a `SignatureMaterial` without `lineage` does not compile (the "without" form cannot be
+> emitted). At runtime: a signature formed over a material WITHOUT the lineage (a constructed
+> artefact) answers `Refuse(malformed-signature)` on MOD-05's append path, and nothing is appended.
+> Positive: a signature covering the lineage verifies, and the candidate is appended.
+
+**BC-12-2 — a signature is the digest of its material (R-43).**
+> `sign(materialOf(p))`, through the injected DigestPort and nothing else. It is deterministic, and
+> it is SENSITIVE to every field of the proposal it covers: the bound draw context, the unit, the
+> currency, the condition, the seed and `from`. A proposal differing in any one of them does not
+> verify under the other's signature (R-44).
+
+**BC-12-3 — a mismatch is `malformed-signature` (R-44), asked in MOD-05's order (R-31).**
+> Through the real CandidateLedger: after admission, context and from, before the ceiling; nothing
+> is appended; the ceiling is not asked.
+
+**BC-12-4 — a BOTTOM-from candidate's lineage is a typed marker (R-45).**
+> Its material's lineage is BOTTOM. The same fields signed as derived and as BOTTOM give different
+> signatures, and neither verifies the other's proposal.
+
+**BC-12-5 — the signature binds THE commitment (F2's rationale; VEC-05's rule).**
+> K is invalidated and re-committed as K'. A signature formed against K does not verify the same
+> proposal re-pointed at K'. The lineage digest covers the whole commitment, its accepted candidate
+> included (R-41): two commitments for one (unit, currency) have different lineage digests.
+
+**BC-12-6 — VEC-05, computed from MOD-12 and re-derived (R-36).**
+> One candidate's material held fixed, signed WITH its lineage digest and WITHOUT it (the
+> constructed artefact). Both values are recorded with the pinned digest's identifier, and they
+> are asserted UNEQUAL, never compared by a distance (IR-06).
+
+**BC-12-7 — OBJ-32 as a value, and HOOK-04 registered at MOD-12.**
+> `SIGNATURE_GATE` is the descriptor F1/F2 state: a derivation closes it, it takes no proposals,
+> it records Candidate, and it fails as `refuse("malformed-signature")`. HOOK-04 is the real
+> SignatureGate, injected as MOD-05's signature check: the registration runs MOD-12 → MOD-05, and
+> MOD-05 imports nothing of MOD-12 (the S3's "registration placement is load-bearing").
+
+**BC-12-8 — OBJ-28: the scope is the transitive closure over `from`, through acceptances (R-42).**
+> Of commitment K, as of a height: the candidates whose `from` is K; the commitments accepting any
+> of them; the candidates from those; and so on, to a fixed point. The count is the number of
+> candidates. It is one rule with no depth, recomputed per call: a Projection joined once,
+> through the kernel, as "InvalidationScope". It sees nothing appended above its height.
+
+**BC-12-9 — REF-07 (RC-4): no invalidation before its scope is derived and displayed.**
+> At parse: `invalidate` takes only a DisplayedScope, which only `display` mints (R-48). An
+> undisplayed scope value, or a look-alike, does not compile. At runtime: a display derived at a
+> height other than the act's answers `Refuse(scope-before-act)`, and nothing is appended (R-47).
+> Positive: derive and display at h, invalidate at h, and the invalidation is appended.
+
+**BC-12-10 — OBJ-18: the invalidation is one HUMAN append.**
+> A non-HUMAN author does not compile. One entry is appended, naming the commitment by height and
+> the height its scope was derived at. The renderer saw the scope BEFORE the append, and its
+> return is never read.
+
+**BC-12-11 — what is invalidated, as of a height (R-42, R-46, S-07).**
+> From the invalidation's height on: K, every commitment that accepted a candidate in K's FROZEN
+> scope (the closure as of `scopeAt`), and such a commitment made AFTER the invalidation (born
+> superseded). Not: anything before the invalidation's height; a commitment outside the scope; a
+> candidate derived above `scopeAt` and the commitments accepting it. `isInvalidated` and
+> `invalidatedAsOf` answer from one derivation.
+
+**BC-12-12 — MOD-05 reads it (R-19).**
+> Wired as the CommitmentLedger's invalidation reader: after the invalidation, K and its downstream
+> commitments fold to BOTTOM, reachability above them refuses, and a candidate whose `from` is K is
+> `malformed-from`. A re-commitment at K's currency is then the one in force.
+
+**Watched failing, 2026-10-13.** Against typed stubs (final signatures, operations throwing,
+constructors validating nothing), with the detectors registering `src/lineage`:
+
+- **30 failed / 218, `tsc` clean.** 28 were MOD-12's own: BC-12-1..12 and the three isolation
+  tests, each red on its subject. One was the append-path map (BC-05-15): the stub appended
+  nothing, so `invalidation` had no path. One was NOT a base case. The surface test pinned the list
+  of ledger roots as `[catalog, facts]`, and I had not added `src/lineage`. That is a registration
+  slip, fixed in the test before any source was written.
+- **Two reds after the implementation, both the build's own rules catching me.** (1) The forge
+  rule flagged `signature-gate.ts`: to hash the commitment I built an object whose `kind` carried
+  the `"commitment"` literal, a commitment-shaped object outside `src/facts`. The lineage is now
+  encoded positionally (IR-80); the `string`-typed-kind limit was not taken. (2) MOD-04's
+  family-join test pinned the WHOLE join list as Reachability's. With OBJ-28 joining in MOD-12 that
+  was an instance list. It now asserts each member's own join (BC-12-8 asserts InvalidationScope's).
+- **After:** `tsc` clean, **218 / 218**; VEC-01 and VEC-05 re-derive.
+

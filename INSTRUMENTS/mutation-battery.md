@@ -871,3 +871,25 @@ On `3b02b49`; restores verified.
 
 12 / 13. E3 (no canonical order) survived `test_dispersion_depends_on_the_multiset_alone`: the test's second order, the reverse of the first, happens to sum to the same bits, so the claim "bit for bit, whatever the order" was pinned by an order that could not show the difference. The test now uses an order whose plain sum differs in the last bit; the battery re-runs in full on that commit, and only that record goes to battery_complete@1. (An earlier attempt on `f61ad1b` aborted after E1 because the owner's store appeared mid-run: the verified-restore check stopped it, as it should.)
 
+## Round 25 — MOD-08 `statistics/`, sized to its claims (R-50), re-run in full after E3's pin
+
+On `3e0bd46`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| E1 | BC-08-1 / REF-08: below THREE scored members, Undetermined(AE-3) | KILLED (test) | `test_dispersion_below_floor_returns_undetermined` |
+| E2 | R-63: the SAMPLE standard deviation (n - 1) | KILLED (test) | `test_dispersion_below_floor_returns_undetermined` |
+| E3 | BC-08-2 / VEC-03 rule iii: one canonical order, so the multiset alone decides | KILLED (test) | `test_dispersion_depends_on_the_multiset_alone` |
+| E4 | BC-08-3 / rule iv: an ABSENT component contributes nothing | KILLED (test) | `test_only_scored_members_count_toward_the_floor` |
+| E5 | BC-08-3: an unobserved member contributes nothing | KILLED (test) | `test_only_scored_members_count_toward_the_floor` |
+| E6 | BC-08-7: an observation source's Unknown other than NoSubject is the answer | KILLED (test) | `test_the_samples_unknown_propagates_as_itself` |
+| E7 | BC-08-4 / R-65: a sample closed by a revision is void | KILLED (test) | `test_a_revised_sample_is_void_for_statistics` |
+| E8 | BC-08-4 / J3: a sample closed by a COMMITMENT is still measured | KILLED (test) | `test_a_revised_sample_is_void_for_statistics` |
+| E9 | BC-08-5 / OBJ-21: location needs no floor | KILLED (test) | `test_location_is_the_mean_and_takes_no_threshold` |
+| E10 | BC-08-3 / BC-08-5: the centre of nothing is NoSubject, not 0 | KILLED (test) | `test_only_scored_members_count_toward_the_floor` |
+| E11 | BC-08-1: available tests the floor | KILLED (test) | `test_dispersion_below_floor_returns_undetermined` |
+| E12 | BC-08-7 / SEAM-12: the sample's Unknown propagates as itself | KILLED (test) | `test_the_samples_unknown_propagates_as_itself` |
+| E13 | IR-100: location is void for a revised sample | KILLED (test) | `test_a_revised_sample_is_void_for_statistics` |
+
+**13 / 13.** The schema record is `INSTRUMENTS/battery-records/MOD-08-round-25.json`; it goes to battery_complete@1 (RD-28).
+

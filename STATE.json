@@ -10,8 +10,8 @@
   "k7_round": 14,
   "last_gate_tag": "closed-by-owner-14",
   "seal_tag": "",
-  "next_action": "MOD-08 PASSED (round 15, drift 7; receipts ACCEPT). Owner: tag k7-pass-15 on 4b55994. Next: MOD-09 calibration (R-69..R-71 ruled).",
+  "next_action": "MOD-09 BUILT (not COMPLETE: AE-5, R-69). Next: battery 26 (receipt), then K7 round 16 (R-62). Owner: tag k7-pass-15 on 4b55994 if not yet placed.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T09:07:33+00:00",
+  "updated_at": "2026-10-13T09:30:40+00:00",
   "updated_by": "manual"
 }

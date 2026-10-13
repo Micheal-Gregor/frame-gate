@@ -244,6 +244,9 @@ const BRANDS = [
   // Not a ledger fact, but REF-07's parse half rests on it (R-48): a DisplayedScope minted outside
   // MOD-12 would let an invalidation skip its display. Listed by hand - see IR-79.
   { owner: "src/lineage/invalidation-ledger.ts", name: "DisplayedScope", key: brandKey("src/lineage/invalidation-ledger.ts", "DisplayedScope") },
+  // Not a ledger fact either: HOOK-03 / REF-12 rest on it. A Threshold minted outside MOD-09 is a
+  // configured threshold wearing θ's type. Listed by hand, as DisplayedScope is (IR-106).
+  { owner: "src/calibration/bar.ts", name: "Threshold", key: brandKey("src/calibration/bar.ts", "Threshold") },
 ];
 const HEIGHT = brandKey("src/kernel/index.ts", "RecordHeight");
 const CURRENCY = brandKey("src/catalog/currency-order.ts", "Currency");

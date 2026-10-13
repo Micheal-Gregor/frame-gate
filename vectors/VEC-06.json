@@ -1,0 +1,12 @@
+{
+  "id": "VEC-06",
+  "module": "MOD-09 · PopulationPartition",
+  "rule": "Population membership is a pure function of the record as of a height. Appending an invalidation over a commitment moves that commitment's candidate from Accepted to PassedOver at the level recorded at draw time. The union is unchanged; only the partition moves. No accumulator participates.",
+  "encoding": "utf8-json",
+  "input": "{\"levels\":[\"L\"],\"components\":[\"q\"],\"currencies\":[\"c0\"],\"level\":\"L\",\"component\":\"q\",\"moved\":\"a\",\"acts\":[{\"act\":\"declare\",\"unit\":\"u1\",\"level\":\"L\"},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"x\",\"name\":\"a\",\"scores\":{\"q\":0.8}},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"x\",\"name\":\"b\",\"scores\":{\"q\":0.3}},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"x\",\"name\":\"c\"},{\"act\":\"commit\",\"candidate\":\"a\",\"name\":\"K\"},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"y\",\"name\":\"d\",\"scores\":{\"q\":0.7}},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"y\",\"name\":\"e\",\"scores\":{\"q\":0.2}},{\"act\":\"commit\",\"candidate\":\"d\",\"name\":\"K2\"},{\"act\":\"mark\",\"name\":\"before\"},{\"act\":\"invalidate\",\"commitment\":\"K\"},{\"act\":\"mark\",\"name\":\"after\"}],\"snapshots\":[{\"label\":\"before\",\"at\":\"before\"},{\"label\":\"after\",\"at\":\"after\"}]}",
+  "output": "{\"moved\":7,\"snapshots\":[{\"label\":\"before\",\"at\":37,\"accepted\":[7,27],\"passed_over\":[14,34],\"excluded_accepted\":0,\"excluded_passed_over\":1,\"union\":4},{\"label\":\"after\",\"at\":38,\"accepted\":[27],\"passed_over\":[7,14,34],\"excluded_accepted\":0,\"excluded_passed_over\":1,\"union\":4}]}",
+  "state": "COMPUTED",
+  "computed_at": "2026-10-13T09:29:12+00:00",
+  "impl_sha": "23f8e2e3b8efe7dd8a0aecd34b38f11104ff6fc3a840349d41e0650427ddca4b",
+  "computed_by": "node --import tsx tools/vectors/run.ts VEC-06 src/calibration/population-partition.ts <input> (R-36); the fixture runs through the real ledgers on one record"
+}

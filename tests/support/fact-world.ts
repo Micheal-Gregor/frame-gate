@@ -28,8 +28,8 @@ export interface FactWorld {
   readonly independence: IndependenceLedger;
   readonly commitments: CommitmentLedger;
   readonly candidates: CandidateLedger;
-  /** A candidate for (unit, currency), drawn through the real path under condition `setup`. */
-  drawAt(unit: Unit, currency: Currency): Candidate;
+  /** A candidate for (unit, currency), drawn through the real path under `condition` (default `setup`). */
+  drawAt(unit: Unit, currency: Currency, condition?: string): Candidate;
   /** A commitment for (unit, currency), accepting a candidate drawn through the real path. */
   commitAt(unit: Unit, currency: Currency): Commitment;
 }
@@ -54,7 +54,7 @@ export function factWorld({ currencies, invalidations, record = inMemoryRecord()
     ceiling: { admitsDraw: () => "WITHIN" },
   });
   const now = (): RecordHeight => record.noise();
-  const drawAt = (unit: Unit, currency: Currency): Candidate => {
+  const drawAt = (unit: Unit, currency: Currency, condition = "setup"): Candidate => {
     if (isUnknown(declarations.declarationAt(unit, now()))) declarations.declare(unit, "easy", "HUMAN");
     const below = order.predecessors(currency);
     if (isUnknown(below)) throw new Error(`setup: ${currency} is not in the order`);
@@ -69,9 +69,9 @@ export function factWorld({ currencies, invalidations, record = inMemoryRecord()
       from = k;
     }
     const h = now();
-    const context = draws.recordDraw(unit, { setup: true }, h, "setup", h, "ENGINE");
+    const context = draws.recordDraw(unit, { setup: true }, h, condition, h, "ENGINE");
     if (isUnknown(context)) throw new Error(`setup: the draw answered ${context.kind}`);
-    const k = candidates.appendCandidate({ context, unit, currency, condition: "setup", seed: "setup", from }, "sig", now(), "ENGINE");
+    const k = candidates.appendCandidate({ context, unit, currency, condition, seed: "setup", from }, "sig", now(), "ENGINE");
     if (isUnknown(k)) throw new Error(`setup: the candidate answered ${k.kind}`);
     return k;
   };

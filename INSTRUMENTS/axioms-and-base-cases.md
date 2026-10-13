@@ -700,3 +700,17 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 - **BC-08-7** an unknown handed in propagates as itself; Dispersion and Location each join the family once, in MOD-08.
 
 **Watched failing (MOD-08):** against typed stubs, 16 / 274 red (BC-08-1..7 and both isolation tests), `tsc` clean. After: 274 / 274.
+
+## MOD-09 `calibration/` (R-69..R-71; written before the module, watched failing; one line each, R-50)
+
+- **BC-09-1** REF-11: with either population empty, the bar is no-bar with a cause naming the empty side (or both) and a discharge, on the POPULATION branch: the separation rule is never invoked, and no number is produced.
+- **BC-09-2** R-69 / AE-5: with both populations non-empty the injected rule is consulted once, with each population's scores; the stand-in answers no-bar "AE-5 open"; a rule that separates yields θ with its sample size (the scored members of both populations).
+- **BC-09-3** REF-12 / HOOK-03: no threshold is data. A literal, a default parameter or a coalesced fallback in a threshold position, a threshold argument to `of`, and a threshold key at construction do not compile; Bar exposes no operation but `of`.
+- **BC-09-4** REF-13 / X21 / VEC-06: an invalidated commitment's candidate - invalidated directly or inside a scope (R-43) - moves from Accepted to PassedOver and the union is unchanged; without the invalidation it stays in Accepted.
+- **BC-09-5** REF-14 / HOOK-08 / VEC-07: an unobserved member, or one ABSENT for the component (R-70), joins no population and is counted excluded on its own side; both counts ride on every return (θ, population-branch no-bar, separation no-bar); with every member scored, both are zero.
+- **BC-09-6** SEAM-10: membership reads the declaration recorded at draw time, so a re-declaration moves no existing candidate; one bar per level, levels never merged; a level not configured is refused.
+- **BC-09-7** OBJ-23: Accepted is the candidates with a commitment not invalidated as of the height; PassedOver is the other members of CLOSED samples, closed by a commitment or by a revision (R-53); a member of an open sample is in neither; currencies pool at a level (R-71).
+- **BC-09-8** as-of, never accumulated: an earlier height reads the earlier partition after a later invalidation; an observation source's Unknown other than NoSubject propagates as itself; Bar and PopulationPartition each join the family once, in MOD-09.
+- **BC-09-9** VEC-02 rows 1-3, VEC-06 and VEC-07 are computed from MOD-09 by the harness and re-derived; VEC-02 row 4 is not computed (AE-5 open, R-69).
+
+**Watched failing (MOD-09):** against typed stubs, 17 / 295 red (BC-09-1..9 and every operation case of both isolation tests), `tsc` clean. After: 295 / 295.

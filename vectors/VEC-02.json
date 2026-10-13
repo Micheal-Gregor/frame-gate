@@ -1,0 +1,20 @@
+{
+  "id": "VEC-02",
+  "module": "MOD-09 · Bar",
+  "rule": "No-bar is returned on the POPULATION branch whenever either population is empty, carrying a cause, before the separation operator is consulted. Only with both populations populated is the separation rule engaged; if it does not separate them, no-bar with the rule's cause. Only separated populations yield a value, accompanied by its sample size. Every row carries both exclusion counts.",
+  "encoding": "utf8-json",
+  "input": "{\"levels\":[\"L\"],\"components\":[\"q\"],\"currencies\":[\"c0\"],\"level\":\"L\",\"component\":\"q\",\"acts\":[{\"act\":\"declare\",\"unit\":\"u1\",\"level\":\"L\"},{\"act\":\"mark\",\"name\":\"both-empty\"},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"x\",\"name\":\"a\",\"scores\":{\"q\":0.62}},{\"act\":\"commit\",\"candidate\":\"a\",\"name\":\"K1\"},{\"act\":\"mark\",\"name\":\"one-empty\"},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"y\",\"name\":\"b\",\"scores\":{\"q\":0.71}},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"y\",\"name\":\"c\",\"scores\":{\"q\":0.48}},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"y\",\"name\":\"d\"},{\"act\":\"commit\",\"candidate\":\"c\",\"name\":\"K2\"},{\"act\":\"mark\",\"name\":\"overlapping\"}],\"rows\":[{\"state\":\"both empty\",\"at\":\"both-empty\"},{\"state\":\"one empty\",\"at\":\"one-empty\"},{\"state\":\"both populated, overlapping\",\"at\":\"overlapping\"}]}",
+  "output": "[{\"state\":\"both empty\",\"kind\":\"no-bar\",\"cause\":\"both-empty\",\"discharge\":\"a scored commitment and a scored passed-over member of a closed sample, at this level\",\"accepted\":0,\"passed_over\":0,\"excluded_accepted\":0,\"excluded_passed_over\":0,\"separation_invoked\":false},{\"state\":\"one empty\",\"kind\":\"no-bar\",\"cause\":\"passed-over-empty\",\"discharge\":\"a closed sample at this level with a scored member no commitment accepted\",\"accepted\":1,\"passed_over\":0,\"excluded_accepted\":0,\"excluded_passed_over\":0,\"separation_invoked\":false},{\"state\":\"both populated, overlapping\",\"kind\":\"no-bar\",\"cause\":\"AE-5 open\",\"discharge\":\"the owner rules the separation rule\",\"accepted\":2,\"passed_over\":1,\"excluded_accepted\":0,\"excluded_passed_over\":1,\"separation_invoked\":true}]",
+  "state": "COMPUTED",
+  "computed_at": "2026-10-13T09:29:12+00:00",
+  "impl_sha": "a1d88223831cc9504b6882f5691ea39e817065830155bbdfe0adb81db8e1d754",
+  "computed_by": "node --import tsx tools/vectors/run.ts VEC-02 src/calibration/bar.ts <input> (R-36); the fixture runs through the real ledgers on one record",
+  "deferred_rows": [
+    {
+      "row": 4,
+      "state": "both populated and separated",
+      "expected": "a threshold with its sample size, and both exclusion counts",
+      "discharge": "AE-5's separation rule closes (R-69): the first declaration level whose two populations reach their floor and separate"
+    }
+  ]
+}

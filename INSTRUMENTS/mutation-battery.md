@@ -867,3 +867,7 @@ On `3b02b49`; restores verified.
 
 **6 / 6.** MOD-07's gate is closed by owner triage (R-67).
 
+## Round 25, first pass — MOD-08 on `29b61c8`: E3 SURVIVED
+
+12 / 13. E3 (no canonical order) survived `test_dispersion_depends_on_the_multiset_alone`: the test's second order, the reverse of the first, happens to sum to the same bits, so the claim "bit for bit, whatever the order" was pinned by an order that could not show the difference. The test now uses an order whose plain sum differs in the last bit; the battery re-runs in full on that commit, and only that record goes to battery_complete@1. (An earlier attempt on `f61ad1b` aborted after E1 because the owner's store appeared mid-run: the verified-restore check stopped it, as it should.)
+

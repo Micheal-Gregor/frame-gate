@@ -87,7 +87,9 @@ describe("BC-08-2 - a function of the member multiset alone (VEC-03 rule iii)", 
     const a = world();
     const b = world();
     for (const n of [0.61, 0.42, 0.57, 0.38]) a.member(n);
-    for (const n of [0.38, 0.57, 0.42, 0.61]) b.member(n);
+    // An order whose plain floating sum differs in the last bit from a's (battery 25: E3 survived the
+    // reversed order, which happens to sum alike) - only the canonical order makes them equal.
+    for (const n of [0.61, 0.57, 0.38, 0.42]) b.member(n);
     const va = a.sd();
     expect(Object.is(va, b.sd()), "the order of the members changed the value").toBe(true);
     // A member contributing nothing (ABSENT for `a`) leaves the multiset, and so the value, unchanged.

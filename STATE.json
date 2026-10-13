@@ -10,8 +10,8 @@
   "k7_round": 17,
   "last_gate_tag": "closed-by-owner-14",
   "seal_tag": "",
-  "next_action": "K7 round 18 RETURNED MOD-11/MOD-05 (drift 5). Fix round under R-84 (reachability at the draw too), then battery 29 and the one re-check (round 19). MOD-13 rulings R-82/R-83 recorded.",
+  "next_action": "Fix round under R-84 built (347/347). Next: battery 29 (receipts), then the ONE re-check, K7 round 19 on Opus 5.5 (R-85). Then MOD-13 (R-82, R-83).",
   "blocked_on": null,
-  "updated_at": "2026-10-13T21:29:38+00:00",
+  "updated_at": "2026-10-13T21:37:17+00:00",
   "updated_by": "manual"
 }

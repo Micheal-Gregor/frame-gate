@@ -248,7 +248,7 @@ describe("BC-05-5 - REF-06: no act signature accepts a diagnostic", () => {
 function drawWorld() {
   const record = inMemoryRecord();
   const declarations = new DeclarationLedger({ record, levels: ["easy", "hard"] });
-  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
+  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN", currencyOf: () => "c0" as never }, admission: { admit: () => "ADMIT" } });
   const scope = record.noise(); // some appended fact; MOD-05 never looks at it (R-23)
   return { record, declarations, draws, scope };
 }
@@ -280,7 +280,7 @@ describe("BC-05-8 - REF-05: a draw with no declaration in force is refused (R-21
     const odd = uncomputable("reader-boundary");
     const reader: DeclarationReader = { declarationAt: () => odd };
     const h = record.noise();
-    const got = new DrawContextLog({ record, declarations: reader, scopes: { admitsDraw: () => "WITHIN" } }).recordDraw(u, features, h, "cond", h, "ENGINE");
+    const got = new DrawContextLog({ record, declarations: reader, scopes: { admitsDraw: () => "WITHIN", currencyOf: () => "c0" as never }, admission: { admit: () => "ADMIT" } }).recordDraw(u, features, h, "cond", h, "ENGINE");
     expect(got, "an Unknown from the reader was collapsed into the refusal").toEqual(odd);
     expect(Number(record.noise()), "an unanswerable draw appended something").toBe(Number(h) + 1);
   });
@@ -436,7 +436,7 @@ function candidateWorld(answers: Answers = {}) {
   const declarations = new DeclarationLedger({ record, levels: ["easy", "hard"] });
   declarations.declare(u, "easy", "HUMAN");
   declarations.declare(v, "easy", "HUMAN");
-  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
+  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN", currencyOf: () => "c0" as never }, admission: { admit: () => "ADMIT" } });
   const commitments = new CommitmentLedger({ record, invalidations: none });
   const independence = new IndependenceLedger({ record });
   const asked: string[] = [];
@@ -549,7 +549,7 @@ describe("BC-05-23 - REF-05 on the path that costs: no candidate without a decla
     // DrawContext exists; a proposal without one does not compile, and none can be minted
     // outside DrawContextLog (BC-05-6). So no candidate can be appended for that draw.
     const record = inMemoryRecord();
-    const draws = new DrawContextLog({ record, declarations: new DeclarationLedger({ record, levels: ["easy"] }), scopes: { admitsDraw: () => "WITHIN" } });
+    const draws = new DrawContextLog({ record, declarations: new DeclarationLedger({ record, levels: ["easy"] }), scopes: { admitsDraw: () => "WITHIN", currencyOf: () => "c0" as never }, admission: { admit: () => "ADMIT" } });
     const h = record.noise();
     expect(isRefusal(draws.recordDraw(u, features, h, "cond", h, "ENGINE"), "no-declaration"), "a draw context was minted with no declaration").toBe(true);
     const out = JSON.parse(

@@ -17,6 +17,7 @@ import { AE5_OPEN, Bar, PopulationPartition, type SeparationRule } from "../../s
 import {
   AuthorizationForms,
   Ratio,
+  SCOPE_GATE,
   ScopeGate,
   ScopeLedger,
   ScopeReader,
@@ -52,7 +53,8 @@ function world({ rule = AE5_OPEN }: { readonly rule?: SeparationRule } = {}) {
   const reader = new ScopeReader({ record });
   const gate = new ScopeGate({ scopes: reader, charges: lineage });
   const invalidations = new InvalidationLedger({ record, scopes: new InvalidationScope({ lineage }), renderer: { present: () => undefined } });
-  const w = factWorld({ currencies: ["c0", "c1"], invalidations, record, scopes: gate, ceiling: gate });
+  // MOD-04's REAL gate at the draw and at the candidate append (R-84), MOD-11's real gate at both (R-78).
+  const w = factWorld({ currencies: ["c0", "c1"], invalidations, record, scopes: gate, ceiling: gate, reachable: true });
   const [c0, c1] = w.order.currencies() as readonly [Currency, Currency];
   const samples = new Samples({ candidates: w.candidates, draws: w.draws, revisions: new RevisionLog({ record }), lineage });
   const observations = new ObservationLedger({ record, components: ["q"] });
@@ -109,6 +111,22 @@ describe("BC-11-1 - REF-16 / HOOK-05 / R-77 / R-78: the draw itself is gated, an
     // No draw without a governing scope of THIS unit.
     w.declarations.declare(v, "easy", "HUMAN");
     expect(w.dispatch(v, s3.at), "a draw charged to another unit's scope").toEqual(refuse("scope-exceeded"));
+  });
+});
+
+describe("BC-11-9 - REF-03 against HOOK-05 (R-84): an unreachable draw is refused before it is charged", () => {
+  it("test_an_unreachable_draw_costs_nothing", () => {
+    const w = world();
+    const s1 = scope(w.authorize(u, w.c1, 2)); // nothing is committed at c0 yet
+    const h = w.record.noise();
+    expect(w.draws.recordDraw(u, {}, s1.at, "x", h, "ENGINE"), "an unreachable draw was not refused").toEqual(refuse("unreachable"));
+    nothingAppendedSince(w.record, h);
+    expect(w.gate.remaining(u, w.c1, w.record.noise()), "an unreachable draw cost a unit of the scope").toBe(2);
+    // Committed at c0, under its own scope: c1 is reachable, and its first draw is charged.
+    const s0 = scope(w.authorize(u, w.c0, 1));
+    w.commitments.commit(w.drawAt(u, w.c0, "x", s0.at), "HUMAN");
+    expect(isUnknown(w.dispatch(u, s1.at))).toBe(false);
+    expect(w.gate.remaining(u, w.c1, w.record.noise())).toBe(1);
   });
 });
 
@@ -252,6 +270,8 @@ describe("BC-11-8 - the module's registrations: Ratio's join, the scope kind's o
   it("test_spend_is_registered", () => {
     const joins = (JSON.parse(execFileSync(process.execPath, [resolve(repo, "tools/checks/projection-joins.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 })) as { joins: string[] }).joins;
     expect(joins.filter((j) => j.startsWith("Ratio "))).toEqual(["Ratio src/spend/ratio.ts"]);
+    // OBJ-30's descriptor in the S3 section 7 wording: no expiry is proven and none is claimed (R-77; round 18).
+    expect(SCOPE_GATE).toEqual({ condition: "a scope exists with remaining greater than zero", closedBy: "DERIVATION", proposalsIn: [], records: "DrawContext", onFail: refuse("scope-exceeded") });
     const out = JSON.parse(execFileSync(process.execPath, [resolve(repo, "tools/checks/ledger-checks.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 })) as {
       paths: { src: Record<string, string[]> };
       mint: { src: unknown[]; fixtures: Record<string, { how: string }[]> };

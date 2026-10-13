@@ -30,7 +30,7 @@ function world(): { inputs: CandidateLedgerInputs; record: TestRecord; at: Recor
   independence.declareIndependence(u, true, "HUMAN");
   // R-41: k0 accepts a real candidate at c0 (BOTTOM, licensed), appended through a setup ledger.
   const h0 = record.noise();
-  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
+  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN", currencyOf: () => "c0" as never }, admission: { admit: () => "ADMIT" } });
   const ctx0 = draws.recordDraw(u, { colour: "red" }, h0, "setup", h0, "ENGINE");
   if (!("payload" in ctx0)) throw new Error("setup: the draw was refused");
   const setup = new CandidateLedger({

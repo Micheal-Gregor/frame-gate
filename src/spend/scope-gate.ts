@@ -8,7 +8,7 @@
 //
 // Scaffolded by tools/new-object.py, then hand-fixed for strict TypeScript (MF-21).
 //
-// OBJ-30 (a Gate, HOOK-05 @before-draw). MOD-05's draw asks it before anything is recorded (R-78), so
+// OBJ-30 (a Gate, HOOK-05 @before-draw). MOD-05's draw asks it before anything is recorded (R-78), after MOD-04's reachability (R-84), so
 // an (N+1)th draw is refused with no context, no candidate and no cost. A draw is charged when it is
 // RECORDED - spent by dispatch, not by return (DG-F3, cited) - whether or not a candidate returns.
 // The governing scope is the latest for its (unit, currency) (R-77): a superseded one admits nothing,
@@ -18,8 +18,9 @@ import type { Currency, Unit } from "../catalog/index.js";
 import type { ScopeRecord } from "./scope-reader.js";
 
 /** OBJ-30 as a value: the gate's descriptor (OBJ-03). HOOK-05 @before-draw. */
-export const SCOPE_GATE: Gate<"an unexpired scope exists with remaining > 0", never, "DrawContext"> = Object.freeze({
-  condition: "an unexpired scope exists with remaining > 0",
+/** The S3 section 7 wording: "unexpired" was struck there, as no expiry is proven (R-77: expiry is supersession). */
+export const SCOPE_GATE: Gate<"a scope exists with remaining greater than zero", never, "DrawContext"> = Object.freeze({
+  condition: "a scope exists with remaining greater than zero",
   closedBy: "DERIVATION",
   proposalsIn: Object.freeze([] as const),
   records: "DrawContext",
@@ -71,6 +72,12 @@ export class ScopeGate {
     const governing = this.#scopes.governing(unit, named.payload.currency, at);
     if (isUnknown(governing) || governing.at !== named.at) return refuse("scope-exceeded");
     return this.#left(named, at) > 0 ? "WITHIN" : refuse("scope-exceeded");
+  }
+
+  /** R-84: the currency of the scope at `scope`, for MOD-05's draw to ask reachability before the charge. */
+  currencyOf(scope: RecordHeight, at: RecordHeight): Currency | UnknownValue {
+    const named = this.#scopes.scopeAt(scope, at);
+    return isUnknown(named) ? named : named.payload.currency;
   }
 
   /** R-78 (R-25 amended): a candidate's unit and currency are its draw's scope's. */

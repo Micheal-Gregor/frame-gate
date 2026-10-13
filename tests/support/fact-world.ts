@@ -13,11 +13,13 @@ import {
   CommitmentLedger,
   DrawContextLog,
   type Candidate,
+  type AdmissionDecider,
   type Commitment,
   type DrawScopeGate,
   type InvalidationReader,
   type ScopeCeiling,
 } from "../../src/facts/index.js";
+import { Reachability, ReachabilityGate } from "../../src/reachability/index.js";
 import { inMemoryRecord, type TestRecord } from "../catalog/in-memory-record.js";
 
 export const never: InvalidationReader = { isInvalidated: () => false };
@@ -36,38 +38,44 @@ export interface FactWorld {
   commitAt(unit: Unit, currency: Currency): Commitment;
 }
 
-/** Setup stand-ins for MOD-11's gate (R-78): every draw and every candidate is within scope. */
-const anyScope: DrawScopeGate & ScopeCeiling = { admitsDraw: () => "WITHIN", admitsCandidate: () => "WITHIN" };
+/** Setup stand-in for MOD-11's candidate check (R-78): every candidate is within scope. */
+const anyCeiling: ScopeCeiling = { admitsCandidate: () => "WITHIN" };
 
 /**
  * `record`, when given, is the one the world appends to - so an invalidation reader built over it
  * (MOD-12's ledger) can be handed in before the fold that reads it. `scopes` and `ceiling`, when
- * given, are MOD-11's real gate (R-78); otherwise every draw is within scope.
+ * given, are MOD-11's real gate (R-78); otherwise every draw is within scope. `reachable` hands
+ * MOD-04's REAL gate to both the draw and the candidate append (R-84); otherwise both admit.
  */
 export function factWorld({
   currencies,
   invalidations,
   record = inMemoryRecord(),
-  scopes = anyScope,
-  ceiling = anyScope,
+  scopes,
+  ceiling = anyCeiling,
+  reachable = false,
 }: {
   readonly currencies: readonly string[];
   readonly invalidations: InvalidationReader;
   readonly record?: TestRecord;
   readonly scopes?: DrawScopeGate;
   readonly ceiling?: ScopeCeiling;
+  readonly reachable?: boolean;
 }): FactWorld {
   const order = new CurrencyOrder({ currencies: [...currencies] });
   const declarations = new DeclarationLedger({ record, levels: ["easy", "hard"] });
-  const draws = new DrawContextLog({ record, declarations, scopes });
-  const independence = new IndependenceLedger({ record });
   const commitments = new CommitmentLedger({ record, invalidations });
+  const admission: AdmissionDecider = reachable ? new ReachabilityGate({ reachability: new Reachability({ currencies: order, commitments }) }) : { admit: () => "ADMIT" };
+  // Setup stand-in for MOD-11's draw gate: every draw is within scope, charged to the least currency.
+  const anyScope: DrawScopeGate = { admitsDraw: () => "WITHIN", currencyOf: () => order.least() };
+  const draws = new DrawContextLog({ record, declarations, scopes: scopes ?? anyScope, admission });
+  const independence = new IndependenceLedger({ record });
   const candidates = new CandidateLedger({
     record,
     commitments,
     currencies: order,
     independence,
-    admission: { admit: () => "ADMIT" },
+    admission,
     signatures: { check: () => "VERIFIED" },
     ceiling,
   });

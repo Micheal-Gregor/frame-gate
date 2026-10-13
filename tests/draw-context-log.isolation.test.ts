@@ -3,50 +3,61 @@
 // strict TypeScript - MF-21, MF-22.)
 import { describe, expect, it } from "vitest";
 import { height, noSubject, refuse, type RecordHeight } from "../src/kernel/index.js";
-import { DeclarationLedger, type Unit } from "../src/catalog/index.js";
-import { DrawContextLog, type DeclarationReader, type DrawScopeGate } from "../src/facts/index.js";
+import { DeclarationLedger, type Currency, type Unit } from "../src/catalog/index.js";
+import { DrawContextLog, type AdmissionDecider, type DeclarationReader, type DrawScopeGate } from "../src/facts/index.js";
 import { inMemoryRecord, type TestRecord } from "./catalog/in-memory-record.js";
 
 const u = "u1" as Unit;
 const features = { colour: "red" };
 const nothingDeclared: DeclarationReader = { declarationAt: () => noSubject() };
 /** A scope gate that admits every draw: setup, not the subject (R-78's gate is MOD-11's). */
-const within: DrawScopeGate = { admitsDraw: () => "WITHIN" };
+const within: DrawScopeGate = { admitsDraw: () => "WITHIN", currencyOf: () => "c0" as Currency };
+/** An admission that admits every draw: setup, not the subject (R-84's gate is MOD-04's). */
+const admit: AdmissionDecider = { admit: () => "ADMIT" };
 
 /** A record holding a declaration for `u`, the reader that answers it, and an admitting scope gate. */
-function declared(): { record: TestRecord; declarations: DeclarationReader; scopes: DrawScopeGate; at: RecordHeight } {
+function declared(): { record: TestRecord; declarations: DeclarationReader; scopes: DrawScopeGate; admission: AdmissionDecider; at: RecordHeight } {
   const record = inMemoryRecord();
   const declarations = new DeclarationLedger({ record, levels: ["easy"] });
   declarations.declare(u, "easy", "HUMAN");
-  return { record, declarations, scopes: within, at: record.noise() };
+  return { record, declarations, scopes: within, admission: admit, at: record.noise() };
 }
 
 describe("DrawContextLog in isolation", () => {
   it("refuses to construct when an input is missing", () => {
-    expect(() => new DrawContextLog({ declarations: nothingDeclared, scopes: within } as never)).toThrow();
-    expect(() => new DrawContextLog({ record: inMemoryRecord(), scopes: within } as never)).toThrow();
-    expect(() => new DrawContextLog({ record: inMemoryRecord(), declarations: nothingDeclared } as never)).toThrow();
+    const all = { record: inMemoryRecord(), declarations: nothingDeclared, scopes: within, admission: admit };
+    for (const missing of Object.keys(all)) expect(() => new DrawContextLog({ ...all, [missing]: undefined } as never), missing).toThrow();
   });
 
   it("refuses inputs that do not offer the operations it calls (OS-1, declared slots)", () => {
-    expect(() => new DrawContextLog({ record: {} as never, declarations: nothingDeclared, scopes: within })).toThrow();
-    expect(() => new DrawContextLog({ record: inMemoryRecord(), declarations: {} as never, scopes: within })).toThrow();
-    expect(() => new DrawContextLog({ record: inMemoryRecord(), declarations: nothingDeclared, scopes: {} as never })).toThrow();
+    const all = { record: inMemoryRecord(), declarations: nothingDeclared, scopes: within, admission: admit };
+    for (const slot of Object.keys(all)) expect(() => new DrawContextLog({ ...all, [slot]: {} } as never), slot).toThrow();
+    expect(() => new DrawContextLog({ ...all, scopes: { admitsDraw: within.admitsDraw } as never }), "a scope gate without currencyOf").toThrow();
   });
 
   it("recordDraw answers differently when declarations differs", () => {
     const { record, declarations, at } = declared();
-    const a = new DrawContextLog({ record, declarations, scopes: within }).recordDraw(u, features, at, "c", at, "ENGINE");
-    const b = new DrawContextLog({ record, declarations: nothingDeclared, scopes: within }).recordDraw(u, features, at, "c", at, "ENGINE");
+    const a = new DrawContextLog({ record, declarations, scopes: within, admission: admit }).recordDraw(u, features, at, "c", at, "ENGINE");
+    const b = new DrawContextLog({ record, declarations: nothingDeclared, scopes: within, admission: admit }).recordDraw(u, features, at, "c", at, "ENGINE");
     expect(a).not.toEqual(b);
   });
 
   it("recordDraw answers differently when scopes differs", () => {
     const { record, declarations, at } = declared();
-    const exceeded: DrawScopeGate = { admitsDraw: () => refuse("scope-exceeded") };
-    const a = new DrawContextLog({ record, declarations, scopes: within }).recordDraw(u, features, at, "c", at, "ENGINE");
-    const b = new DrawContextLog({ record, declarations, scopes: exceeded }).recordDraw(u, features, at, "c", at, "ENGINE");
+    const exceeded: DrawScopeGate = { ...within, admitsDraw: () => refuse("scope-exceeded") };
+    const a = new DrawContextLog({ record, declarations, scopes: within, admission: admit }).recordDraw(u, features, at, "c", at, "ENGINE");
+    const b = new DrawContextLog({ record, declarations, scopes: exceeded, admission: admit }).recordDraw(u, features, at, "c", at, "ENGINE");
     expect(a).not.toEqual(b);
+  });
+
+  it("recordDraw answers differently when admission differs (R-84)", () => {
+    const { record, declarations, at } = declared();
+    const unreachable: AdmissionDecider = { admit: () => refuse("unreachable") };
+    const a = new DrawContextLog({ record, declarations, scopes: within, admission: admit }).recordDraw(u, features, at, "c", at, "ENGINE");
+    const b = new DrawContextLog({ record, declarations, scopes: within, admission: unreachable }).recordDraw(u, features, at, "c", at, "ENGINE");
+    expect(a).not.toEqual(b);
+    // Not merely a different height: the unreachable draw is refused, and nothing is recorded for it.
+    expect(b).toEqual(refuse("unreachable"));
   });
 
   it("recordDraw answers differently when record differs", () => {

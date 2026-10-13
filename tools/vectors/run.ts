@@ -81,7 +81,7 @@ function calibrationFixture(script: Script) {
   const order = new CurrencyOrder({ currencies: [...script.currencies] });
   const declarations = new DeclarationLedger({ record, levels: [...script.levels] });
   const independence = new IndependenceLedger({ record });
-  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
+  const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN", currencyOf: () => "c0" as never }, admission: { admit: () => "ADMIT" } });
   const lineage = new LineageReader({ record });
   const invalidations = new InvalidationLedger({ record, scopes: new InvalidationScope({ lineage }), renderer: { present: () => undefined } });
   const commitments = new CommitmentLedger({ record, invalidations });
@@ -197,7 +197,7 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
           // BOTTOM (licensed) at the least currency, then the commitment below.
           const declarations = new DeclarationLedger({ record, levels: ["fixture"] });
           const independence = new IndependenceLedger({ record });
-          const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
+          const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN", currencyOf: () => "c0" as never }, admission: { admit: () => "ADMIT" } });
           const setup = new CandidateLedger({
             record,
             commitments,
@@ -381,7 +381,7 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
       const commitments = new CommitmentLedger({ record, invalidations: { isInvalidated: () => false } });
       const declarations = new DeclarationLedger({ record, levels: ["fixture"] });
       const independence = new IndependenceLedger({ record });
-      const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN" } });
+      const draws = new DrawContextLog({ record, declarations, scopes: { admitsDraw: () => "WITHIN", currencyOf: () => "c0" as never }, admission: { admit: () => "ADMIT" } });
       const setup = new CandidateLedger({
         record,
         commitments,

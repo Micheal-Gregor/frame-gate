@@ -24,7 +24,11 @@
  *            caller's parameter; a class field that is not readonly or whose TYPE is
  *            writable (record port excepted). KNOWN, unpinned (R-61, DR-44): a "read" is an
  *            enumerated declaration list, so MOD-06's injected readers (CandidateReads,
- *            DrawReads, RevisionReads, AcceptanceReads, ChainLineage) are not reads to it.
+ *            DrawReads, RevisionReads, AcceptanceReads, ChainLineage) are not reads to it;
+ *            nor are MOD-11's seams (R-78, R-84): ScopeCeiling.admitsCandidate,
+ *            DrawScopeGate.admitsDraw / currencyOf, ScopeReads, DrawCharges - whose scope
+ *            height is an IDENTITY, which this rule's every-height-is-a-height reading would
+ *            misjudge (IR-129). The stale ScopeCeiling.admitsDraw entry R-78 orphaned is removed.
  *            LIMITS: module-level mutable state read by a class (limit-module-state/);
  *            the caller's own choice of height is the caller's (as-of semantics).
  *   reach    DECIDES, in src/ outside src/advisory/ (MOD-13), a call to or a reference
@@ -439,7 +443,6 @@ const isBaseRead = (d) =>
   declaredAs(d, "src/facts/candidate-ledger.ts", "independenceAt", "IndependenceReader") ||
   declaredAs(d, "src/facts/candidate-ledger.ts", "admit", "AdmissionDecider") ||
   declaredAs(d, "src/facts/candidate-ledger.ts", "check", "SignatureCheck") ||
-  declaredAs(d, "src/facts/candidate-ledger.ts", "admitsDraw", "ScopeCeiling") ||
   declaredAs(d, "src/facts/candidate-ledger.ts", "candidatesAsOf") ||
   declaredAs(d, "src/facts/candidate-ledger.ts", "derivedFrom") ||
   declaredAs(d, "src/facts/candidate-ledger.ts", "countsAsOf");

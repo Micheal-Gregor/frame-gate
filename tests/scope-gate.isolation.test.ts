@@ -50,6 +50,12 @@ describe("ScopeGate in isolation", () => {
     expect(new ScopeGate({ scopes, charges }).admitsDraw(u, s.at, h)).not.toEqual(new ScopeGate({ scopes, charges: oneDraw(h) }).admitsDraw(u, s.at, h));
   });
 
+  it("currencyOf answers differently when scopes differs (and reads no charges)", () => {
+    const { s, h, scopes, charges } = parts();
+    expect(new ScopeGate({ scopes, charges }).currencyOf(s.at, h)).not.toEqual(new ScopeGate({ scopes: none, charges }).currencyOf(s.at, h));
+    expect(new ScopeGate({ scopes, charges }).currencyOf(s.at, h)).toEqual(new ScopeGate({ scopes, charges: oneDraw(h) }).currencyOf(s.at, h));
+  });
+
   it("admitsCandidate answers differently when scopes differs (and reads no charges)", () => {
     const { s, h, scopes, charges } = parts();
     expect(new ScopeGate({ scopes, charges }).admitsCandidate(u, c0, s.at, h)).not.toEqual(new ScopeGate({ scopes: none, charges }).admitsCandidate(u, c0, s.at, h));

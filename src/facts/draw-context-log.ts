@@ -30,7 +30,8 @@ import {
   type UnknownValue,
 } from "../kernel/index.js";
 import type { Author } from "../ports/index.js";
-import type { Declaration, Features, Unit } from "../catalog/index.js";
+import type { Currency, Declaration, Features, Unit } from "../catalog/index.js";
+import type { AdmissionDecider } from "./candidate-ledger.js";
 import type { FactRecord } from "./commitment-ledger.js";
 
 declare const DRAWN: unique symbol;
@@ -77,14 +78,27 @@ export interface DeclarationReader {
  */
 export interface DrawScopeGate {
   admitsDraw(unit: Unit, scope: RecordHeight, at: RecordHeight): "WITHIN" | UnknownValue;
+  /** R-84: the currency the scope at `scope` is for, so reachability is asked before the scope is charged. */
+  currencyOf(scope: RecordHeight, at: RecordHeight): Currency | UnknownValue;
 }
 
 export class DrawContextLog {
   readonly #record: FactRecord;
   readonly #declarations: DeclarationReader;
   readonly #scopes: DrawScopeGate;
+  readonly #admission: AdmissionDecider;
 
-  constructor({ record, declarations, scopes }: { readonly record: FactRecord; readonly declarations: DeclarationReader; readonly scopes: DrawScopeGate }) {
+  constructor({
+    record,
+    declarations,
+    scopes,
+    admission,
+  }: {
+    readonly record: FactRecord;
+    readonly declarations: DeclarationReader;
+    readonly scopes: DrawScopeGate;
+    readonly admission: AdmissionDecider;
+  }) {
     if (record === undefined || record === null) throw new TypeError("DrawContextLog requires record");
     // OS-1: an object input is a declared slot - the operations called on it are named
     // and checked here, never discovered inside a method.
@@ -96,10 +110,15 @@ export class DrawContextLog {
       throw new TypeError("declarations must offer declarationAt (SEAM-05, R-21)");
     }
     if (scopes === undefined || scopes === null) throw new TypeError("DrawContextLog requires scopes");
-    if (typeof scopes.admitsDraw !== "function") throw new TypeError("scopes must offer admitsDraw (MOD-11 ScopeGate, R-78)");
+    if (typeof scopes.admitsDraw !== "function" || typeof scopes.currencyOf !== "function") {
+      throw new TypeError("scopes must offer admitsDraw and currencyOf (MOD-11 ScopeGate, R-78, R-84)");
+    }
+    if (admission === undefined || admission === null) throw new TypeError("DrawContextLog requires admission");
+    if (typeof admission.admit !== "function") throw new TypeError("admission must offer admit (MOD-04 ReachabilityGate, R-84)");
     this.#record = record;
     this.#declarations = declarations;
     this.#scopes = scopes;
+    this.#admission = admission;
     Object.freeze(this);
   }
 
@@ -115,6 +134,12 @@ export class DrawContextLog {
     }
     // HOOK-05 @before-draw (R-78): MOD-11 is asked before anything is recorded, so a refused draw
     // leaves no context, no candidate and no cost.
+    // R-84 / REF-03: reachability FIRST, for the scope's currency - an unreachable draw is refused
+    // before it is charged, so it costs nothing. The same MOD-04 gate the candidate append asks (HOOK-01).
+    const currency = this.#scopes.currencyOf(scope, at);
+    if (isUnknown(currency)) return refuse("scope-exceeded"); // no such scope: HOOK-05's one refusal
+    const admitted = this.#admission.admit(unit, currency, at);
+    if (admitted !== "ADMIT") return admitted;
     const within = this.#scopes.admitsDraw(unit, scope, at);
     if (within !== "WITHIN") return within;
     const payload: DrawContextPayload = Object.freeze({

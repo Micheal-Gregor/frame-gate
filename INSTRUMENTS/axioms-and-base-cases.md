@@ -740,3 +740,10 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 - **BC-11-8** Ratio joins the family once, in MOD-11. `ScopeLedger.authorize` is the one append path for the scope kind (S-01). A scope-kind entry built outside src/spend is a forge, and a Scope or AuthorizationForm minted outside its owner is flagged.
 
 **Watched failing (MOD-11, with R-78's MOD-05 work item):** against typed stubs, 29 / 344 red: BC-11-1..8; every case of the five isolation tests; `drawsUnder`'s isolation case; BC-05-6, BC-05-15 and BC-03-2 (the registrations). `tsc` clean. After: 344 / 344.
+
+### MOD-11 fix round (K7 round 18 -> R-84) - written before the change, watched failing
+
+- **BC-11-9** REF-03 against HOOK-05 (R-84), on the real MOD-04 + MOD-11 path: an unreachable draw is Refuse(unreachable) with nothing recorded and nothing charged, and the scope's whole ceiling remains. Once the cheaper currency commits, the first draw is charged.
+
+**Watched failing (the fix round):** 3 / 346 red - BC-11-9, the SCOPE_GATE wording pin in BC-11-8, and the draw log's admission isolation case (tightened after it first passed vacuously). After: 347 / 347, with `currencyOf`'s isolation case.
+

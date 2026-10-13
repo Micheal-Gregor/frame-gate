@@ -42,6 +42,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-32 WI-07: the relay forms `paths` does not see | **ACCEPTED 2026-10-13** (owner, live gate) | DECIDE the wrapped relay (a helper building the entry from its own type-parameter-typed parameter); REGISTER the destructured relay as a limit with a `limit-` fixture |
 | R-33 WI-08 / IR-59: may a draw context be bound twice? | **ACCEPTED 2026-10-13** (owner, live gate) | One draw, one candidate: a context already bound by a candidate as of the append height refuses `context-spent` (an as-of read; no catalog re-read). An unused old context may still be bound: its declaration IS the draw's |
 | R-34 how MOD-04's refusal names the unit, currency and cheapest BOTTOM predecessor | **ACCEPTED 2026-10-13** (owner, live gate) | In the witness set: the gate answers MOD-05 `refuse("unreachable")` (SEAM-03's shape); ONE evaluation returns the verdict with the predecessor witness set and the cheapest BOTTOM currency. The kernel is unchanged |
+| R-35 how a listed member joins the Projection family (MOD-04 is the first) | **ACCEPTED 2026-10-13** (owner, live gate) | The kernel mints it: MOD-01 gains one ADDITIVE export, `asProjection(member, compute)`, with `member` typed by the ten-name list. It is a join, not a predicate. A detector pins each member joined at most once, only in the module the S3 partition assigns, and never in `advisory/`. MOD-01 work item WI-10 |
 
 ---
 
@@ -776,4 +777,26 @@ returns the verdict together with the predecessor witness set: each strictly che
 effective commitment or BOTTOM, and the cheapest currency that is not a commitment. That is the
 attributable content of the refusal, derived from the same evaluation, never a second one (F2).
 The kernel is unchanged.
+
+## R-35 · The kernel mints Projection membership, by name
+
+**Owner, 2026-10-13, live gate.** OBJ-24 Reachability is the first Projection to join the family.
+The kernel's `Projection<T>` brand symbol is unexported and has no runtime value (IR-18), so no
+module can implement it, and the kernel mints nothing. The two other doors are worse. An
+assertion `as Projection<...>` cannot say which member it claims. An unbranded class makes "a
+Projection" prose, not type. **Ruling.** MOD-01 gains one additive export,
+`asProjection(member, compute)`. Its `member` parameter is typed by `ProjectionMember`, so only
+one of the ten listed names compiles, and OBJ-34 DifficultyAdvisory cannot be named. It is a
+JOIN, not a membership predicate: nothing in the kernel answers "is this a Projection?" (BC-01-2
+stands).
+
+A detector pins three things:
+
+- every member is joined at most once in `src/`;
+- only in the module the S3 partition assigns it to;
+- never in `advisory/`.
+
+An assertion to a Projection type anywhere in `src/` is flagged, because only the kernel mints.
+This is a new work item (WI-10) against MOD-01's closed gate. It is not a reopening, and it is
+reviewed with MOD-04.
 

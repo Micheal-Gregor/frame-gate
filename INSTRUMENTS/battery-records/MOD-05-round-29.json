@@ -1,0 +1,21 @@
+{
+  "module": "MOD-05",
+  "manifest": "sha256:5ba175f5ae44e06e359c9c528fa340fcc1ba6db2720d7182735ea833cba5a62d",
+  "commit": "81a878c",
+  "mutations": [
+    {
+      "id": "K1",
+      "claim": "R-84 / REF-03: the draw asks reachability before it is recorded and charged",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "K2",
+      "claim": "R-84: an unreachable draw is refused in the draw log itself, nothing recorded",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

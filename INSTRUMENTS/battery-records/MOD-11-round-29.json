@@ -1,0 +1,21 @@
+{
+  "module": "MOD-11",
+  "manifest": "sha256:f33e7063a6266f532e0c266648d60b3392d8d43d8e48daf2a8e47180b424e8dc",
+  "commit": "81a878c",
+  "mutations": [
+    {
+      "id": "K3",
+      "claim": "R-84: reachability is asked for the SCOPE's currency",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "K4",
+      "claim": "S3 section 7 / R-77: the gate's condition claims no expiry",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

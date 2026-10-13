@@ -1010,3 +1010,16 @@ On `fa0e7e8`; restores verified.
 
 **15 / 15.** Schema records `MOD-11-round-28.json` (manifest `sha256:648acb86…`) and `MOD-05-round-28.json` (manifest `sha256:379bc9f1…`), each handed to battery_complete@1. H3 is not planted: the clause it targeted was removed as redundant.
 
+## Round 29 — the fix round under R-84 (MOD-05, MOD-11), sized to the change (R-50)
+
+On `81a878c`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| K1 | MOD-05: R-84 / REF-03: the draw asks reachability before it is recorded and charged | KILLED (test) | `test_an_unreachable_draw_costs_nothing` |
+| K2 | MOD-05: R-84: an unreachable draw is refused in the draw log itself, nothing recorded | KILLED (test) | `recordDraw answers differently when admission differs` |
+| K3 | MOD-11: R-84: reachability is asked for the SCOPE's currency | KILLED (test) | `test_an_unreachable_draw_costs_nothing` |
+| K4 | MOD-11: S3 section 7 / R-77: the gate's condition claims no expiry | KILLED (test) | `test_spend_is_registered` |
+
+**4 / 4.** Schema records `MOD-05-round-29.json` (manifest `sha256:5ba175f5…`) and `MOD-11-round-29.json` (manifest `sha256:f33e7063…`). The runner ran twice by mistake on the same commit and manifests, with identical results; the records are the second run's.
+

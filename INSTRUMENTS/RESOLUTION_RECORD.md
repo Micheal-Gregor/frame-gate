@@ -45,6 +45,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-35 how a listed member joins the Projection family (MOD-04 is the first) | **ACCEPTED 2026-10-13** (owner, live gate) | The kernel mints it: MOD-01 gains one ADDITIVE export, `asProjection(member, compute)`, with `member` typed by the ten-name list. It is a join, not a predicate. A detector pins each member joined at most once, only in the module the S3 partition assigns, and never in `advisory/`. MOD-01 work item WI-10 |
 | R-36 how golden vectors are computed and re-derived (VEC-01 first) | **ACCEPTED 2026-10-13** (owner, live gate) | A harness in tools/: `rederive_invoke` becomes `node --import tsx tools/vectors/run.ts {vector_id} {entry} {input_file}`. The entry stays the implementing file (VEC-01: `src/reachability/reachability.ts`), so impl_sha pins the fold. The harness reads the input and calls the real implementation, and src/ names no external (REF-02) |
 | R-37 K7 round 10's scope and reviewer | **ACCEPTED 2026-10-13** (owner, live gate) | Modules MOD-04, MOD-05 and MOD-01: the new module plus every work item since `k7-pass-9` (WI-07, WI-08 in MOD-05; WI-10 in MOD-01). Reviewer Fable 5.1, as rounds 8-9; `reviewer_command` unchanged |
+| R-38 K7 round 10 triage (MOD-04 RETURN, drift 6): the fix round | **ACCEPTED 2026-10-13** (owner, live gate) | DR-30: the branch rule DECIDES destructuring (a binding element picked from the loaded order); a class field holding the least is a registered limit. DR-31: PC-05 enumerated for MOD-04 - attributable by construction through re-evaluation at the same height (a pure as-of fold); the refusal stream is deployment, carried forward. DR-32: all five forms DECIDED |
 
 ---
 
@@ -824,4 +825,30 @@ round's scope is MOD-04, MOD-05 and MOD-01 (`--modules MOD-04,MOD-05,MOD-01`), s
 changed since the last PASS gets a reviewer. R-35 already said WI-10 is reviewed with MOD-04.
 The reviewer stays Fable 5.1, as in rounds 8 and 9. This is recorded before the round runs
 (RD-15).
+
+## R-38 · K7 round 10 triage: MOD-04's one fix round
+
+**Owner, 2026-10-13, live gate.** Round 10 returned MOD-04 at drift 6 (DR-30..DR-32). RD-9 allows
+one fix round and one re-check. **Rulings:**
+
+- **DR-30: decide the destructured member.** The branch rule follows a binding element of an
+  array or object destructuring back to what it was picked from. A member picked by POSITION from
+  the LOADED ORDER is particular: an indexed or destructured element of a zero-parameter call
+  returning the currency collection, or of a `const` one hop from such a call. Currencies taken
+  from data, such as a parameter or a payload field, are compared as data and are never
+  particular. A class field holding the least currency is a registered limit, pinned by a
+  `limit-` fixture.
+- **DR-31: PC-05 is enumerated for MOD-04, and attribution is re-evaluation at the same height.**
+  `ReachabilityGate.evaluate(u, c, h)` is a pure as-of fold, so whoever reports a refusal gets
+  the same evaluation (witnesses, cheapest unmet currency) by asking again at the refusal's
+  height: attributable by construction. The aggregating stream is deployment (PC-05's
+  resolution, Developer) and is carried forward. The stale MOD-04 and MOD-05 module rows are
+  corrected.
+- **DR-32: decide all five.** Sole site: a commitment read wrapped in a helper (a fixed point
+  over helpers that return a boolean or a commitment), `Array.from(xs, fn)`, and iteration
+  through library collections (Set, Map). Joins: a generic launder, as catalog-mint decides it,
+  and `asProjection` reached by `call`, `apply` or `Reflect.apply`, as spawn-resolve decides it.
+  Each gets a violating fixture, watched red first.
+
+The re-check (round 11) keeps R-37's scope and reviewer.
 

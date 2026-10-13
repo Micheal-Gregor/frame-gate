@@ -1,0 +1,77 @@
+{
+  "module": "MOD-10",
+  "manifest": "sha256:ad98f3fdb6d77c6f6c4b25f3591d427a171d325a1424f70f74e33bd49f9c6d69",
+  "commit": "6de9daa",
+  "mutations": [
+    {
+      "id": "G1",
+      "claim": "VEC-04 / OBJ-42: one withheld entry per absent axis, carried in the value",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G2",
+      "claim": "R-73: n is the scored members behind the spread, not the sample's size",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G3",
+      "claim": "SEAM-12: the dispersion source's own Unknown is the cause, never re-worded",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G4",
+      "claim": "R-74: equality meets the bar",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G5",
+      "claim": "SEAM-13: \u03b8 = \u22a5 withholds location with the bar's own no-bar as the cause",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G6",
+      "claim": "PC-07 / R-74: the location axis carries the bar whole, its exclusion counts included",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G7",
+      "claim": "R-72: the latest sample - the one holding the most recent candidate",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G8",
+      "claim": "R-75: the bar is read at the level in force at the height, not the sample's draw-time level",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G9",
+      "claim": "BC-10-7: an Unknown other than an absence is the answer, never 'withheld'",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G10",
+      "claim": "IR-115: a diagnostic of nothing drawn is NoSubject",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

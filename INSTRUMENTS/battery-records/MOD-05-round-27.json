@@ -1,0 +1,21 @@
+{
+  "module": "MOD-05",
+  "manifest": "sha256:acfd124df47bb95b14889f676199906f70819e8bdc1e30602140ba1cf939b403",
+  "commit": "6de9daa",
+  "mutations": [
+    {
+      "id": "G11",
+      "claim": "R-76 / REF-06: an act parameter carrying the Diagnostic brand is flagged",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "G12",
+      "claim": "R-76: a DiagnosticValue minted outside MOD-10 is flagged (BRANDS)",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

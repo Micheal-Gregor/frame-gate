@@ -940,3 +940,24 @@ On `cabe897`; restores verified.
 
 **16 / 16.** Schema record `INSTRUMENTS/battery-records/MOD-09-round-26.json`, manifest `sha256:c796e270…`, handed to battery_complete@1. A first pass aborted after C4 on a console-encoding error in the runner (cp1252 could not print "θ"), restores verified; this is the full re-run.
 
+## Round 27 — MOD-10 `diagnostic/`, and MOD-05's R-76 work item, each sized to its claims (R-50)
+
+On `6de9daa`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| G1 | MOD-10: VEC-04 / OBJ-42: one withheld entry per absent axis, carried in the value | KILLED (test) | `test_the_diagnostic_is_two_independent_axes` |
+| G2 | MOD-10: R-73: n is the scored members behind the spread, not the sample's size | KILLED (test) | `test_the_dispersion_axis_is_the_measured_spread` |
+| G3 | MOD-10: SEAM-12: the dispersion source's own Unknown is the cause, never re-worded | KILLED (test) | `test_the_dispersion_axis_is_the_measured_spread` |
+| G4 | MOD-10: R-74: equality meets the bar | KILLED (test) | `test_the_location_axis_meets_or_falls_below_the_bar` |
+| G5 | MOD-10: SEAM-13: θ = ⊥ withholds location with the bar's own no-bar as the cause | KILLED (test) | `test_the_location_axis_meets_or_falls_below_the_bar` |
+| G6 | MOD-10: PC-07 / R-74: the location axis carries the bar whole, its exclusion counts included | KILLED (test) | `test_the_location_axis_meets_or_falls_below_the_bar` |
+| G7 | MOD-10: R-72: the latest sample - the one holding the most recent candidate | KILLED (test) | `test_the_latest_sample_is_read_per_component` |
+| G8 | MOD-10: R-75: the bar is read at the level in force at the height, not the sample's draw-time level | KILLED (test) | `test_the_bar_is_read_at_the_level_in_force` |
+| G9 | MOD-10: BC-10-7: an Unknown other than an absence is the answer, never 'withheld' | KILLED (test) | `test_an_unknown_other_than_an_absence_is_the_answer` |
+| G10 | MOD-10: IR-115: a diagnostic of nothing drawn is NoSubject | KILLED (test) | `test_the_latest_sample_is_read_per_component` |
+| G11 | MOD-05: R-76 / REF-06: an act parameter carrying the Diagnostic brand is flagged | KILLED (test) | `test_no_act_signature_accepts_diagnostic` |
+| G12 | MOD-05: R-76: a DiagnosticValue minted outside MOD-10 is flagged (BRANDS) | KILLED (test) | `test_an_unknown_other_than_an_absence_is_the_answer` |
+
+**12 / 12.** Schema records `INSTRUMENTS/battery-records/MOD-10-round-27.json` (manifest `sha256:ad98f3fd…`) and `MOD-05-round-27.json` (manifest `sha256:acfd124d…`), each handed to battery_complete@1.
+

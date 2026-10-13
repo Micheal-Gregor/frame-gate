@@ -193,6 +193,7 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-115 | **A diagnostic of nothing drawn is NoSubject.** With no candidate at (unit, currency) there is no sample to diagnose, so there are no axes to withhold. A unit with a single draw gets the full tuple with both axes withheld (MWE step 6) | benign | MOD-10 |
 | IR-116 | **ODG-FG-04 at MOD-10:** the undischargeable-ABSENT bound is not carried by WithheldReason. The dispersion axis reads MOD-08, whose membership rule counts an ABSENT component as contributing nothing whether or not it is dischargeable. So a withheld axis whose members are permanently ABSENT still names a discharge ("three members scored ..."). Making that bound visible needs MOD-08 or MOD-09 to expose it, and stays open (IR-96, IR-109) | latent | MOD-10 (ODG-FG-04) |
 | IR-117 | **VEC-04 is COMPUTED for rows 2 and 4 and carries rows 1 and 3 as deferred rows** (both need a present θ: AE-5). This is IR-110's shape | benign | MOD-10 |
+| IR-118 | **Building a module voids every upstream receipt (framework report).** The manifest gives a test to every module whose files it imports, and folds each dependency's content into a module's digest. So MOD-10's integration tests changed the content of MOD-01..09 and MOD-12, and their battery, k7, owner-triage and full-review receipts now read NO_SUBJECT. Workaround: each round receipts only its own scope (round 27: MOD-10 and MOD-05). Earlier gates stand on their tags, verdicts and rulings | latent | all built modules (RD-27, RD-28) |
 
 ## Log
 

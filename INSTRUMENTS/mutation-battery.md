@@ -1052,3 +1052,14 @@ On `be0c869`; restores verified.
 
 **6 / 6.** Schema record `INSTRUMENTS/battery-records/MOD-13-round-31.json` (manifest `sha256:ca7f071f…`), handed to battery_complete@1. Planted files were removed with `git clean -- src` on each restore; the tree was clean at the start.
 
+## Round 32 — R-86's fix (MOD-13): F3 re-planted in src; containment on identity
+
+On `ddd2787`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| C1 | MOD-13: K7 round 21 F3: a case-variant import of MOD-13 from a .mjs in src is the same module | KILLED (test) | `test_no_write_path_from_difficulty_to_a_gate` |
+| C2 | MOD-13: R-86: containment is decided on the file's identity, not its spelling | KILLED (test) | `test_no_write_path_from_difficulty_to_a_gate` |
+
+**2 / 2.** Schema record `INSTRUMENTS/battery-records/MOD-13-round-32.json` (manifest `sha256:3eab5125…`). No re-check follows (R-86); the gate closes on the owner's tag.
+

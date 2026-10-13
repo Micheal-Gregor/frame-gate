@@ -1,0 +1,21 @@
+{
+  "module": "MOD-13",
+  "manifest": "sha256:3eab51254e0747d6f4436e63b452e6fcba5202f63644e9aae485a1183ea9af3c",
+  "commit": "ddd2787",
+  "mutations": [
+    {
+      "id": "C1",
+      "claim": "K7 round 21 F3: a case-variant import of MOD-13 from a .mjs in src is the same module",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C2",
+      "claim": "R-86: containment is decided on the file's identity, not its spelling",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

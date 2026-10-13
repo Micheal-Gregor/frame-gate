@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 9,
+  "reviewed": {
+    "tree_sha": "f8257c4d53e439940c38da60008936f5c670bbc4",
+    "commit_sha": "00a654f5eb862e3abadd298157d54298cbbf39cc",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-05"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T00:09:49+00:00",
+    "completed_at": "2026-10-13T00:26:03+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 8,
+    "prior_tree_sha": "6d7679660813c86514514a2ab73ec7ff5512a1d2",
+    "prior_failing_checks": [
+      "CC-2",
+      "CC-3",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Checked by reading. src/facts/ is unchanged in file set (index.ts, commitment-ledger.ts, draw-context-log.ts, candidate-ledger.ts); each has a row in INSTRUMENTS/object-model-and-parameters.md (:14, :28-30, the CandidateLedger row now naming context in R-31's order) and traces to an admitted node: OBJ-11 (candidate-ledger.ts:58-73, the payload gaining `context: RecordHeight` under IR-58), OBJ-12/OBJ-31 (commitment-ledger.ts:27-65), OBJ-16 (draw-context-log.ts:39-64) - S3 section 3:106-109. No orphan file; no NOT_STARTED module has a file in src/. Every citation in the code and the new instruments resolves and is live: R-31 (RESOLUTION_RECORD.md:723-744), IR-58..IR-61 (drift-ledger.md:108-111), DR-27..DR-29 and WI-06 marked REMEDIATED (:41-44), BC-05-23..27 (axioms-and-base-cases.md:390-415), and every test the module-close clause map (INSTRUMENTS/MOD-05-clause-map.md) names exists in tests/facts/facts.test.ts (e.g. :500 test_a_candidate_without_from_is_malformed_at_parse, :114 test_two_effective_commitments_are_uncomputable_not_chosen, :537 test_a_candidate_identifies_the_declaration_it_was_drawn_under). The S3 node that round 8 found without a destination (SEAM-10 per candidate) now has one: CandidatePayload.context (:61) is the key, read back in BC-05-25. Observation, not a MOD-05 defect: governance/S3/facets/F2-gate.md:345 still carries the facet name `draw_without_declaration_in_force_at_record_height_is_refused` while section 5:175 names `test_draw_without_declaration_is_refused`; IR-12 makes section 5 govern and the join is proven below, so this is the SP-1 document class, reported for the record."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Round 8's failing scenario was reconstructed live, not read from the diff. REF-05 on the path that costs: CandidateProposal.context is a required DrawContext (candidate-ledger.ts:49), a nominal type only DrawContextLog.recordDraw mints (draw-context-log.ts:94-115) and only after declarationAt(unit, at) answers a Declaration (:98-103, NoSubject -> refuse('no-declaration'), any other Unknown passed through unchanged). appendCandidate checks the context is this unit's, this condition's and not newer than the append height (:163-166, strict `succeeds`), then from, signature, ceiling (:168-175); every refusal returns before the single append (:188). With a real DeclarationLedger holding nothing for the unit, recordDraw refuses and no context exists (BC-05-23, run under the declared single-test command), and a proposal without a context does not compile: tests/fixtures/facts/candidate-without-context.ts yields exactly TS2345 naming `context` while the positive control compiles (pinned, and I turned it green by mutation M4 below, so the pin is live). F1 S-14 'thereafter never re-read from the catalog' holds: CandidateLedgerInputs (:107-115) declares no declaration reader. SEAM-10 per candidate: the payload records the context's height (:179), and BC-05-25 recovers the declaration by that key after a re-declaration. Everything round 8 found holding still holds: SEAM-02 fold with BOTTOM = noSubject and uncomputable on two (commitment-ledger.ts:111-114); SEAM-03 admission first with its Unknown passed through (:157-158); SEAM-04 ceiling (:174-175); SEAM-19 `from` required at parse (:55, pinned by the clause-map test); SEAM-22 counts never summed (:205-214); R-26 (:222-236); REF-06 on commit (:88) and on every act (CC-6 probe). Error paths: no Unknown is collapsed (draw-context-log.ts:102; candidate-ledger.ts:224, :229, :234). One runtime boundary, stated and not new: the context check reads the object the caller hands over, not the record, so a DrawContext-shaped value forged OUTSIDE src/ binds at runtime; that is the same provenance boundary every ledger registers (IR-35, IR-38, BC-05-6; PC-02), not a MOD-05 rule breach. Thresholds, populations and ratio arithmetic are absent by structure: N/A-by-absence."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Every new mechanism is registered: the candidate binding its draw context, the `context-mismatch` refusal and the strict height edge (IR-58, under owner ruling R-31); a context bound by more than one candidate (IR-59, latent, open to the owner); the relay rule and the library-member limit (IR-60); SEAM-17/18 honoured at MOD-12's append (IR-61). Detector scope statements probed against their SCOPE (R-15) blocks in .k7/wt: act-signatures.mjs - the registered library-member limit is pinned by limit-library-member.ts (asserted [] by the named test), and a COMPOSED claimed form (a public user-declared property typed `Promise<unknown>`) was flagged `actOnLater proposal.later<0> unknown`, so the DECIDES is true where I attacked it. ledger-checks.mjs `paths` - a relay written as a class METHOD and as an arrow const were both decided (`MethodRelay.backfill`, `arrowBackfill` reported as candidate paths), so the new DECIDES holds for the forms it claims. Two adjacent forms it does not claim evaded with test_each_ledger_kind_has_exactly_one_append_path green: (a) a WRAPPING generic helper `wrap<T>(record, payload: T) { return record.append({ author: 'ENGINE', payload }) }` called with a CandidatePayload, and (b) a relay receiving its entry as a DESTRUCTURED member of one parameter (`relay<T>({ record, entry })`), which ownerOfParam (ledger-checks.mjs:440-448) does not resolve because the binding is not a Parameter node. Both are outside the literal DECIDES ('a function passing a parameter ... to RecordPort.append') and neither is in LIMITS (:49-55). By R-15 they are known-issue candidates, reported here and deducted under CC-7 extensibility; if the owner reads 'omits a limit it has' to include adjacent unstated residues this is DR-29's shape a third time and converts to a one-line registration (a limit- fixture each) or a decision extending the relay rule to an append argument BUILT FROM a parameter. IR-59 is also flagged for the owner as a consequence of the chosen shape: nothing bounds how old a bound context may be, so a candidate appended after a re-declaration can bind a context from before it and record the earlier declaration; registered, so not a defect, but the test that would make the question concrete is: declare d1, draw a context, re-declare d2, bind that context to a candidate appended above d2 - which declaration should MOD-09 read for that candidate?"
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit ; npx vitest run   (the declared full suite as its two commands in sequence, on the repository tree: tsc printed no diagnostics, exit 0; vitest 14 files, 148/148 passed, exit 0. The section-5 join re-proven with the declared single-test command: npx vitest run -t \"test_draw_without_declaration_is_refused\" selected exactly 1 case (tests/facts/facts.test.ts:233, REF-05, genuine forbidden inputs: no declaration, another unit's, a later one; nothing appended) and npx vitest run -t \"test_no_act_signature_accepts_diagnostic\" selected exactly 1 case (:170, REF-06, parse-level over the real acts and 14 pinned fixtures). F2's 'no candidate appended' clause, uncased in round 8, is now cased by test_no_candidate_without_a_declaration_in_force (:481) and test_the_bound_context_must_be_this_draws (:514).)",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (stderr: 'rederive: no vectors found in ...\\vectors'. N/A-by-absence: S3 section 6:216 and section 11:316 give MOD-05 no vector; nothing to re-derive by hand, no impl_sha to check.)",
+        "exit_code": 2
+      }
+    },
+    "CC-6": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "All experiments ran in the runner's R-07 worktree .k7/wt at 00a654f (git worktree list), with `npx tsc --noEmit -p .k7/wt` and `npx vitest run --root .k7/wt -t <name>`; the repository was never written. Baseline in the worktree first: tsc clean, 148/148, so every kill below is attributable. MOD-05 owns no hook (S3 section 11:316, N/A-by-absence); its append is the trigger site of HOOK-01/04/05 through injected deciders, and the R-31 closures were attacked directly. KILLS by the named test, mutant tsc-clean in src unless stated: M1 context check deleted (candidate-ledger.ts:164) -> test_the_bound_context_must_be_this_draws red ('another unit's draw context was bound'). M2 context check moved after `from` -> test_refusals_answer_in_order_and_later_deciders_are_not_asked red (malformed-from where context-mismatch was due). M3 candidate records the append height instead of its context's (:179) -> test_a_candidate_identifies_the_declaration_it_was_drawn_under red (declaration not recoverable by key). M4 `context?: DrawContext` asserted past the compiler with `!` -> test_no_candidate_without_a_declaration_in_force red (the without-context fixture compiled: [] not [2345]); src compiled, only tests tripped tsc, so the kill is the test's. M5 ledger-checks.mjs:709 relay fixed point disabled -> test_each_ledger_kind_has_exactly_one_append_path red with violating-generic-relay.ts reporting [] instead of its two paths (read differentially, because my neutralised probe stubs also appear as extra empty keys). M7 COMMIT_GATE.proposalsIn gains 'Difficulty' behind a cast (commitment-ledger.ts:62) -> test_commit_gate_states_obj_31 red, tsc clean - WI-06's pin is live and would catch DG-F1's defeat at the gate descriptor. DIVERGENCE D1 on the real orchestrated path: recordDraw made to mint a context with the draw height as its declaration when none is in force (draw-context-log.ts:99-103) -> test_no_candidate_without_a_declaration_in_force red at its first assertion, so the composite REF-05 guard on the candidate path is falsifiable through the component it depends on. Detector scope (R-15): no evasion inside a stated DECIDES was found (method relay, arrow relay, composed act property all decided); two outside-DECIDES evasions (wrapping relay, destructured-parameter relay) are reported under CC-3. Independence note: round 8's required change enumerated two admissible shapes for REF-05 on the candidate path (read the declaration at the append, or bind a context that did) and left the choice to the owner; R-31 chose binding, and the mechanism (nominal DrawContext in the proposal, context-mismatch, strict height, recorded by height) is the builder's. Likewise round 8 said 'decide or register' for DR-29 and the owner chose decide for paths and register for act-signatures. I did not design the fixes, but I named the admissible space; the owner may want IR-59, a consequence of the chosen shape, examined by someone who did not. Tree integrity: repo `git status --porcelain` = ' M STATE.json' before and after; worktree src/ and tools/ verified byte-identical to the repo with `git diff --no-index --stat` (no output); the only residue is five probe fixtures neutralised to `export {};` under .k7/wt/tests/fixtures (deletion is refused by the sandbox), which the runner deletes with the worktree."
+    },
+    "CC-7": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form (the drift ledger scores per entry, not D1-D6). Object-model fidelity 8: three classes to the Object Writing Standard, clean injection, OBJ-11 now keyed to OBJ-16 under a registered interpretation (IR-58); the candidate still carries unit and condition beside a context that carries them too, a cosmetic redundancy. Axiom coverage 8: every carried rule holds in the running code and REF-05 is pinned at parse and at runtime on both paths; the deduction is IR-59 - the chosen shape leaves the age of a bound context unbounded, a registered latent question rather than a breach. Base-case support 8: BC-05-23..27 written first and watched red against wrong code, every new pin killed by a mutation here, non-empty detector verdicts pinned, no tautological assertion found. Extensibility 7 (WORST): the `paths` relay rule decides the fixture's spelling and its two-level variant, not the class - a wrapping generic helper or a destructuring relay is an unseen second candidate append path with the named test green and nothing in LIMITS names it, so the next module inherits S-01's central claim with a hole its scope statement does not disclose. Code quality: no unused imports, no dead code (COMMIT_GATE is now asserted), no hidden state. MIN = 7: at the floor, not below it; MOD-04 may open on this verdict."
+    }
+  },
+  "drift_score": {
+    "value": 7,
+    "basis": [
+      {
+        "check_id": "CC-3",
+        "finding": "Worst dimension: extensibility. ledger-checks.mjs `paths` (SCOPE :40-55) decides bare-parameter generic relays but not a relay that wraps its parameter in the appended entry (`record.append({ author, payload })` with `payload: T`) nor one receiving its entry by destructuring; both planted in .k7/wt were unseen with test_each_ledger_kind_has_exactly_one_append_path green, and neither is a registered limit. Known-issue candidates by R-15; the next module inherits them unnamed.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-2",
+        "finding": "Axiom coverage: IR-59 (registered latent) - appendCandidate accepts any context not newer than the append height (candidate-ledger.ts:164), so a candidate appended after a re-declaration may bind a context recorded before it and carry the earlier declaration as 'the declaration at draw time'; an owner question about the chosen shape, not a breach.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-1",
+        "finding": "Object-model fidelity / cosmetic: CandidatePayload (candidate-ledger.ts:58-70) repeats unit and condition that its bound context already carries; F2-gate.md:345 still names REF-05's facet test, governed by IR-12 and SP-1.",
+        "deduction": 2
+      }
+    ]
+  },
+  "verdict": "PASS",
+  "blocking": [],
+  "next_action": "Tag k7-pass-9 and record as work items, before MOD-04 opens, the two undecided relay forms (wrapping and destructured, each needing a limit- fixture or a decision) and IR-59's unbounded context age."
+}

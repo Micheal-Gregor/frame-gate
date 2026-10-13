@@ -27,7 +27,7 @@ checks against the tree, in both directions.
 | MOD-03 · IndependenceLedger | src/catalog/independence-ledger.ts | OBJ-06/ODG-FG-06 (R-10) | Appends HUMAN independence acts; reads the one in force at a height | record | NO | BUILT |
 | MOD-05 · CommitmentLedger | src/facts/commitment-ledger.ts | OBJ-12, OBJ-31 | Appends HUMAN commitments; folds the effective commitment per (unit, currency) as of a height | record, invalidations | NO | BUILT |
 | MOD-05 · DrawContextLog | src/facts/draw-context-log.ts | OBJ-16 (R-21..R-24) | Appends draw contexts (declaration read at the draw height, REF-05) and their later resolution labels; reads draws and resolutions as of a height | record, declarations | NO | BUILT |
-| MOD-05 · CandidateLedger | src/facts/candidate-ledger.ts | OBJ-11 (R-18, R-25..R-28) | The one guarded candidate append (admission, from, signature, ceiling - in that order) and the as-of reads by condition, by lineage and as per-currency counts | record, commitments, currencies, independence, admission, signatures, ceiling | NO | BUILT |
+| MOD-05 · CandidateLedger | src/facts/candidate-ledger.ts | OBJ-11 (R-18, R-25..R-28) | The one guarded candidate append (admission, context, from, signature, ceiling - in that order; R-31) and the as-of reads by condition, by lineage and as per-currency counts | record, commitments, currencies, independence, admission, signatures, ceiling | NO | BUILT |
 
 Rows are in build order (S3 section 10), not module-number order.
 

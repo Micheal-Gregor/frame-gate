@@ -3,11 +3,12 @@
 // strict TypeScript - MF-21, MF-22.)
 import { describe, expect, it } from "vitest";
 import { noSubject, refuse, type RecordHeight } from "../src/kernel/index.js";
-import { CurrencyOrder, IndependenceLedger, type Currency, type Unit } from "../src/catalog/index.js";
+import { CurrencyOrder, DeclarationLedger, IndependenceLedger, type Currency, type Unit } from "../src/catalog/index.js";
 import {
   BOTTOM,
   CandidateLedger,
   CommitmentLedger,
+  DrawContextLog,
   type CandidateLedgerInputs,
   type CandidateProposal,
   type InvalidationReader,
@@ -19,13 +20,18 @@ const order = new CurrencyOrder({ currencies: ["c0", "c1"] });
 const [c0, c1] = order.currencies() as readonly [Currency, Currency];
 const never: InvalidationReader = { isInvalidated: () => false };
 
-/** A world where u is licensed independent and has a commitment at c0. */
+/** A world where u is declared, licensed independent, has a commitment at c0, and was drawn. */
 function world(): { inputs: CandidateLedgerInputs; record: TestRecord; at: RecordHeight; proposal: CandidateProposal } {
   const record = inMemoryRecord();
+  const declarations = new DeclarationLedger({ record, levels: ["easy"] });
+  declarations.declare(u, "easy", "HUMAN");
   const commitments = new CommitmentLedger({ record, invalidations: never });
   const independence = new IndependenceLedger({ record });
   independence.declareIndependence(u, true, "HUMAN");
   const k0 = commitments.commit(u, c0, "HUMAN");
+  const h = record.noise();
+  const context = new DrawContextLog({ record, declarations }).recordDraw(u, { colour: "red" }, h, "k", h, "ENGINE");
+  if (!("payload" in context)) throw new Error("setup: the draw was refused");
   const inputs: CandidateLedgerInputs = {
     record,
     commitments,
@@ -35,7 +41,7 @@ function world(): { inputs: CandidateLedgerInputs; record: TestRecord; at: Recor
     signatures: { check: () => "VERIFIED" },
     ceiling: { admitsDraw: () => "WITHIN" },
   };
-  return { inputs, record, at: record.noise(), proposal: { unit: u, currency: c1, condition: "k", seed: "s", from: k0 } };
+  return { inputs, record, at: record.noise(), proposal: { context, unit: u, currency: c1, condition: "k", seed: "s", from: k0 } };
 }
 const bottomAtLeast = (p: CandidateProposal): CandidateProposal => ({ ...p, currency: c0, from: BOTTOM });
 

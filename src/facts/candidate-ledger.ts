@@ -11,21 +11,26 @@
 // Scaffolded by tools/new-object.py, then hand-fixed for strict TypeScript (MF-21).
 //
 // There is exactly ONE way a candidate enters the record (S-01): `appendCandidate`. It
-// asks, in this order, and the first failure answers with nothing appended (R-28):
+// asks, in this order, and the first failure answers with nothing appended (R-28, as
+// amended by R-31):
 //   1. ADMISSION   - MOD-04, injected (R-18). An unreachable draw costs nothing (REF-03):
 //                    no later decider is even asked.
-//   2. FROM        - MOD-05's own check (R-26): `from` IS the effective commitment at the
+//   2. CONTEXT     - the draw this candidate was drawn under (R-31): REF-05 by construction,
+//                    since only `recordDraw` mints a DrawContext and only with a declaration
+//                    in force; it must be this unit's, this condition's, and not newer.
+//   3. FROM        - MOD-05's own check (R-26): `from` IS the effective commitment at the
 //                    currency immediately below, as of the append height; BOTTOM only at
 //                    the least currency of a unit licensed independent then (R-10).
-//   3. SIGNATURE   - MOD-12, injected (R-18): it receives the whole proposal, `from`
+//   4. SIGNATURE   - MOD-12, injected (R-18): it receives the whole proposal, `from`
 //                    included, and digests it under its own encoding (R-27, HOOK-04).
-//   4. CEILING     - MOD-11, injected (R-25): the scope's remaining ceiling (REF-16).
+//   5. CEILING     - MOD-11, injected (R-25): the scope's remaining ceiling (REF-16).
 // No guard sits around this method and no second path exists: a second place where a draw
 // is judged is the removed duplicate the S3 forbids growing back.
-import { height, isUnknown, refuse, type AppendedFact, type RecordHeight, type UnknownValue } from "../kernel/index.js";
+import { height, isUnknown, refuse, succeeds, type AppendedFact, type RecordHeight, type UnknownValue } from "../kernel/index.js";
 import type { Author } from "../ports/index.js";
 import type { Currency, IndependenceAct, Unit } from "../catalog/index.js";
 import type { Commitment, FactRecord } from "./commitment-ledger.js";
+import type { DrawContext } from "./draw-context-log.js";
 
 declare const CANDIDATE: unique symbol;
 
@@ -36,6 +41,12 @@ export const BOTTOM: Bottom = Object.freeze({ kind: "no-subject" } as const);
 
 /** What a caller proposes; `from` is a Commitment or BOTTOM - no other Unknown compiles. */
 export interface CandidateProposal {
+  /**
+   * The draw context this candidate was drawn under (R-31). Only `recordDraw` mints one,
+   * and only with a declaration in force, so REF-05 holds on this path by construction
+   * and the declaration is never re-read from the catalog (F1 S-14).
+   */
+  readonly context: DrawContext;
   readonly unit: Unit;
   readonly currency: Currency;
   /** The condition's identity, uninterpreted here (R-23; MOD-06 defines it). */
@@ -46,6 +57,8 @@ export interface CandidateProposal {
 
 export interface CandidatePayload {
   readonly kind: "candidate";
+  /** The draw context drawn under, by its height (IR-43): SEAM-10's key per candidate. */
+  readonly context: RecordHeight;
   readonly unit: Unit;
   readonly currency: Currency;
   readonly condition: string;
@@ -138,23 +151,32 @@ export class CandidateLedger {
     Object.freeze(this);
   }
 
-  /** The one guarded candidate append (S-01): admission, from, signature, ceiling - in that order (R-28). */
+  /** The one guarded candidate append (S-01): admission, context, from, signature, ceiling - in that order (R-31). */
   appendCandidate(proposal: CandidateProposal, signature: string, at: RecordHeight, author: Author): Candidate | UnknownValue {
     // 1. ADMISSION (MOD-04). An unreachable draw costs nothing: nothing after this is asked.
     const admitted = this.#admission.admit(proposal.unit, proposal.currency, at);
     if (admitted !== "ADMIT") return admitted;
-    // 2. FROM (R-26) - MOD-05's own check, against its own fold.
+    // 2. CONTEXT (R-31) - the draw this candidate was drawn under. Its existence proves a
+    // declaration was in force at the draw (REF-05: only recordDraw mints one); it must be THIS
+    // draw's - this unit, this condition, recorded at or below the append height. The
+    // declaration itself is never re-read here (F1 S-14).
+    const context = proposal.context;
+    if (context.payload.unit !== proposal.unit || context.payload.condition !== proposal.condition || succeeds(context.at, at)) {
+      return refuse("context-mismatch");
+    }
+    // 3. FROM (R-26) - MOD-05's own check, against its own fold.
     const lineage = this.#checkFrom(proposal, at);
     if (lineage !== "WELL-FORMED") return lineage;
-    // 3. SIGNATURE (MOD-12): over the whole proposal, `from` included; MOD-12 digests it (R-27).
+    // 4. SIGNATURE (MOD-12): over the whole proposal, `from` included; MOD-12 digests it (R-27).
     const verified = this.#signatures.check(proposal, signature, at);
     if (verified !== "VERIFIED") return verified;
-    // 4. CEILING (MOD-11, REF-16).
+    // 5. CEILING (MOD-11, REF-16).
     const within = this.#ceiling.admitsDraw(proposal.unit, proposal.currency, at);
     if (within !== "WITHIN") return within;
 
     const payload: CandidatePayload = Object.freeze({
       kind: "candidate",
+      context: proposal.context.at,
       unit: proposal.unit,
       currency: proposal.currency,
       condition: proposal.condition,

@@ -382,3 +382,34 @@ is injected too, so that `from` is checked against the same answer MOD-04 reads.
 > `CandidateLedger` is constructed with its declared inputs (`record`, `commitments`,
 > `currencies`, `independence`, `admission`, `signatures`, `ceiling`) and nothing else. Every
 > operation is called, and each input it reads is varied with the answers asserted to differ.
+
+### MOD-05 fix round (K7 round 8 → R-31)
+
+Written before the change, and watched failing.
+
+**BC-05-23 — REF-05 on the path that costs: no candidate without a draw context, so none
+without a declaration (DR-27, R-31).**
+> `appendCandidate`'s proposal carries the `DrawContext` it was drawn under. A proposal without
+> one does not compile. A context cannot be built outside `DrawContextLog` (BC-05-6 mint), and
+> `recordDraw` mints none when no declaration is in force. With a real `DeclarationLedger`
+> holding nothing for the unit, the draw is refused, there is no context, and no candidate can
+> be appended. The declaration is never re-read on the candidate path (F1 S-14).
+
+**BC-05-24 — the bound context must be this draw's (R-31).**
+> A context for another unit or another condition, or one recorded above the append height,
+> answers `Refuse(context-mismatch)`, and nothing is appended. The candidate records the
+> context by its height.
+
+**BC-05-25 — the record says which declaration a candidate was drawn under (DR-28, SEAM-10).**
+> Take two draw contexts for one (unit, condition), recorded under different declarations, and
+> one candidate drawn under the second. The candidate's context, read by key, names the second
+> declaration.
+
+**BC-05-26 — refusal order, amended (R-31 supersedes BC-05-19's order).**
+> Admission, then context, then `from`, then signature, then ceiling. The first failure answers,
+> and every decider after it is not asked.
+
+**BC-05-27 — OBJ-31 as a value (WI-06).**
+> `COMMIT_GATE` states: the condition is a human act present for (unit, currency); it is closed by
+> `HUMAN_ACT`; its proposals are `Diagnostic` and `Observation`; it records `Commitment`; on
+> failure it refuses with guard `commit-gate`. It is frozen.

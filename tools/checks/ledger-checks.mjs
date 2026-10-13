@@ -38,13 +38,17 @@
  *            Fixtures under tests/fixtures/ledger-discovery/src/<root>/ are judged at
  *            the path they mirror, so each verdict is pinned non-empty too.
  *   paths    DECIDES, per ledger kind, every function in src/ whose RecordPort.append
- *            argument's TYPE carries it - outward through inline closures to the member
+ *            argument's TYPE carries it - outward through inline closures to the member -
+ *            and every function that hands such an argument to a GENERIC RELAY: a
+ *            function passing a parameter whose type carries no kind to RecordPort.append,
+ *            directly or through another relay, found to a fixed point (R-31, DR-29).
  *            (S-01: "exactly one entry point; no alternate, bulk, administrative,
  *            backfill or test path"); the test pins one per kind, for every ledger.
  *            Fixtures under tests/fixtures/ledger-paths/src/<root>/ are judged at the
  *            path they mirror.
- *            LIMITS: an entry whose type carries no kind - typed `unknown` or `any`
- *            (limit-untyped-entry.ts; forge registers the same residue).
+ *            LIMITS: an entry whose type carries no kind at any call - typed `unknown` or
+ *            `any` (limit-untyped-entry.ts; forge registers the same residue); a relay
+ *            reached indirectly, through `.call` / `.apply` (limit-indirect-relay.ts).
  *   sc3      DECIDES: a numeric 2 in any source file of any extension; a comparison of
  *            a Currency collection's length or size to a numeric literal.
  *            LIMITS: cardinality asked by index (limit-cardinality-by-index.ts).
@@ -668,14 +672,55 @@ function nameOfFn(fn, sf) {
   if (fn.parent && ts.isVariableDeclaration(fn.parent) && ts.isIdentifier(fn.parent.name)) return fn.parent.name.text;
   return `<closure:${lineOf(sf, fn)}>`;
 }
-/** Every RecordPort.append in `file` whose argument's TYPE carries a ledger kind: {kind, fn}. */
+/**
+ * GENERIC RELAYS (R-31, DR-29): functions that hand one of their own parameters - typed so it
+ * carries no kind, e.g. `entry: T` - to RecordPort.append, directly or through another relay,
+ * found to a fixed point. Map: declaration -> the parameter indexes it relays. A relay whose
+ * parameter DOES carry a kind is already the path itself, so it is not followed further.
+ */
+const RELAYS = (() => {
+  const relays = new Map();
+  const calls = [];
+  for (const f of [...SRC, ...PATHS]) {
+    const visit = (n) => {
+      if (ts.isCallExpression(n)) calls.push(n);
+      ts.forEachChild(n, visit);
+    };
+    visit(program.getSourceFile(f));
+  }
+  const add = (fn, i) => {
+    const set = relays.get(fn) ?? new Set();
+    if (set.has(i)) return false;
+    relays.set(fn, set.add(i));
+    return true;
+  };
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const n of calls) {
+      const d = declOf(checker.getResolvedSignature(n));
+      for (const i of isPortAppend(d) ? [0] : [...(relays.get(d) ?? [])]) {
+        const arg = n.arguments[i];
+        if (!arg || kindsCarried(checker.getTypeAtLocation(arg)).length > 0) continue;
+        const o = ownerOfParam(arg, enclosingFunction(n));
+        if (o && add(o.fn, o.index)) grew = true;
+      }
+    }
+  }
+  return relays;
+})();
+/** Every append in `file` - direct, or through a relay - whose argument's TYPE carries a ledger kind: {kind, fn}. */
 function pathFindings(file, here) {
   const sf = program.getSourceFile(file);
   const out = [];
   const visit = (n) => {
-    if (ts.isCallExpression(n) && n.arguments[0] && isPortAppend(declOf(checker.getResolvedSignature(n)))) {
-      for (const kind of new Set(kindsCarried(checker.getTypeAtLocation(n.arguments[0])))) {
-        out.push({ kind, fn: nameOfFn(memberOf(n), sf), file: here });
+    if (ts.isCallExpression(n)) {
+      const d = declOf(checker.getResolvedSignature(n));
+      for (const i of isPortAppend(d) ? [0] : [...(RELAYS.get(d) ?? [])]) {
+        const arg = n.arguments[i];
+        if (!arg) continue;
+        for (const kind of new Set(kindsCarried(checker.getTypeAtLocation(arg)))) {
+          out.push({ kind, fn: nameOfFn(memberOf(n), sf), file: here });
+        }
       }
     }
     ts.forEachChild(n, visit);

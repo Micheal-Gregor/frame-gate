@@ -15,6 +15,7 @@ import { isUnknown, noSubject, refuse, uncomputable, type RecordHeight, type Unk
 import { CurrencyOrder, DeclarationLedger, IndependenceLedger, type Currency, type Unit } from "../../src/catalog/index.js";
 import {
   BOTTOM,
+  COMMIT_GATE,
   CandidateLedger,
   CommitmentLedger,
   DrawContextLog,
@@ -189,6 +190,7 @@ describe("BC-05-5 - REF-06: no act signature accepts a diagnostic", () => {
       "conforming-acts.ts": [],
       "limit-call-through-port.ts": [],
       "limit-indirect-call.ts": [],
+      "limit-library-member.ts": [],
       "violating-any.ts": ["actOnAny proposal any"],
       "violating-class-field.ts": ["FieldActs.act proposal unknown"],
       "violating-closure.ts": ["ClosureAct.act proposal unknown"],
@@ -383,7 +385,7 @@ describe("BC-05-13 - draws are read as of a height, per unit", () => {
   });
 });
 
-// ---- slice 3: candidates (OBJ-11), under R-18 and R-25..R-28 -------------------------------
+// ---- slice 3: candidates (OBJ-11), under R-18, R-25..R-28 and R-31 ---------------------------
 
 const [, , c2] = order.currencies() as readonly [Currency, Currency, Currency];
 type Answers = {
@@ -391,9 +393,16 @@ type Answers = {
   readonly signature?: "VERIFIED" | UnknownValue;
   readonly ceiling?: "WITHIN" | UnknownValue;
 };
-/** Real MOD-03/MOD-05 collaborators; stand-ins for MOD-04, MOD-12 and MOD-11 that log being asked. */
+/**
+ * Real MOD-03/MOD-05 collaborators - a declaration for u and for v, a draw-context log over the
+ * same record - and stand-ins for MOD-04, MOD-12 and MOD-11 that log being asked.
+ */
 function candidateWorld(answers: Answers = {}) {
   const record = inMemoryRecord();
+  const declarations = new DeclarationLedger({ record, levels: ["easy", "hard"] });
+  declarations.declare(u, "easy", "HUMAN");
+  declarations.declare(v, "easy", "HUMAN");
+  const draws = new DrawContextLog({ record, declarations });
   const commitments = new CommitmentLedger({ record, invalidations: none });
   const independence = new IndependenceLedger({ record });
   const asked: string[] = [];
@@ -414,10 +423,14 @@ function candidateWorld(answers: Answers = {}) {
     },
     ceiling: { admitsDraw: () => (asked.push("ceiling"), answers.ceiling ?? "WITHIN") },
   });
-  return { record, commitments, independence, ledger, asked, seen };
+  /** Records a draw context for (unit, condition) now: the draw a candidate is drawn under. */
+  const draw = (unit: Unit = u, condition = "cond"): DrawContext =>
+    drawn(draws.recordDraw(unit, features, record.noise(), condition, record.noise(), "ENGINE"));
+  /** A proposal drawn under a fresh context. Build proposals BEFORE taking the append height. */
+  const propose = (currency: Currency, from: CandidateProposal["from"], condition = "cond", unit: Unit = u): CandidateProposal =>
+    ({ context: draw(unit, condition), unit, currency, condition, seed: "seed-1", from });
+  return { record, declarations, draws, commitments, independence, ledger, asked, seen, draw, propose };
 }
-const proposal = (currency: Currency, from: CandidateProposal["from"], condition = "cond", unit = u): CandidateProposal =>
-  ({ unit, currency, condition, seed: "seed-1", from });
 const candidate = (x: Candidate | UnknownValue): Candidate => {
   if (isUnknown(x)) throw new Error(`setup: the candidate answered ${x.kind}`);
   return x;
@@ -429,10 +442,11 @@ const nothingAppendedSince = (record: ReturnType<typeof inMemoryRecord>, h: Reco
 describe("BC-05-15 - one guarded append; an unreachable draw costs nothing (S-01, REF-03)", () => {
   it("test_an_unreachable_draw_appends_nothing_and_asks_no_one_else", () => {
     const unreachable = refuse("unreachable");
-    const { record, commitments, ledger, asked } = candidateWorld({ admission: unreachable });
+    const { record, commitments, ledger, asked, propose } = candidateWorld({ admission: unreachable });
     const k0 = commitments.commit(u, c0, "HUMAN");
+    const p = propose(c1, k0);
     const h = record.noise();
-    expect(ledger.appendCandidate(proposal(c1, k0), "sig", h, "ENGINE"), "MOD-04's refusal was not passed through").toEqual(unreachable);
+    expect(ledger.appendCandidate(p, "sig", h, "ENGINE"), "MOD-04's refusal was not passed through").toEqual(unreachable);
     nothingAppendedSince(record, h);
     expect(asked, "a decider after admission was asked: the draw cost something").toEqual(["admission"]);
   });
@@ -440,7 +454,7 @@ describe("BC-05-15 - one guarded append; an unreachable draw costs nothing (S-01
   it("test_each_ledger_kind_has_exactly_one_append_path", () => {
     // S-01: "exactly one such entry point; no alternate, bulk, administrative, backfill or
     // test path". Resolved by TYPE: every function in src/ whose RecordPort.append carries a
-    // ledger kind, mapped kind -> appenders. One each, for every ledger, not only candidates.
+    // ledger kind - directly or through generic relays (R-31) - mapped kind -> appenders.
     type Path = { kind: string; fn: string; file: string };
     const out = JSON.parse(
       execFileSync(process.execPath, [resolve(repo, "tools/checks/ledger-checks.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }),
@@ -454,9 +468,67 @@ describe("BC-05-15 - one guarded append; an unreachable draw costs nothing (S-01
       "resolution-label": ["DrawContextLog.label"],
     });
     expect(Object.fromEntries(Object.entries(out.paths.fixtures).map(([k, v]) => [k, v.map((x) => `${x.kind} ${x.fn}`).sort()]))).toEqual({
+      "src/facts/limit-indirect-relay.ts": [],
       "src/facts/limit-untyped-entry.ts": [],
       "src/facts/violating-backfill-path.ts": ["candidate CandidateBackfill.backfill", "candidate CandidateBackfill.replay"],
+      "src/facts/violating-generic-relay.ts": ["candidate RelayBackfill.backfill", "candidate RelayBackfill.viaTwoRelays"],
     });
+  });
+});
+
+describe("BC-05-23 - REF-05 on the path that costs: no candidate without a declaration in force (R-31)", () => {
+  it("test_no_candidate_without_a_declaration_in_force", () => {
+    // With a real DeclarationLedger holding NOTHING for the unit, the draw is refused and no
+    // DrawContext exists; a proposal without one does not compile, and none can be minted
+    // outside DrawContextLog (BC-05-6). So no candidate can be appended for that draw.
+    const record = inMemoryRecord();
+    const draws = new DrawContextLog({ record, declarations: new DeclarationLedger({ record, levels: ["easy"] }) });
+    const h = record.noise();
+    expect(isRefusal(draws.recordDraw(u, features, h, "cond", h, "ENGINE"), "no-declaration"), "a draw context was minted with no declaration").toBe(true);
+    const out = JSON.parse(
+      execFileSync(process.execPath, [resolve(repo, "tools/checks/ledger-checks.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }),
+    ) as { fixtures: Record<string, { codes: number[]; messages: string[] }> };
+    const without = out.fixtures["tests/fixtures/facts/candidate-without-context.ts"];
+    expect(without?.codes, "a candidate proposal without a draw context compiled").toEqual([2345]);
+    expect(without?.messages.join(" "), "the refusal at parse is not about the missing context").toContain("context");
+    expect(out.fixtures["tests/fixtures/facts/candidate-with-context.ts"]?.codes).toEqual([]);
+  });
+});
+
+describe("BC-05-24 - the bound context must be this draw's (R-31)", () => {
+  const mismatch = (x: unknown) => isRefusal(x, "context-mismatch");
+
+  it("test_the_bound_context_must_be_this_draws", () => {
+    const { record, commitments, ledger, draw, propose } = candidateWorld();
+    const k0 = commitments.commit(u, c0, "HUMAN");
+    const good = propose(c1, k0, "cond");
+    const otherUnit = { ...good, context: draw(v, "cond") };
+    const otherCondition = { ...good, context: draw(u, "elsewhere") };
+    const h = record.noise();
+    const late = { ...good, context: draw(u, "cond") }; // recorded ABOVE h
+    const h2 = record.noise();
+    expect(mismatch(ledger.appendCandidate(otherUnit, "sig", h, "ENGINE")), "another unit's draw context was bound").toBe(true);
+    expect(mismatch(ledger.appendCandidate(otherCondition, "sig", h, "ENGINE")), "another condition's draw context was bound").toBe(true);
+    expect(mismatch(ledger.appendCandidate(late, "sig", h, "ENGINE")), "a context recorded above the append height was bound").toBe(true);
+    nothingAppendedSince(record, h2);
+    const k = candidate(ledger.appendCandidate(good, "sig", record.noise(), "ENGINE"));
+    expect(k.payload.context).toBe(good.context.at);
+  });
+});
+
+describe("BC-05-25 - the record says which declaration a candidate was drawn under (DR-28, SEAM-10)", () => {
+  it("test_a_candidate_identifies_the_declaration_it_was_drawn_under", () => {
+    const { record, declarations, draws, commitments, ledger, draw } = candidateWorld();
+    const k0 = commitments.commit(u, c0, "HUMAN");
+    const d1 = declarations.declare(u, "easy", "HUMAN");
+    const first = draw(u, "cond");
+    const d2 = declarations.declare(u, "hard", "HUMAN");
+    const second = draw(u, "cond");
+    if (isUnknown(d1) || isUnknown(d2)) throw new Error("setup");
+    expect(first.payload.declaration).toBe(d1.at);
+    const k = candidate(ledger.appendCandidate({ context: second, unit: u, currency: c1, condition: "cond", seed: "s", from: k0 }, "sig", record.noise(), "ENGINE"));
+    const boundTo = draws.drawsAsOf(u, k.at).find((c) => c.at === k.payload.context);
+    expect(boundTo?.payload.declaration, "the candidate's declaration is not recoverable by key").toBe(d2.at);
   });
 });
 
@@ -464,18 +536,23 @@ describe("BC-05-16 - from is the effective commitment immediately below, as of t
   const malformed = (x: unknown) => isRefusal(x, "malformed-from");
 
   it("test_from_must_be_the_effective_commitment_immediately_below", () => {
-    const { record, commitments, ledger } = candidateWorld();
+    const { record, commitments, ledger, propose } = candidateWorld();
     const k0 = commitments.commit(u, c0, "HUMAN");
     const other = commitments.commit(v, c0, "HUMAN");
     const k1 = commitments.commit(u, c1, "HUMAN");
+    const bottomAbove = propose(c1, BOTTOM);
+    const othersFrom = propose(c1, other);
+    const twoBelow = propose(c2, k0);
     const h = record.noise();
-    expect(malformed(ledger.appendCandidate(proposal(c1, BOTTOM), "sig", h, "ENGINE")), "BOTTOM above the least currency").toBe(true);
-    expect(malformed(ledger.appendCandidate(proposal(c1, other), "sig", h, "ENGINE")), "another unit's commitment").toBe(true);
-    expect(malformed(ledger.appendCandidate(proposal(c2, k0), "sig", h, "ENGINE")), "a commitment two currencies below").toBe(true);
+    expect(malformed(ledger.appendCandidate(bottomAbove, "sig", h, "ENGINE")), "BOTTOM above the least currency").toBe(true);
+    expect(malformed(ledger.appendCandidate(othersFrom, "sig", h, "ENGINE")), "another unit's commitment").toBe(true);
+    expect(malformed(ledger.appendCandidate(twoBelow, "sig", h, "ENGINE")), "a commitment two currencies below").toBe(true);
     nothingAppendedSince(record, h);
+    const atC1 = propose(c1, k0);
+    const atC2 = propose(c2, k1);
     const h2 = record.noise();
-    expect(candidate(ledger.appendCandidate(proposal(c1, k0), "sig", h2, "ENGINE")).payload.from).toBe(k0.at);
-    expect(candidate(ledger.appendCandidate(proposal(c2, k1), "sig", h2, "ENGINE")).payload.from).toBe(k1.at);
+    expect(candidate(ledger.appendCandidate(atC1, "sig", h2, "ENGINE")).payload.from).toBe(k0.at);
+    expect(candidate(ledger.appendCandidate(atC2, "sig", h2, "ENGINE")).payload.from).toBe(k1.at);
   });
 
   it("test_a_superseded_commitment_is_not_a_from", () => {
@@ -493,42 +570,48 @@ describe("BC-05-16 - from is the effective commitment immediately below, as of t
       signatures: { check: () => "VERIFIED" },
       ceiling: { admitsDraw: () => "WITHIN" },
     });
+    const fromA = w.propose(c1, a);
+    const fromB = w.propose(c1, b);
     const h = w.record.noise();
-    expect(malformed(ledger.appendCandidate(proposal(c1, a), "sig", h, "ENGINE")), "a superseded commitment was a from").toBe(true);
-    expect(candidate(ledger.appendCandidate(proposal(c1, b), "sig", h, "ENGINE")).payload.from).toBe(b.at);
+    expect(malformed(ledger.appendCandidate(fromA, "sig", h, "ENGINE")), "a superseded commitment was a from").toBe(true);
+    expect(candidate(ledger.appendCandidate(fromB, "sig", h, "ENGINE")).payload.from).toBe(b.at);
   });
 
   it("test_bottom_from_needs_an_independence_license_at_the_least_currency", () => {
-    const { record, commitments, independence, ledger } = candidateWorld();
+    const { record, commitments, independence, ledger, propose } = candidateWorld();
+    const atLeast = propose(c0, BOTTOM);
     const h = record.noise();
-    expect(malformed(ledger.appendCandidate(proposal(c0, BOTTOM), "sig", h, "ENGINE")), "BOTTOM with no independence act").toBe(true);
+    expect(malformed(ledger.appendCandidate(atLeast, "sig", h, "ENGINE")), "BOTTOM with no independence act").toBe(true);
     const licensed = independence.declareIndependence(u, true, "HUMAN");
-    expect(malformed(ledger.appendCandidate(proposal(c0, BOTTOM), "sig", h, "ENGINE")), "a license made after the height counted").toBe(true);
-    expect(candidate(ledger.appendCandidate(proposal(c0, BOTTOM), "sig", licensed.at, "ENGINE")).payload.from).toEqual(noSubject());
+    expect(malformed(ledger.appendCandidate(atLeast, "sig", h, "ENGINE")), "a license made after the height counted").toBe(true);
+    expect(candidate(ledger.appendCandidate(atLeast, "sig", licensed.at, "ENGINE")).payload.from).toEqual(noSubject());
     // While LICENSED: a Commitment is still no `from` at the least currency - nothing lies below
     // it, and the license must not mask that (battery 12, before the run).
     const k0 = commitments.commit(u, c0, "HUMAN");
-    expect(malformed(ledger.appendCandidate(proposal(c0, k0), "sig", k0.at, "ENGINE")), "a commitment as from at the least currency, licensed").toBe(true);
+    const commitmentAtLeast = propose(c0, k0);
+    expect(malformed(ledger.appendCandidate(commitmentAtLeast, "sig", record.noise(), "ENGINE")), "a commitment as from at the least currency, licensed").toBe(true);
     const withdrawn = independence.declareIndependence(u, false, "HUMAN");
-    expect(malformed(ledger.appendCandidate(proposal(c0, BOTTOM), "sig", withdrawn.at, "ENGINE")), "a withdrawn license counted").toBe(true);
+    expect(malformed(ledger.appendCandidate(atLeast, "sig", withdrawn.at, "ENGINE")), "a withdrawn license counted").toBe(true);
   });
 
   it("test_an_unanswerable_from_check_passes_the_unknown_through", () => {
     // IR-55: only "none" is the malformation; R-20's uncomputable is passed through, not
     // collapsed into malformed-from.
-    const { record, commitments, ledger } = candidateWorld();
+    const { record, commitments, ledger, propose } = candidateWorld();
     const k0 = commitments.commit(u, c0, "HUMAN");
     commitments.commit(u, c0, "HUMAN");
+    const p = propose(c1, k0);
     const h = record.noise();
-    expect(ledger.appendCandidate(proposal(c1, k0), "sig", h, "ENGINE")).toEqual(uncomputable("two-effective-commitments"));
+    expect(ledger.appendCandidate(p, "sig", h, "ENGINE")).toEqual(uncomputable("two-effective-commitments"));
     nothingAppendedSince(record, h);
   });
 
   it("test_a_bottom_from_is_recorded_as_a_fresh_value", () => {
-    const { independence, ledger } = candidateWorld();
-    const licensed = independence.declareIndependence(u, true, "HUMAN");
+    const { record, independence, ledger, propose } = candidateWorld();
+    independence.declareIndependence(u, true, "HUMAN");
     const mine: { kind: "no-subject" } = { kind: "no-subject" };
-    const k = candidate(ledger.appendCandidate(proposal(c0, mine), "sig", licensed.at, "ENGINE"));
+    const p = propose(c0, mine);
+    const k = candidate(ledger.appendCandidate(p, "sig", record.noise(), "ENGINE"));
     (mine as { kind: string }).kind = "latent";
     expect(ledger.candidatesAsOf(u, c0, "cond", k.at)[0]?.payload.from, "the caller's later change reached the record").toEqual(noSubject());
   });
@@ -537,57 +620,63 @@ describe("BC-05-16 - from is the effective commitment immediately below, as of t
 describe("BC-05-17/18 - the signature and the ceiling are asked on the same path (R-25, R-27)", () => {
   it("test_the_signature_check_sees_the_whole_proposal_and_its_refusal_passes_through", () => {
     const bad = refuse("malformed-signature");
-    const { record, commitments, ledger, seen } = candidateWorld({ signature: bad });
+    const { record, commitments, ledger, seen, propose } = candidateWorld({ signature: bad });
     const k0 = commitments.commit(u, c0, "HUMAN");
+    const p = propose(c1, k0);
     const h = record.noise();
-    const p = proposal(c1, k0);
     expect(ledger.appendCandidate(p, "sig-7", h, "ENGINE")).toEqual(bad);
     nothingAppendedSince(record, h);
-    expect(seen.proposal, "MOD-12 did not see the whole proposal, from included").toEqual(p);
+    expect(seen.proposal, "MOD-12 did not see the whole proposal, from and context included").toEqual(p);
     expect(seen.signature).toBe("sig-7");
   });
 
   it("test_draw_beyond_the_scope_ceiling_is_refused_on_the_append_path", () => {
     const exceeded = refuse("scope-exceeded");
-    const { record, commitments, ledger } = candidateWorld({ ceiling: exceeded });
+    const { record, commitments, ledger, propose } = candidateWorld({ ceiling: exceeded });
     const k0 = commitments.commit(u, c0, "HUMAN");
+    const p = propose(c1, k0);
     const h = record.noise();
-    expect(ledger.appendCandidate(proposal(c1, k0), "sig", h, "ENGINE")).toEqual(exceeded);
+    expect(ledger.appendCandidate(p, "sig", h, "ENGINE")).toEqual(exceeded);
     nothingAppendedSince(record, h);
   });
 });
 
-describe("BC-05-19 - refusal order: admission, from, signature, ceiling (R-28)", () => {
+describe("BC-05-26 - refusal order: admission, context, from, signature, ceiling (R-31 amends R-28)", () => {
   it("test_refusals_answer_in_order_and_later_deciders_are_not_asked", () => {
     const A = refuse("unreachable");
     const S = refuse("malformed-signature");
     const C = refuse("scope-exceeded");
-    const cases: ReadonlyArray<readonly [Answers, boolean, UnknownValue, readonly string[]]> = [
-      [{ admission: A, signature: S, ceiling: C }, true, A, ["admission"]],
-      [{ signature: S, ceiling: C }, true, refuse("malformed-from"), ["admission"]],
-      [{ signature: S, ceiling: C }, false, S, ["admission", "signature"]],
-      [{ ceiling: C }, false, C, ["admission", "signature", "ceiling"]],
+    type Bad = "none" | "from" | "context-and-from";
+    const cases: ReadonlyArray<readonly [Answers, Bad, UnknownValue, readonly string[]]> = [
+      [{ admission: A, signature: S, ceiling: C }, "context-and-from", A, ["admission"]],
+      [{ signature: S, ceiling: C }, "context-and-from", refuse("context-mismatch"), ["admission"]],
+      [{ signature: S, ceiling: C }, "from", refuse("malformed-from"), ["admission"]],
+      [{ signature: S, ceiling: C }, "none", S, ["admission", "signature"]],
+      [{ ceiling: C }, "none", C, ["admission", "signature", "ceiling"]],
     ];
-    for (const [answers, badFrom, expected, order_] of cases) {
-      const { record, commitments, ledger, asked } = candidateWorld(answers);
+    for (const [answers, bad, expected, order_] of cases) {
+      const { record, commitments, ledger, asked, draw, propose } = candidateWorld(answers);
       const k0 = commitments.commit(u, c0, "HUMAN");
+      const base = propose(c1, bad === "none" ? k0 : BOTTOM);
+      const p = bad === "context-and-from" ? { ...base, context: draw(v, "cond") } : base;
       const h = record.noise();
-      expect(ledger.appendCandidate(proposal(c1, badFrom ? BOTTOM : k0), "sig", h, "ENGINE")).toEqual(expected);
+      expect(ledger.appendCandidate(p, "sig", h, "ENGINE")).toEqual(expected);
       expect(asked, `asked out of order for ${JSON.stringify(expected)}`).toEqual(order_);
       nothingAppendedSince(record, h);
     }
   });
 });
 
-describe("BC-05-20 - a good candidate is appended once, carrying its lineage", () => {
+describe("BC-05-20 - a good candidate is appended once, carrying its lineage and its draw", () => {
   it("test_a_good_candidate_is_appended_once_with_its_lineage", () => {
-    const { record, commitments, ledger, asked } = candidateWorld();
+    const { record, commitments, ledger, asked, propose } = candidateWorld();
     const k0 = commitments.commit(u, c0, "HUMAN");
+    const p = propose(c1, k0, "cond-9");
     const h = record.noise();
-    const k = candidate(ledger.appendCandidate(proposal(c1, k0, "cond-9"), "sig-1", h, "DIRECTOR"));
+    const k = candidate(ledger.appendCandidate(p, "sig-1", h, "DIRECTOR"));
     expect(Number(k.at)).toBe(Number(h) + 1);
     expect(k.author).toBe("DIRECTOR");
-    expect(k.payload).toEqual({ kind: "candidate", unit: u, currency: c1, condition: "cond-9", seed: "seed-1", from: k0.at, signature: "sig-1" });
+    expect(k.payload).toEqual({ kind: "candidate", context: p.context.at, unit: u, currency: c1, condition: "cond-9", seed: "seed-1", from: k0.at, signature: "sig-1" });
     expect(asked).toEqual(["admission", "signature", "ceiling"]);
   });
 });
@@ -598,12 +687,17 @@ describe("BC-05-21 - candidates are read as of a height (S-09, SEAM-22, lineage)
     w.independence.declareIndependence(u, true, "HUMAN");
     w.independence.declareIndependence(v, true, "HUMAN");
     const k0 = w.commitments.commit(u, c0, "HUMAN");
+    const pa = w.propose(c1, k0, "x");
+    const pb = w.propose(c1, k0, "y");
+    const pc = w.propose(c0, BOTTOM, "x");
+    const pd = w.propose(c0, BOTTOM, "x", v);
+    const pe = w.propose(c1, k0, "x");
     const h = w.record.noise();
-    const a = candidate(w.ledger.appendCandidate(proposal(c1, k0, "x"), "s", h, "ENGINE"));
-    const b = candidate(w.ledger.appendCandidate(proposal(c1, k0, "y"), "s", h, "ENGINE"));
-    const c = candidate(w.ledger.appendCandidate(proposal(c0, BOTTOM, "x"), "s", h, "ENGINE"));
-    const d = candidate(w.ledger.appendCandidate(proposal(c0, BOTTOM, "x", v), "s", h, "ENGINE"));
-    const e = candidate(w.ledger.appendCandidate(proposal(c1, k0, "x"), "s", h, "ENGINE"));
+    const a = candidate(w.ledger.appendCandidate(pa, "s", h, "ENGINE"));
+    const b = candidate(w.ledger.appendCandidate(pb, "s", h, "ENGINE"));
+    const c = candidate(w.ledger.appendCandidate(pc, "s", h, "ENGINE"));
+    const d = candidate(w.ledger.appendCandidate(pd, "s", h, "ENGINE"));
+    const e = candidate(w.ledger.appendCandidate(pe, "s", h, "ENGINE"));
     return { ...w, k0, a, b, c, d, e };
   }
 
@@ -635,3 +729,15 @@ describe("BC-05-21 - candidates are read as of a height (S-09, SEAM-22, lineage)
   });
 });
 
+describe("BC-05-27 - OBJ-31 as a value (WI-06)", () => {
+  it("test_commit_gate_states_obj_31", () => {
+    expect(COMMIT_GATE).toEqual({
+      condition: "a human act is present for (unit, currency)",
+      closedBy: "HUMAN_ACT",
+      proposalsIn: ["Diagnostic", "Observation"],
+      records: "Commitment",
+      onFail: { kind: "refuse", guard: "commit-gate" },
+    });
+    expect(Object.isFrozen(COMMIT_GATE) && Object.isFrozen(COMMIT_GATE.proposalsIn) && Object.isFrozen(COMMIT_GATE.onFail), "OBJ-31's descriptor can be edited").toBe(true);
+  });
+});

@@ -24,7 +24,10 @@
  *         LIMITS: a call through an interface or injected port signature is not
  *         followed - the implementation is judged where it is declared
  *         (limit-call-through-port.ts); an indirect call (`.call`, `.apply`,
- *         `Reflect.apply`) is not followed (limit-indirect-call.ts).
+ *         `Reflect.apply`) is not followed (limit-indirect-call.ts); members declared
+ *         in LIBRARY types are not recursed, so an act taking `Error` (`cause: unknown`)
+ *         or `PromiseSettledResult` (`reason: any`) is not flagged (limit-library-member.ts;
+ *         K7 round 8, DR-29, registered by R-31).
  *         BOUNDARY: RecordPort.append is the substrate, generic over its entry, not
  *         an act - a diagnostic written straight to the record is a forge, and the
  *         forge rule gains the Diagnostic brand when MOD-10 builds it. A primitive

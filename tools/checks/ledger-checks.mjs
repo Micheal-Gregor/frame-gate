@@ -22,7 +22,9 @@
  *            not HUMAN acts, IR-47, IR-48); a height handed to a
  *            read (directly or through any wrapper in the root) that is not the
  *            caller's parameter; a class field that is not readonly or whose TYPE is
- *            writable (record port excepted).
+ *            writable (record port excepted). KNOWN, unpinned (R-61, DR-44): a "read" is an
+ *            enumerated declaration list, so MOD-06's injected readers (CandidateReads,
+ *            DrawReads, RevisionReads, AcceptanceReads, ChainLineage) are not reads to it.
  *            LIMITS: module-level mutable state read by a class (limit-module-state/);
  *            the caller's own choice of height is the caller's (as-of semantics).
  *   reach    DECIDES, in src/ outside src/advisory/ (MOD-13), a call to or a reference

@@ -162,6 +162,9 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-88 | **A PromptRevision is HUMAN-authored at parse** (F3: "the operator's rejection"), like a commitment. It records only the new condition; the condition it ends is the one in force before it, read from the record | benign | MOD-06 |
 | IR-89 | **HOOK-06's refusal is `refuse("mixed-conditions")`**: an assembly whose members do not all carry the queried identity answers it, and no Sample is formed | benign | MOD-06 |
 | IR-90 | **LineageReader gains `candidatesAsOf(at)` and `commitmentsAsOf(at)`** (MOD-05 work item, record-only, unbranded, R-41's reader). The catalog has no list of units, so Chains walks the record's commitments. The least currency is "no predecessors", never compared by name (S-13) | benign | MOD-05, MOD-06 |
+| IR-91 | **`samplesFor` reads a unit's identities off its OBJ-16 draw contexts** (a MOD-05 read F3 does not list for MOD-06). It is exhaustive: every candidate binds a context of its own condition (R-31's context check), so no candidate's identity is missed | benign | MOD-06, MOD-05 |
+| IR-92 | **IR-47 revisited: MOD-05's ResolutionLabel `REVISION` stays an independent per-draw label.** OBJ-17 PromptRevision is the condition change, and neither reads nor writes the label | benign | MOD-05, MOD-06 |
+| IR-93 | **A condition identity writes every number exactly** (DR-43): NaN, Infinity, -Infinity and -0 are distinct, and a number differs from its text | benign | MOD-06 |
 
 ## Log
 

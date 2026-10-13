@@ -48,7 +48,7 @@ describe("Samples in isolation", () => {
     const later = w.record.noise();
     const noLineage = { ...w.parts, lineage: { acceptedBy: quiet.acceptedBy } };
     expect(new Samples(noLineage).of(u, c1, setup).compute(later)).not.toEqual(new Samples({ ...noLineage, revisions: { revisions: quiet.revisions } }).of(u, c1, setup).compute(later));
-    void k;
+    expect(k.payload.candidate).toBe(s.at);
   });
 
   it("samplesFor answers differently when draws differs", () => {

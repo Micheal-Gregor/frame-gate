@@ -12,10 +12,11 @@
 // commitment IN FORCE accepted a candidate derived from u's commitment (R-40, R-41, R-54), so a
 // unit has one predecessor at most. A chain is each maximal path from a head (a unit nobody
 // precedes) to an end. Chains are reported; nothing here schedules, blocks or gates on them.
-import { asProjection, isUnknown, type Projection, type RecordHeight } from "../kernel/index.js";
+// The fold's Unknown surfaces as ITSELF (DR-42, RC-1): only NoSubject means "no edge"; two
+// commitments in force, or the order's refusal, is the answer, never an empty set of chains.
+import { asProjection, isUnknown, type Projection, type RecordHeight, type UnknownValue } from "../kernel/index.js";
 import type { Currency, Unit } from "../catalog/index.js";
 import type { AcceptingCommitment, CommitmentFold, LineageCandidate } from "../facts/index.js";
-import type { UnknownValue } from "../kernel/index.js";
 
 /** One inheritance: `to`'s least-currency commitment accepted `candidate`, derived from `from`'s commitment `donor`. */
 export interface ChainEdge {
@@ -64,14 +65,17 @@ export class Chains {
     Object.freeze(this);
   }
 
-  /** OBJ-27, every chain as of a height: a Projection, joined through the kernel. */
-  chains(): Projection<readonly Chain[]> {
+  /** OBJ-27, every chain as of a height - or the Unknown the fold answered: a Projection, joined through the kernel. */
+  chains(): Projection<readonly Chain[] | UnknownValue> {
     // R-35: joined through the kernel, by name. Computed per read; nothing is kept.
-    return asProjection("Chain", (at: RecordHeight) => this.#paths(this.#edges(at)));
+    return asProjection("Chain", (at: RecordHeight) => {
+      const edges = this.#edges(at);
+      return isUnknown(edges) ? edges : this.#paths(edges);
+    });
   }
 
   /** Every inheritance edge as of `at`, in the order the successors' commitments were appended. */
-  #edges(at: RecordHeight): readonly ChainEdge[] {
+  #edges(at: RecordHeight): readonly ChainEdge[] | UnknownValue {
     const commitments = this.#lineage.commitmentsAsOf(at);
     const commitmentAt = new Map(commitments.map((k) => [k.at, k]));
     const candidateAt = new Map(this.#lineage.candidatesAsOf(at).map((c) => [c.at, c]));
@@ -79,10 +83,16 @@ export class Chains {
     for (const k of commitments) {
       // The least currency is the one with nothing below it (S-13: by the order, never by name).
       const below = this.#currencies.predecessors(k.currency);
-      if (isUnknown(below) || below.at(-1) !== undefined) continue;
-      // R-54: only the commitment the fold answers - in force, alone - makes an edge.
+      if (isUnknown(below)) return below;
+      if (below.at(-1) !== undefined) continue;
+      // R-54: only the commitment the fold answers - in force, alone - makes an edge. NoSubject is
+      // "none in force"; any other Unknown is the answer (DR-42).
       const inForce = this.#commitments.effectiveCommitment(k.unit, k.currency, at);
-      if (isUnknown(inForce) || inForce.at !== k.at) continue;
+      if (isUnknown(inForce)) {
+        if (inForce.kind === "no-subject") continue;
+        return inForce;
+      }
+      if (inForce.at !== k.at) continue;
       const accepted = candidateAt.get(k.candidate);
       if (accepted === undefined || typeof accepted.from !== "number") continue; // independent: no edge in
       const donor = commitmentAt.get(accepted.from);

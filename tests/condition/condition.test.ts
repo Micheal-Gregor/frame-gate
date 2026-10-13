@@ -7,11 +7,11 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { isUnknown, noSubject, refuse, type RecordHeight } from "../../src/kernel/index.js";
+import { compare, isUnknown, noSubject, refuse, uncomputable, type RecordHeight } from "../../src/kernel/index.js";
 import type { DigestPort } from "../../src/ports/index.js";
 import type { Currency, Unit } from "../../src/catalog/index.js";
 import { LineageReader, type Candidate, type CandidateProposal, type Commitment } from "../../src/facts/index.js";
-import { Chains, ConditionIdentities, RevisionLog, Samples, conditionOf, type ConditionIdentity, type SampleValue } from "../../src/condition/index.js";
+import { Chains, ConditionIdentities, RevisionLog, Samples, conditionOf, type Chain, type ConditionIdentity, type SampleValue } from "../../src/condition/index.js";
 import { factWorld } from "../support/fact-world.js";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -55,7 +55,13 @@ function world() {
     return s;
   };
   const invalidate = (k: Commitment) => void invalidated.add(Number(k.at));
-  return { ...w, c0, c1, c2, lineage, revisions, samples, chains, draw, sample, invalidate };
+  /** The chains as of `at`, which must be computable here. */
+  const chainsAt = (at: RecordHeight): readonly Chain[] => {
+    const c = chains.chains().compute(at);
+    if (isUnknown(c)) throw new Error(`the chains answered ${c.kind}`);
+    return c;
+  };
+  return { ...w, c0, c1, c2, lineage, revisions, samples, chains, draw, sample, invalidate, chainsAt };
 }
 
 describe("BC-06-1 - OBJ-07: a condition identity is the digest of the WHOLE draw-input set (R-52)", () => {
@@ -77,6 +83,10 @@ describe("BC-06-1 - OBJ-07: a condition identity is the digest of the WHOLE draw
     for (const [what, changed] of Object.entries(variants)) {
       expect(ids.sameCondition(ids.identityOf(changed as typeof inputs), id), `a ${what} change kept the identity`).toBe(false);
     }
+    // Numbers are kept EXACTLY (DR-43, R-61): none of these collapse, as JSON would collapse them.
+    const numbers = [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, 0, -0, 1];
+    expect(new Set(numbers.map((n) => ids.identityOf({ strength: n }))).size, "two numbers gave one identity").toBe(numbers.length);
+    expect(ids.identityOf({ strength: 1 }), "a number and its text gave one identity").not.toBe(ids.identityOf({ strength: "1" }));
     // The digest is the PORT's (OBJ-39): MOD-06 chooses none.
     const other = new ConditionIdentities({ digests: { digest: (b) => `other:${sha256.digest(b)}` } });
     expect(other.identityOf(inputs)).toBe(`other:${id}`);
@@ -128,7 +138,7 @@ describe("BC-06-3 - REF-10 (INV-SAMPLE): membership is identity, never a union (
     const all = w.samples.samplesFor(u, w.c1, h);
     if (isUnknown(all)) throw new Error("samplesFor answered Unknown");
     expect(all.map((s) => s.condition)).toEqual([X, Y]);
-    expect(all.flatMap((s) => s.members.map((m) => m.at)).sort((a, b) => a - b)).toEqual([x1.at, y1.at, x2.at]);
+    expect(all.flatMap((s) => s.members.map((m) => m.at)).sort(compare)).toEqual([x1.at, y1.at, x2.at]);
     // OBJ-19 joins the family once, in MOD-06 (R-35, the S3 partition).
     expect(joins().filter((j) => j.startsWith("Sample "))).toEqual(["Sample src/condition/samples.ts"]);
   });
@@ -202,23 +212,37 @@ describe("BC-06-6 - OBJ-27: chains are maximal paths of inheriting units (R-54)"
     const ky = inherit(y, kv);
     w.commitAt(z, w.c0); // independent, and nobody inherits from it: in no chain
     const h = w.record.noise();
-    const chains = w.chains.chains();
-    const now = chains.compute(h);
+    const now = w.chainsAt(h);
     expect(now.map((c) => c.units), "the maximal paths").toEqual([[u, v, y], [u, x]]);
     expect(now[0]?.edges).toEqual([
       { from: u, to: v, donor: ku.at, candidate: kv.payload.candidate, commitment: kv.at },
       { from: v, to: y, donor: kv.at, candidate: ky.payload.candidate, commitment: ky.at },
     ]);
-    expect(chains.compute(beforeY).map((c) => c.units), "a chain was read above its height").toEqual([[u, v], [u, x]]);
+    expect(w.chainsAt(beforeY).map((c) => c.units), "a chain was read above its height").toEqual([[u, v], [u, x]]);
     // Only a commitment IN FORCE makes an edge: x's, once invalidated, does not.
     w.invalidate(kx);
-    expect(chains.compute(w.record.noise()).map((c) => c.units)).toEqual([[u, v, y]]);
+    expect(w.chainsAt(w.record.noise()).map((c) => c.units)).toEqual([[u, v, y]]);
     // An inheritance from another of the donor's currencies counts too (R-40).
     const ku1 = w.commitAt(u, w.c1);
     inherit(x, ku1);
-    expect(chains.compute(w.record.noise()).map((c) => c.units)).toEqual([[u, v, y], [u, x]]);
+    expect(w.chainsAt(w.record.noise()).map((c) => c.units)).toEqual([[u, v, y], [u, x]]);
     // OBJ-27 joins the family once, in MOD-06.
     expect(joins().filter((j) => j.startsWith("Chain "))).toEqual(["Chain src/condition/chains.ts"]);
+  });
+});
+
+describe("DR-42 - Chains surface the fold's Unknown as itself (R-61; RC-1, IR-42)", () => {
+  it("test_chains_surface_the_folds_unknown", () => {
+    const w = world();
+    const ku = w.commitAt(u, w.c0);
+    // v holds TWO least-currency commitments in force: the fold answers uncomputable (R-20), and
+    // so must the chains - never "no edge".
+    w.commitments.commit(w.draw(v, w.c0, "inherit", ku), "HUMAN");
+    w.commitments.commit(w.draw(v, w.c0, "inherit", ku), "HUMAN");
+    expect(w.chains.chains().compute(w.record.noise())).toEqual(uncomputable("two-effective-commitments"));
+    // The order's own refusal passes through too.
+    const refusing = new Chains({ lineage: w.lineage, commitments: w.commitments, currencies: { predecessors: () => refuse("not-in-order") } });
+    expect(refusing.chains().compute(w.record.noise())).toEqual(refuse("not-in-order"));
   });
 });
 

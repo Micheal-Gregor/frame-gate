@@ -40,7 +40,7 @@ describe("Chains in isolation", () => {
     const w = world();
     const h = w.record.noise();
     const real = new Chains(w.parts).chains().compute(h);
-    expect(real.map((c) => c.units)).toEqual([[u, v]]);
+    expect("kind" in real ? real : real.map((c) => c.units)).toEqual([[u, v]]);
     expect(new Chains({ ...w.parts, lineage: new LineageReader({ record: inMemoryRecord() }) }).chains().compute(h)).not.toEqual(real);
     expect(new Chains({ ...w.parts, commitments: { effectiveCommitment: () => ({ kind: "no-subject" }) } }).chains().compute(h)).not.toEqual(real);
     expect(new Chains({ ...w.parts, currencies: { predecessors: () => [c0] } }).chains().compute(h)).not.toEqual(real);

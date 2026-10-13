@@ -10,7 +10,8 @@
 //
 // OBJ-07 (R-52). An identity is the digest, through the pinned DigestPort, of a canonical
 // encoding of the WHOLE draw-input set the caller gives. Canonical means only that object keys
-// are sorted: no component is dropped, trimmed or normalized, so a changed cited reference IS a
+// are sorted, and every number is written exactly - NaN, the infinities and -0 included, which JSON
+// would collapse (DR-43): no component is dropped, trimmed or normalized, so a changed cited reference IS a
 // condition change, and a component added later partitions by construction (J2, AE-6).
 // Comparison is exact string equality: no tolerance, no near-match.
 import type { DigestPort } from "../ports/index.js";
@@ -66,6 +67,7 @@ export class ConditionIdentities {
       const record = value as { readonly [component: string]: DrawInput };
       return { record: Object.keys(record).sort().map((k) => [k, this.#canonical(record[k] as DrawInput)]) };
     }
+    if (typeof value === "number") return { number: Object.is(value, -0) ? "-0" : String(value) };
     return value;
   }
 }

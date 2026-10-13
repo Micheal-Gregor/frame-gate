@@ -961,3 +961,28 @@ On `6de9daa`; restores verified.
 
 **12 / 12.** Schema records `INSTRUMENTS/battery-records/MOD-10-round-27.json` (manifest `sha256:ad98f3fd…`) and `MOD-05-round-27.json` (manifest `sha256:acfd124d…`), each handed to battery_complete@1.
 
+## Round 28, first pass — MOD-11 and MOD-05 (R-78) on `4d8b3bf`: H2 and H3 SURVIVED
+
+On `4d8b3bf`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| H1 | MOD-11: REF-16: the (N+1)th draw is refused - remaining must be above zero | KILLED (test) | `test_draw_beyond_scope_ceiling_is_refused` |
+| H2 | MOD-11: R-77: a superseded scope admits no draw | SURVIVED | `test_draw_beyond_scope_ceiling_is_refused` |
+| H3 | MOD-11: HOOK-05: a draw is charged only to its own unit's scope | SURVIVED | `test_draw_beyond_scope_ceiling_is_refused` |
+| H4 | MOD-11: R-78: draws recorded under a scope are charged against it | KILLED (test) | `test_draw_beyond_scope_ceiling_is_refused` |
+| H5 | MOD-11: R-78 (R-25 amended): a candidate is its draw's scope's currency | KILLED (test) | `test_a_candidate_is_its_draws_scopes` |
+| H6 | MOD-11: REF-15: a stop condition while θ = ⊥ is Refuse(no-bar) | KILLED (test) | `test_stop_condition_without_bar_is_refused` |
+| H7 | MOD-11: R-79 / AE-05: with none requested, the stop member does not exist | KILLED (test) | `test_stop_condition_without_bar_is_refused` |
+| H8 | MOD-11: I-5: hasStopCondition reads the member's presence | KILLED (test) | `test_stop_condition_without_bar_is_refused` |
+| H9 | MOD-11: R-81: a Scope is authorized only from a form of the same height | KILLED (test) | `test_authorization_without_ratio_is_refused` |
+| H10 | MOD-11: IR-123: a ceiling below one is malformed | KILLED (test) | `test_governing_scope_and_remaining` |
+| H11 | MOD-11: R-77 / I-2: the governing scope is the latest appended | KILLED (test) | `test_governing_scope_and_remaining` |
+| H12 | MOD-11: REF-18: the ratio's arity is the currency set, zeros included | KILLED (test) | `test_ratio_as_quotient_is_malformed` |
+| H13 | MOD-11: HOOK-09: with no ratio there is no form | KILLED (test) | `build answers differently when ratio differs` |
+| F1 | MOD-05: R-78 / HOOK-05: the draw asks the scope gate before anything is recorded | KILLED (test) | `test_draw_beyond_scope_ceiling_is_refused` |
+| F2 | MOD-05: R-78: the candidate append checks its DRAW's scope | KILLED (test) | `test_a_candidate_is_its_draws_scopes` |
+| F3 | MOD-05: R-78: drawsUnder charges only the draws recorded under that scope | KILLED (test) | `test_draw_beyond_scope_ceiling_is_refused` |
+
+**14 / 16.** H2 is a test gap: BC-11-1's superseded scope was also spent, so it was refused either way. H3 is an EQUIVALENT mutant: `admitsDraw` reads the governing scope by the drawing unit, so another unit's scope never matches it, and the explicit unit check was redundant. Fix: H2 pinned test-first (a superseded scope with remaining admits nothing), the redundant clause removed, and the round re-run in full. The schema records from this pass are not receipted.
+

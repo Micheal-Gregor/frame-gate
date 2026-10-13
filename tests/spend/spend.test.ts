@@ -101,10 +101,14 @@ describe("BC-11-1 - REF-16 / HOOK-05 / R-77 / R-78: the draw itself is gated, an
     const s2 = scope(w.authorize(u, w.c0, 1));
     expect(w.dispatch(u, s.at), "a superseded scope admitted a draw").toEqual(refuse("scope-exceeded"));
     expect(w.gate.remaining(u, w.c0, w.record.noise()), "a remainder carried over").toBe(1);
-    expect(isUnknown(w.dispatch(u, s2.at))).toBe(false);
+    // Superseded with something LEFT: still no draw - expiry is supersession, not exhaustion (battery 28, H2).
+    const s3 = scope(w.authorize(u, w.c0, 4));
+    expect(w.dispatch(u, s2.at), "a superseded scope with remaining admitted a draw").toEqual(refuse("scope-exceeded"));
+    expect(isUnknown(w.dispatch(u, s3.at))).toBe(false);
+    expect(w.gate.remaining(u, w.c0, w.record.noise())).toBe(3);
     // No draw without a governing scope of THIS unit.
     w.declarations.declare(v, "easy", "HUMAN");
-    expect(w.dispatch(v, s2.at), "a draw charged to another unit's scope").toEqual(refuse("scope-exceeded"));
+    expect(w.dispatch(v, s3.at), "a draw charged to another unit's scope").toEqual(refuse("scope-exceeded"));
   });
 });
 

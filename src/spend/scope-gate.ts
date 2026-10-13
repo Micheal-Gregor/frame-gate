@@ -63,10 +63,11 @@ export class ScopeGate {
 
   /** HOOK-05 @before-draw (R-78): MOD-05's draw asks this before anything is recorded. */
   admitsDraw(unit: Unit, scope: RecordHeight, at: RecordHeight): "WITHIN" | UnknownValue {
-    // HOOK-05: the named scope is this unit's, it governs its (unit, currency), and something remains.
-    // Every failure of that condition is the hook's one refusal.
+    // HOOK-05: the named scope governs THIS unit at its currency, and something remains. The governing
+    // read is by the drawing unit, so another unit's scope never matches it. Every failure of that
+    // condition is the hook's one refusal.
     const named = this.#scopes.scopeAt(scope, at);
-    if (isUnknown(named) || named.payload.unit !== unit) return refuse("scope-exceeded");
+    if (isUnknown(named)) return refuse("scope-exceeded");
     const governing = this.#scopes.governing(unit, named.payload.currency, at);
     if (isUnknown(governing) || governing.at !== named.at) return refuse("scope-exceeded");
     return this.#left(named, at) > 0 ? "WITHIN" : refuse("scope-exceeded");

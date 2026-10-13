@@ -690,3 +690,34 @@ silently, and each dies on its pin. J16 re-creates DR-36's collision for a DIFFE
 J17 renames a §5 test away to nothing; the new rule-based test catches both, which a test fixing
 only REF-03's title would not.
 
+## Round 18 — MOD-12 slice A: the MOD-05 work items (R-40, R-41)
+
+Run on committed tree `8bb9a69` with the round-5 discipline: every restore was verified against
+HEAD, and the tree was clean after the run. Before the run, the sweep on slice A's own claims
+(MF-30) found four that were unpinned, and pinned each: inheritance agreed BY HEIGHT, while a
+successor is in force; an uncomputable donor passed through on the inheritance branch; a
+look-alike candidate does not compile (`commit-a-look-alike.ts`, TS2345 on the brand); the
+reader reads what the fold reads (a forged acceptance is not read). L4, L5 and L11 would have
+SURVIVED without those pins.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| L1 | inheritance: the own-unit check dropped | KILLED (test) | `test_an_inherited_from_must_be_another_units_commitment_in_force` |
+| L2 | inheritance: 'own' decided by the (unit, currency) pair, not the unit | KILLED (test) | `test_an_inherited_from_must_be_another_units_commitment_in_force` |
+| L3 | inheritance: the fold not asked - the caller's commitment trusted | KILLED (test) | `test_an_inherited_from_must_be_another_units_commitment_in_force` |
+| L4 | inheritance: in force, but not agreed BY HEIGHT | KILLED (test) | `test_an_inherited_from_must_be_another_units_commitment_in_force` |
+| L5 | inheritance: an uncomputable donor collapsed into malformed-from | KILLED (test) | `test_an_unanswerable_from_check_passes_the_unknown_through` |
+| L6 | inheritance removed (R-26 as first built) | KILLED (test) +tsc | `test_a_least_currency_candidate_may_inherit_from_another_units_commitment` |
+| L7 | inheritance: the fold asked at the CANDIDATE's currency, not the donor's | KILLED (test) | `test_a_least_currency_candidate_may_inherit_from_another_units_commitment` |
+| L8 | commit records the candidate's draw context, not the candidate | KILLED (test) | `test_each_commit_appends_exactly_one_entry` |
+| L9 | recognizer: a commitment naming no candidate read (R-41 clause dropped) | KILLED (test) | `test_only_the_ledgers_own_human_entries_count` |
+| L10 | recognizer: a non-HUMAN entry read as a commitment | KILLED (test) | `test_only_the_ledgers_own_human_entries_count` |
+| L11 | reader: a second, looser commitment recognizer - no HUMAN clause (IR-76's divergence) | KILLED (test) | `test_the_lineage_reader_walks_derived_from_and_accepted_by` |
+| L12 | reader: heights off by one (position, not position + 1) | KILLED (test) | `test_the_lineage_reader_walks_derived_from_and_accepted_by` |
+| L13 | reader: derivedFrom matches every candidate that has a commitment as its from | KILLED (test) | `test_the_lineage_reader_walks_derived_from_and_accepted_by` |
+| L14 | reader: the record slot not checked at construction (OS-1) | KILLED (test) | `LineageReader in isolation` |
+
+**Fourteen of fourteen killed on the first pass.** L6 also fails `tsc`, and the test kills it.
+L11 is IR-76's divergence: a reader with its own looser recognizer. Only the pin added in the
+sweep kills it.
+

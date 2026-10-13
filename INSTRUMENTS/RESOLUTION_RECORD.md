@@ -50,6 +50,9 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-40 inheritance: may a least-currency candidate derive from ANOTHER unit's commitment? (F3 OBJ-27 vs R-26) | **ACCEPTED 2026-10-13** (owner, live gate) | YES (amends R-26): at the least currency `from` is BOTTOM (licensed independent, R-10) or ANOTHER unit's commitment in force as of the append height (F3's inheritance relation). IR-53 is answered from F3; the SP-2 addendum is withdrawn. MOD-05 work item |
 | R-41 a commitment names the candidate it accepts (F4 Accepted; S-07; SEAM-11) | **ACCEPTED 2026-10-13** (owner, live gate) | `commit(candidate, "HUMAN")`: unit and currency come from the candidate, recorded by height; Accepted is read by key, never inferred. MOD-05 also gains a record-only lineage reader (derived-from, accepted-by), so MOD-12 reads lineage without the fold (no construction cycle). MOD-05 work item |
 | R-42 what an invalidation does to the commitments downstream in its scope (OBJ-28) | **ACCEPTED 2026-10-13** (owner, live gate) | SUPERSEDED WITH IT: one HUMAN approval of the displayed scope invalidates K and every commitment that accepted a candidate in K's scope (derived, not appended one by one); the invalidation reader answers true for all of them; MOD-09 moves all their candidates to PassedOver |
+| R-43 what a candidate's signature IS (OBJ-32; no credential, no signer port) | **ACCEPTED 2026-10-13** (owner, live gate) | The DIGEST of its material, through the pinned OBJ-39 DigestPort; the material structurally includes the lineage digest of its `from` commitment. Verification recomputes and compares. What is unforgeable is the BINDING (VEC-05). MOD-12 offers the proposer the one way to form a signature |
+| R-44 the refusal for a signature that does not match its recomputed material | **ACCEPTED 2026-10-13** (owner, live gate) | `Refuse(malformed-signature)`, OBJ-32's single ON_FAIL. Omitting the lineage stays a parse error (REF-04); a mismatch is the runtime face of the same guard. No new refusal name |
+| R-45 what a BOTTOM-from candidate's signature covers in place of a lineage digest | **ACCEPTED 2026-10-13** (owner, live gate) | A typed BOTTOM lineage marker. The material's lineage is required at parse and is EITHER a lineage digest (minted only by MOD-12, from a Commitment) OR the marker, so a BOTTOM-signed candidate cannot be replayed as a derived one, nor the reverse |
 
 ---
 
@@ -907,4 +910,31 @@ the one invalidation, as of the height its scope was derived and displayed, not 
 one. MOD-12's invalidation reader answers true for all of them, so reachability above them
 refuses. The invalidated set MOD-09 reads holds all of them, and their candidates move
 Accepted → PassedOver.
+
+## R-43 · A candidate's signature is the digest of its material
+
+**Owner, 2026-10-13, live gate.** OBJ-32 requires a candidate's signature to cover the digest of the
+commitment it derives from. The system owns no credential (S3 "What this system does"), and the
+ports OBJ-35..OBJ-39 name no signer. **Ruling.** A signature is the digest, through the pinned
+OBJ-39 DigestPort, of the candidate's MATERIAL. The material is the whole proposal plus its lineage:
+the digest of the `from` commitment (R-27: MOD-12 computes it, under its own encoding). Verification
+recomputes the digest from the proposal and compares. What is unforgeable is the binding: a
+signature formed over one lineage cannot validate against another (VEC-05; F2's "re-approving a
+different commitment would leave an old signature still validating"). MOD-12 offers the proposer
+the one way to form a signature, so no second encoding exists.
+
+## R-44 · A mismatched signature is malformed-signature
+
+**Owner, 2026-10-13, live gate.** **Ruling.** A signature that does not equal the digest recomputed
+from the proposal answers `Refuse(malformed-signature)`, OBJ-32's single ON_FAIL, and nothing is
+appended (MOD-05's order, R-31). OMITTING the lineage stays a parse error (REF-04): the material
+type requires it. A mismatch is the same guard at runtime. No new refusal name is minted.
+
+## R-45 · A BOTTOM-from candidate's signature covers a typed BOTTOM marker
+
+**Owner, 2026-10-13, live gate.** An independent unit's least-currency candidate derives from
+nothing (R-10, R-40). **Ruling.** The material's lineage is required at parse and is EITHER a
+lineage digest, a type minted only by MOD-12 from a Commitment, OR a typed BOTTOM marker. The
+signature then covers "derives from nothing". A BOTTOM-signed candidate cannot be replayed as
+derived, nor the reverse, and no bytes are invented to hash for a value that names nothing.
 

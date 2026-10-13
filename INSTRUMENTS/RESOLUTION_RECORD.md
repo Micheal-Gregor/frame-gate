@@ -39,6 +39,9 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-29 the reviewer model for K7 round 8 (MOD-05) | **ACCEPTED 2026-10-12** (owner, live gate) | Fable 5.1, as round 7 (R-13): a different model from the builder (Opus 5.5) keeps the review distinct in model as well as process. `reviewer_command` unchanged |
 | R-30 IR-53: a unit with no independence act cannot draw at the least currency | **ACCEPTED 2026-10-12** (owner, live gate) | Keep the built behaviour (the S3 and R-10 read literally) and route the question upstream as an addendum to SP-2; no code change |
 | R-31 K7 round 8 triage (MOD-05 RETURN, drift 5): the fix round | **ACCEPTED 2026-10-12** (owner, live gate) | DR-27/28: the candidate BINDS its draw context (REF-05 by construction; S-14's never-re-read; the candidate-to-context key); R-28's order becomes admission → context → from → signature → ceiling. DR-29: `paths` DECIDES appends through generic relays; act-signatures REGISTERS open members of library types as a limit. WI-06: COMMIT_GATE pinned by a test |
+| R-32 WI-07: the relay forms `paths` does not see | **ACCEPTED 2026-10-13** (owner, live gate) | DECIDE the wrapped relay (a helper building the entry from its own type-parameter-typed parameter); REGISTER the destructured relay as a limit with a `limit-` fixture |
+| R-33 WI-08 / IR-59: may a draw context be bound twice? | **ACCEPTED 2026-10-13** (owner, live gate) | One draw, one candidate: a context already bound by a candidate as of the append height refuses `context-spent` (an as-of read; no catalog re-read). An unused old context may still be bound: its declaration IS the draw's |
+| R-34 how MOD-04's refusal names the unit, currency and cheapest BOTTOM predecessor | **ACCEPTED 2026-10-13** (owner, live gate) | In the witness set: the gate answers MOD-05 `refuse("unreachable")` (SEAM-03's shape); ONE evaluation returns the verdict with the predecessor witness set and the cheapest BOTTOM currency. The kernel is unchanged |
 
 ---
 
@@ -742,4 +745,35 @@ allows one builder fix round and one re-check. **Rulings for the fix round:**
 
 The re-check (round 9) runs with the `reviewer_command` unchanged: Fable 5.1, as in round 8
 (R-29).
+
+## R-32 · WI-07: decide the wrapped relay, register the destructured one
+
+**Owner, 2026-10-13, live gate.** K7 round 9 found two relay forms that `paths` misses. In a
+WRAPPED relay, the helper builds the entry, as `record.append({ author, payload })` with
+`payload: T`. In a DESTRUCTURED relay, the entry arrives as a destructured parameter. A
+wrapped-relay backfill in `src/` would escape even the exact per-kind map. **Ruling.** `paths`
+follows the wrapped form: an append argument that is built from a parameter of the relay counts
+as relaying that parameter. The destructured form is registered as a limit, pinned by a
+`limit-` fixture.
+
+## R-33 · WI-08: one draw, one candidate
+
+**Owner, 2026-10-13, live gate.** IR-59 noted that a candidate may bind any context that is not
+newer than its append height, so a context can be reused, or bound after a re-declaration.
+**Ruling.** A draw context binds at most one candidate. `appendCandidate` refuses
+`context-spent` when a candidate bound to that context is in force as of the append height. That
+is a read of MOD-05's own record at a height, not a re-read of the catalog (F1 S-14). An unused
+older context may still be bound: the draw IS the context, so the declaration it recorded is the
+draw's by definition. IR-59 is answered.
+
+## R-34 · MOD-04 names a refusal in its witness set, not in the kernel
+
+**Owner, 2026-10-13, live gate.** F2 OBJ-29 asks that `Refuse(unreachable)` name the unit, the
+currency, and the cheapest currency whose effective commitment was BOTTOM (S1 PC-5). The kernel's
+closed `refuse` member carries only `guard`, and MOD-01's gate is closed. **Ruling.** Toward
+MOD-05 the gate answers SEAM-03's shape, `"ADMIT"` or `refuse("unreachable")`. ONE evaluation
+returns the verdict together with the predecessor witness set: each strictly cheaper currency's
+effective commitment or BOTTOM, and the cheapest currency that is not a commitment. That is the
+attributable content of the refusal, derived from the same evaluation, never a second one (F2).
+The kernel is unchanged.
 

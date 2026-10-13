@@ -194,6 +194,8 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-116 | **ODG-FG-04 at MOD-10:** the undischargeable-ABSENT bound is not carried by WithheldReason. The dispersion axis reads MOD-08, whose membership rule counts an ABSENT component as contributing nothing whether or not it is dischargeable. So a withheld axis whose members are permanently ABSENT still names a discharge ("three members scored ..."). Making that bound visible needs MOD-08 or MOD-09 to expose it, and stays open (IR-96, IR-109) | latent | MOD-10 (ODG-FG-04) |
 | IR-117 | **VEC-04 is COMPUTED for rows 2 and 4 and carries rows 1 and 3 as deferred rows** (both need a present θ: AE-5). This is IR-110's shape | benign | MOD-10 |
 | IR-118 | **Building a module voids every upstream receipt (framework report).** The manifest gives a test to every module whose files it imports, and folds each dependency's content into a module's digest. So MOD-10's integration tests changed the content of MOD-01..09 and MOD-12, and their battery, k7, owner-triage and full-review receipts now read NO_SUBJECT. Workaround: each round receipts only its own scope (round 27: MOD-10 and MOD-05). Earlier gates stand on their tags, verdicts and rulings | latent | all built modules (RD-27, RD-28) |
+| IR-119 | **REF-06's brand rule reaches only the branded whole (K7 round 17).** An act may still take a `DiagnosticAxis`, a `WithheldReason`, `readonly WithheldReason[]` or a `Pick` of the value, because each is an unbranded part. R-76 extended the rule to the Diagnostic brand and no further. So no act in src takes one today, but nothing mechanical keeps it that way; it is held by review | latent | MOD-05 (REF-06), MOD-10 |
+| IR-120 | **A spread copy of a DiagnosticValue keeps its brand outside the mint rule's claim (PC-07; K7 round 17).** `{ ...d, withheld: [] }` compiles as a DiagnosticValue and is made outside MOD-10, because the brand is an enumerable own symbol, as DR-37's spread-copied commitment was. The mint rule decides assertions, `any`-flow, generic launders and guards, not spreads. A diagnostic stripped of its withheld entries is the defect PC-07 names, and no invariant reaches it | latent | MOD-10 (PC-07) |
 
 ## Log
 
@@ -654,3 +656,13 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   - `Threshold` is hand-listed in the mint rule, and VEC-02's deferred row is outside rederive's sight (IR-106, IR-110).
 
 - **2026-10-13 — MOD-10 `diagnostic/` built (R-72..R-76).** Tests were written first and watched red against typed stubs (16 / 311), including MOD-05's REF-06 test and REF-01's mint test, both red until R-76's brand rule and the BRANDS entry landed. One test was corrected after the red run: BC-10-7 had broken the location source while θ = ⊥, where the centre is by design never read (SEAM-13). It now meets the broken source under a bar. VEC-04 rows 2 and 4 are computed from the implementation. 311 / 311.
+
+- **2026-10-13 — K7 round 17 (MOD-10 and MOD-05, DIFF; Fable 5.1): PASS, drift 7.** The k7 receipts for MOD-10 and MOD-05 are ACCEPT.
+  - MOD-10 was reviewed as a DIFF from round 7's `(all)` base (IR-103). Every MOD-10 file is new, so the diff is the whole module. `--full` is all-or-nothing and would have made MOD-05 FULL against R-76, so there is no full-review receipt for MOD-10.
+  - The registers the verdict asked for are IR-119 (the brand rule reaches only the whole), IR-120 (a spread copy keeps the brand) and the LineageReader object-model row (IR-90's two reads).
+  - Non-blocking deductions, left as they are:
+    - BRANDS is hand-listed;
+    - VEC-04's deferred rows are outside rederive's sight (IR-117);
+    - the first broken read wins in sequence (IR-114);
+    - the discharge strings are builder prose;
+    - two probes are unpinned.

@@ -44,6 +44,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-34 how MOD-04's refusal names the unit, currency and cheapest BOTTOM predecessor | **ACCEPTED 2026-10-13** (owner, live gate) | In the witness set: the gate answers MOD-05 `refuse("unreachable")` (SEAM-03's shape); ONE evaluation returns the verdict with the predecessor witness set and the cheapest BOTTOM currency. The kernel is unchanged |
 | R-35 how a listed member joins the Projection family (MOD-04 is the first) | **ACCEPTED 2026-10-13** (owner, live gate) | The kernel mints it: MOD-01 gains one ADDITIVE export, `asProjection(member, compute)`, with `member` typed by the ten-name list. It is a join, not a predicate. A detector pins each member joined at most once, only in the module the S3 partition assigns, and never in `advisory/`. MOD-01 work item WI-10 |
 | R-36 how golden vectors are computed and re-derived (VEC-01 first) | **ACCEPTED 2026-10-13** (owner, live gate) | A harness in tools/: `rederive_invoke` becomes `node --import tsx tools/vectors/run.ts {vector_id} {entry} {input_file}`. The entry stays the implementing file (VEC-01: `src/reachability/reachability.ts`), so impl_sha pins the fold. The harness reads the input and calls the real implementation, and src/ names no external (REF-02) |
+| R-37 K7 round 10's scope and reviewer | **ACCEPTED 2026-10-13** (owner, live gate) | Modules MOD-04, MOD-05 and MOD-01: the new module plus every work item since `k7-pass-9` (WI-07, WI-08 in MOD-05; WI-10 in MOD-01). Reviewer Fable 5.1, as rounds 8-9; `reviewer_command` unchanged |
 
 ---
 
@@ -814,4 +815,13 @@ For VEC-01, the vector's module is the object-model row `MOD-04 · Reachability`
 derives from, reads the input, builds the fixture record, calls the real implementation and
 prints only the encoded output. This is a change to a declared command K7 runs for CC-5, so it
 takes effect from this record (RD-15).
+
+## R-37 · K7 round 10 reviews MOD-04 with the work items, on Fable 5.1
+
+**Owner, 2026-10-13, live gate.** Round 10 is MOD-04's gate. Since `k7-pass-9`, three work items
+have landed on closed modules: WI-07 and WI-08 in MOD-05, and WI-10 in MOD-01. **Ruling.** The
+round's scope is MOD-04, MOD-05 and MOD-01 (`--modules MOD-04,MOD-05,MOD-01`), so every line
+changed since the last PASS gets a reviewer. R-35 already said WI-10 is reviewed with MOD-04.
+The reviewer stays Fable 5.1, as in rounds 8 and 9. This is recorded before the round runs
+(RD-15).
 

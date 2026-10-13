@@ -10,8 +10,8 @@
   "k7_round": 8,
   "last_gate_tag": "closed-by-owner-7",
   "seal_tag": "",
-  "next_action": "MOD-05 gate PASSED (K7 round 9, drift 7) on 00a654f. Owner: tag k7-pass-9 on 00a654f, push. Before MOD-04 opens: dispose WI-07 (two relay forms) and WI-08 (IR-59 context age). Then MOD-04 against the real fold, honouring IR-42.",
+  "next_action": "MOD-04 BUILT (178/178, VEC-01 re-derived, battery 15 21/21). K7 round 10 running on MOD-04, MOD-05, MOD-01 (R-37, Fable 5.1). PASS -> owner tags k7-pass-10 and pushes; then MOD-12 lineage / MOD-06 condition.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T00:26:50+00:00",
+  "updated_at": "2026-10-13T02:43:57+00:00",
   "updated_by": "manual"
 }

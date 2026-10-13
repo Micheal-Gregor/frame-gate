@@ -714,3 +714,15 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 - **BC-09-9** VEC-02 rows 1-3, VEC-06 and VEC-07 are computed from MOD-09 by the harness and re-derived; VEC-02 row 4 is not computed (AE-5 open, R-69).
 
 **Watched failing (MOD-09):** against typed stubs, 17 / 295 red (BC-09-1..9 and every operation case of both isolation tests), `tsc` clean. After: 295 / 295.
+
+## MOD-10 `diagnostic/` (R-72..R-76; written before the module, watched failing; one line each, R-50)
+
+- **BC-10-1** VEC-04 / axis independence: across the four availability combinations, each absent axis has exactly one withheld entry naming it, with a cause and a discharge; there are none when both axes are present. No axis is filled from the other, and none reads as zero.
+- **BC-10-2** R-73: the dispersion axis is MOD-08's sample SD with the n of scored members behind it. Below three it is withheld with Undetermined(AE-3) as itself; in a sample closed by a revision it is withheld with NoSubject (R-65).
+- **BC-10-3** R-74: the location axis is "meets" when μ ≥ θ (equality meets) and "below" when μ < θ, carrying μ and the bar whole. With θ = ⊥ it is withheld, with the bar's no-bar as its cause and the bar's discharge.
+- **BC-10-4** R-72: the sample read holds the unit's most recent candidate at that currency, for one component. With nothing drawn at that pair the diagnostic is NoSubject.
+- **BC-10-5** R-75: the bar is read at the level in force at the height, so a re-declaration moves the diagnostic to the new level's bar.
+- **BC-10-6** REF-06 / SEAM-14 / R-76: no act accepts a diagnostic. An act parameter carrying the Diagnostic brand, in any position, is flagged, and src has none. A commit succeeds while its diagnostic has both axes withheld (MWE step 7).
+- **BC-10-7** An absence (NoSubject, Undetermined) withholds its own axis only. Any other Unknown from a source is the diagnostic's answer. Diagnostic joins the family once, in MOD-10, and a DiagnosticValue minted outside MOD-10 is flagged.
+- **BC-10-8** VEC-04 is computed from MOD-10 and re-derived. Its (absent, absent) row reproduces MWE step 6: a sample of one and both populations empty, so no axis and two withheld entries, with AE-5 never engaged. The rows needing a present θ are carried deferred (AE-5).
+

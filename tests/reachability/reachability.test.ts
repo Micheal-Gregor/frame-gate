@@ -53,7 +53,7 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
     expect(gate.evaluate(u, c2, h), "re-evaluation at the same height disagreed").toEqual(e);
   });
 
-  it("test_draw_without_cheaper_commitment_is_refused_on_the_orchestrated_path", () => {
+  it("test_an_unreachable_draw_is_refused_on_the_orchestrated_path", () => {
     // REF-03's row on the path that costs: MOD-05's one append with this gate injected - no
     // candidate created, no cost incurred (no later decider asked), and the refusal attributable.
     const { record, commitments, gate } = world();
@@ -243,6 +243,11 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
       "src/facts/conforming-one-fold-read.ts": [],
       "src/facts/limit-helper-verdict.ts": [],
       "src/facts/limit-recursive-fold.ts": [],
+      "src/facts/limit-user-iteration-helper.ts": [],
+      "src/facts/violating-bound-reader.ts": ["second-reachability-check"],
+      "src/facts/violating-factory-reader.ts": ["second-reachability-check"],
+      "src/facts/violating-method-reference.ts": ["second-reachability-check"],
+      "src/facts/violating-nullable-helper.ts": ["second-reachability-check"],
       "src/facts/violating-closure-reader.ts": ["second-reachability-check"],
       "src/facts/violating-every-callback.ts": ["second-reachability-check"],
       "src/facts/violating-helper-by-reference.ts": ["second-reachability-check"],
@@ -262,9 +267,14 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
     expect(out.branch.fixtures).toEqual({
       "src/reachability/conforming-destructured-data.ts": [],
       "src/reachability/conforming-lookup-equality.ts": [],
+      "src/reachability/conforming-widened-data.ts": [],
       "src/reachability/limit-class-field-least.ts": [],
+      "src/reachability/limit-rest-then-index.ts": [],
       "src/reachability/limit-set-membership.ts": [],
       "src/reachability/violating-at-member.ts": ["currency-branch"],
+      "src/reachability/violating-binding-hop.ts": ["currency-branch"],
+      "src/reachability/violating-computed-key.ts": ["currency-branch"],
+      "src/reachability/violating-const-key.ts": ["currency-branch"],
       "src/reachability/violating-destructured-hop.ts": ["currency-branch"],
       "src/reachability/violating-destructured-least.ts": ["currency-branch"],
       "src/reachability/violating-destructured-object-key.ts": ["currency-branch"],
@@ -272,7 +282,9 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
       "src/reachability/violating-least-branch.ts": ["currency-branch"],
       "src/reachability/violating-literal-branch.ts": ["currency-branch"],
       "src/reachability/violating-one-hop.ts": ["currency-branch"],
+      "src/reachability/violating-string-key.ts": ["currency-branch"],
       "src/reachability/violating-switch.ts": ["currency-branch"],
+      "src/reachability/violating-widened.ts": Array.from({ length: 8 }, () => "currency-branch"),
     });
   });
 });

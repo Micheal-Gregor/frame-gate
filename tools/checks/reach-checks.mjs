@@ -9,30 +9,38 @@
  *             Commitment brand and which takes a RecordHeight - made inside an ITERATION: a
  *             loop statement, or a callback handed to a library Array / ReadonlyArray /
  *             ArrayConstructor (`Array.from`) / Set / ReadonlySet / Map / ReadonlyMap method
- *             (resolved, not named; R-38). And through HELPERS (R-38): a function returning a
- *             boolean or a commitment that contains a read - or a call to such a helper, to a
- *             fixed point - is a reader, and a reader called inside an iteration, or handed to
- *             an iteration method by reference, is a second check. One read outside an
- *             iteration (MOD-05's `from` check) is not a fold over the order. Fixtures under
+ *             (resolved, not named; R-38). And through HELPERS (R-38, R-39): a function whose
+ *             result is boolean (nullish allowed) or a commitment, and that contains a read -
+ *             or a call to such a helper, to a fixed point - is a READER. A reader called
+ *             inside an iteration is a second check; so is a reader HANDED to an iteration
+ *             method in any spelling, decided by the argument's TYPE: an identifier, a method
+ *             reference, a factory's result, or `.bind` of a reader - whichever call signature
+ *             it carries is declared by a reader. One read outside an iteration (MOD-05's
+ *             `from` check) is not a fold over the order. Fixtures under
  *             tests/fixtures/reach-sole-site/src/<root>/ are judged at the path they mirror.
  *             LIMITS: a fold written as recursion over the predecessor list
- *             (limit-recursive-fold.ts); a read-wrapping helper whose result is neither a
- *             boolean nor a commitment (limit-helper-verdict.ts).
- *   branch    "No per-currency branch" (S-13: no branch on currency identity). DECIDES, in
- *             src/: an equality comparison (`===`, `!==`, `==`, `!=`) or a `case` of a
- *             `switch` on a Currency, whose other side is a PARTICULAR member of the order: a
- *             string literal (through `as`, `satisfies`, parentheses or `!`), a zero-parameter
- *             call returning a Currency (the least), a member picked by POSITION from the
- *             LOADED ORDER - an element access or `.at(...)` with a literal index, or a binding
- *             element of an array (or numeric-keyed object) destructuring, of a zero-parameter
- *             call returning the Currency collection or of a `const` one hop from one (R-38,
- *             DR-30) - or a `const` initialised by any of those (one hop). Currencies taken
- *             from DATA (a parameter, a payload field) are compared as data: never particular.
- *             Fixtures under tests/fixtures/reach-branch/src/<root>/.
+ *             (limit-recursive-fold.ts); a read-wrapping helper whose result is neither boolean
+ *             nor a commitment (limit-helper-verdict.ts); a reader called from a USER-written
+ *             iteration helper (limit-user-iteration-helper.ts; R-39).
+ *   branch    "No per-currency branch" (S-13: no branch on currency identity). The MEANING:
+ *             a currency compared to a PARTICULAR member of the order. DECIDES, in src/, an
+ *             equality comparison (`===`, `!==`, `==`, `!=`) or a `case` of a `switch`, whose
+ *             one side is a CURRENCY - bare, or widened by `as`, `satisfies`, angle brackets,
+ *             `String(c)`, a template `${c}`, `.toString()` or `.valueOf()` (R-39) - and whose
+ *             other side is particular: a string literal; a zero-parameter call returning a
+ *             Currency (the least); or a member picked by POSITION from the LOADED ORDER (a
+ *             zero-parameter call returning the Currency collection, or a `const` one hop from
+ *             one) - by index, by `.at(literal)`, by array destructuring, or by object
+ *             destructuring whose key RESOLVES to a numeric position (`0`, `"0"`, `[0]`, a
+ *             numeric `const`; R-39). A destructuring IS the pick, not a hop; one `const`
+ *             re-binding of any of those is the one hop. Currencies taken from DATA (a
+ *             parameter, a payload field) are compared as data: never particular. Fixtures
+ *             under tests/fixtures/reach-branch/src/<root>/.
  *             LIMITS: a particular member reached through a collection's membership test,
  *             e.g. `new Set([order.least()]).has(c)` (limit-set-membership.ts); a class FIELD
- *             holding a particular member (limit-class-field-least.ts; R-38); more than one
- *             hop of `const`.
+ *             holding a particular member (limit-class-field-least.ts; R-38); a REST element
+ *             of the order read back by a literal index (limit-rest-then-index.ts; R-39); more
+ *             than one hop of `const`.
  *   BOUNDARY: code outside src/ is not read, except these rules' fixtures.
  *
  * Out of process and plain JavaScript for the reasons fixture-compiles.mjs gives (IR-21).
@@ -144,7 +152,9 @@ const innermostFunction = (n) => {
 const foldStepResult = (fn) => {
   const sig = checker.getSignatureFromDeclaration(fn);
   const r = sig && checker.getReturnTypeOfSignature(sig);
-  return !!r && (parts(r).every((c) => (c.flags & ts.TypeFlags.BooleanLike) !== 0) || carries(r, COMMITMENT));
+  if (!r) return false;
+  const kept = present(r);
+  return (kept.length > 0 && kept.every((c) => (c.flags & ts.TypeFlags.BooleanLike) !== 0)) || carries(r, COMMITMENT);
 };
 /** READERS (R-38): helpers that read a commitment - directly or through another reader - to a fixed point. */
 const READERS = (() => {
@@ -179,6 +189,15 @@ function functionNamed(id) {
   if (ts.isVariableDeclaration(d) && d.initializer && ts.isFunctionLike(d.initializer)) return d.initializer;
   return undefined;
 }
+/** An argument whose TYPE is a reader: any call signature it carries is declared by one (R-39). */
+function readerTyped(a) {
+  const e = strip(a);
+  if (checker.getTypeAtLocation(e).getCallSignatures().some((sig) => READERS.has(declOf(sig)))) return true;
+  // `.bind` of a reader: the bound type may be rebuilt by the library, so look at the receiver
+  if (ts.isCallExpression(e) && ts.isPropertyAccessExpression(e.expression) && e.expression.name.text === "bind" &&
+      isLib(declOf(checker.getResolvedSignature(e))?.getSourceFile() ?? e.getSourceFile())) return readerTyped(e.expression.expression);
+  return false;
+}
 function soleSiteFindings(file, here) {
   if (here === REACH || here.startsWith(REACH + "/")) return [];
   const sf = program.getSourceFile(file);
@@ -192,7 +211,7 @@ function soleSiteFindings(file, here) {
       const d = target;
       const owner = d?.parent;
       const iterating = !!d && isLib(d.getSourceFile()) && !!owner && ts.isInterfaceDeclaration(owner) && ITERATING_OWNERS.test(owner.name.text);
-      if (iterating && n.arguments.some((a) => ts.isIdentifier(a) && READERS.has(functionNamed(a)))) add(n);
+      if (iterating && n.arguments.some((a) => !ts.isArrowFunction(a) && !ts.isFunctionExpression(a) && readerTyped(a))) add(n);
     }
     ts.forEachChild(n, visit);
   };
@@ -220,13 +239,23 @@ function isOrderCollection(expr, hops) {
   }
   return false;
 }
+/** A property key that RESOLVES to a numeric position: `0`, `"0"`, `[0]`, `[K]` for a numeric const (R-39). */
+function numericPosition(key) {
+  if (ts.isNumericLiteral(key)) return true;
+  if (ts.isStringLiteral(key)) return /^(0|[1-9][0-9]*)$/.test(key.text);
+  if (ts.isComputedPropertyName(key)) {
+    const t = checker.getTypeAtLocation(key.expression);
+    return t.isNumberLiteral() || (t.isStringLiteral() && /^(0|[1-9][0-9]*)$/.test(t.value));
+  }
+  return false;
+}
 /** A binding element picked by POSITION out of the loaded order (R-38, DR-30). */
 function pickedFromOrder(d) {
   const pattern = d.parent;
   const decl = pattern?.parent;
   if (!decl || !ts.isVariableDeclaration(decl) || !decl.initializer || !(ts.getCombinedNodeFlags(decl) & ts.NodeFlags.Const)) return false;
   if (ts.isArrayBindingPattern(pattern)) return isOrderCollection(decl.initializer, 1);
-  if (ts.isObjectBindingPattern(pattern)) return !!d.propertyName && ts.isNumericLiteral(d.propertyName) && isOrderCollection(decl.initializer, 1);
+  if (ts.isObjectBindingPattern(pattern)) return !!d.propertyName && numericPosition(d.propertyName) && isOrderCollection(decl.initializer, 1);
   return false;
 }
 /** A PARTICULAR member of the order, as opposed to a currency that is data. */
@@ -241,10 +270,28 @@ function particular(expr, hops) {
         isLiteralIndex(e.arguments[0]) && isLib(declOf(sig)?.getSourceFile() ?? e.getSourceFile())) return true; // order.currencies().at(0)
   }
   if (ts.isElementAccessExpression(e) && isOrderCollection(e.expression, 1) && isLiteralIndex(e.argumentExpression)) return true;
-  if (ts.isIdentifier(e) && hops > 0) {
+  if (ts.isIdentifier(e)) {
     const d = checker.getSymbolAtLocation(e)?.valueDeclaration;
-    if (d && ts.isBindingElement(d)) return pickedFromOrder(d);
-    if (d && ts.isVariableDeclaration(d) && d.initializer && ts.getCombinedNodeFlags(d) & ts.NodeFlags.Const) return particular(d.initializer, hops - 1);
+    if (d && ts.isBindingElement(d)) return pickedFromOrder(d); // the destructuring IS the pick, not a hop
+    if (hops > 0 && d && ts.isVariableDeclaration(d) && d.initializer && ts.getCombinedNodeFlags(d) & ts.NodeFlags.Const) return particular(d.initializer, hops - 1);
+  }
+  return false;
+}
+/** A CURRENCY, bare or widened to a string (R-39): `as`, angle brackets, String(c), `${c}`, .toString(), .valueOf(). */
+function currencySide(expr) {
+  const e = strip(expr);
+  if (!e) return false;
+  if (isCurrency(checker.getTypeAtLocation(e))) return true;
+  if (ts.isCallExpression(e)) {
+    const d = declOf(checker.getResolvedSignature(e));
+    const fromLib = !!d && isLib(d.getSourceFile());
+    if (fromLib && ts.isIdentifier(e.expression) && e.expression.text === "String" && e.arguments.length === 1) return currencySide(e.arguments[0]);
+    if (fromLib && ts.isPropertyAccessExpression(e.expression) && ["toString", "valueOf"].includes(e.expression.name.text) && e.arguments.length === 0) {
+      return currencySide(e.expression.expression);
+    }
+  }
+  if (ts.isTemplateExpression(e) && e.head.text === "" && e.templateSpans.length === 1 && e.templateSpans[0].literal.text === "") {
+    return currencySide(e.templateSpans[0].expression);
   }
   return false;
 }
@@ -255,11 +302,9 @@ function branchFindings(file, here) {
   const add = (n) => found.push({ file: here, line: lineOf(sf, n), how: "currency-branch" });
   const visit = (n) => {
     if (ts.isBinaryExpression(n) && EQUALITY.has(n.operatorToken.kind)) {
-      const l = checker.getTypeAtLocation(n.left);
-      const r = checker.getTypeAtLocation(n.right);
-      if ((isCurrency(l) && particular(n.right, 1)) || (isCurrency(r) && particular(n.left, 1))) add(n);
+      if ((currencySide(n.left) && particular(n.right, 1)) || (currencySide(n.right) && particular(n.left, 1))) add(n);
     }
-    if (ts.isSwitchStatement(n) && isCurrency(checker.getTypeAtLocation(n.expression))) {
+    if (ts.isSwitchStatement(n) && currencySide(n.expression)) {
       for (const c of n.caseBlock.clauses) if (ts.isCaseClause(c) && particular(c.expression, 1)) add(c);
     }
     ts.forEachChild(n, visit);

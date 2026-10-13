@@ -273,14 +273,20 @@ describe("BC-01-7 - who joins the Projection family, and where (R-35)", () => {
       "src/advisory/violating-advisory-join.ts": ["advisory-join"],
       "src/advisory/violating-spread-join.ts": ["spread-join"],
       "src/condition/violating-dynamic-member.ts": ["dynamic-member"],
+      "src/facts/limit-user-higher-order.ts": [],
+      "src/facts/violating-alias-call-join.ts": ["indirect-join"],
       "src/facts/violating-apply-bind-join.ts": ["indirect-join", "indirect-join"],
       "src/facts/violating-call-join.ts": ["indirect-join"],
+      "src/facts/violating-double-indirection.ts": ["indirect-join"],
+      "src/facts/violating-generic-higher-order.ts": ["launder-join"],
       "src/facts/violating-reflect-join.ts": ["indirect-join"],
       "src/facts/violating-wrong-module.ts": ["wrong-module"],
       "src/reachability/conforming-one-join.ts": [],
       "src/reachability/violating-joined-twice.ts": ["joined-twice"],
       "src/statistics/violating-assertion.ts": ["assertion-join"],
+      "src/statistics/violating-any-flow.ts": ["any-flow-join", "any-flow-join", "any-flow-join"],
       "src/statistics/violating-generic-launder.ts": ["launder-join"],
+      "src/statistics/violating-type-guard.ts": ["guard-join", "guard-join"],
     });
   });
 });

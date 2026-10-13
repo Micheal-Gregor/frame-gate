@@ -512,3 +512,31 @@ before the classes, and watched failing.
 > reached by `call`, `apply` or `Reflect.apply`, is refused. A helper returning another verdict
 > type is a registered limit.
 
+### MOD-04 work items after its gate (K7 round 11 → R-39) — each rule stated by MEANING, its spellings enumerated (MF-34)
+
+**BC-04-13 — the branch rule: a currency compared to a member picked by POSITION from the loaded
+order, however either side is spelled (WI-11).**
+> The pick: an index, `.at(literal)`, an array destructuring, or an object destructuring whose
+> key RESOLVES to a numeric position (`0`, `"0"`, `[0]`, `[K]` where `K` is a numeric const). The
+> currency side: bare, or widened by `as`, `satisfies`, angle brackets, `String(c)`, a template
+> `${c}`, `.toString()` or `.valueOf()`. One `const` re-binding is one hop; the destructuring is
+> the pick, not a hop. Data compared to data is never a branch. Registered: a rest element read
+> back by a literal index.
+
+**BC-04-14 — no Projection outside the kernel's door, in any spelling (WI-12).**
+> `asProjection` reached indirectly, recognised by its TYPE: as the receiver of call, apply or
+> bind (directly, by alias, by property, by parameter), or as an argument to a LIBRARY function
+> (`Reflect.apply`, `Function.prototype.call.call`). Also refused: a Projection-typed position
+> filled by `any`, and a user type guard asserting a Projection. Registered: `asProjection` handed
+> to a USER higher-order function.
+
+**BC-04-15 — a reader handed to an iteration, in any spelling (WI-13).**
+> The argument's TYPE decides, not its syntax: if any of its call signatures is declared by a
+> reader (an identifier, a method reference, a factory's result, or `.bind`), it is a second
+> check. A read-wrapping helper whose result is boolean or nullish is a reader. Registered: a
+> reader called from a USER-written iteration helper.
+
+**BC-04-16 — every §5 Test name of every built module selects exactly ONE case (S3 §5 (B); WI-14).**
+> Decided over the S3's own §5 table and the suite's own titles, never a list: a substring match
+> by any other title is the defect DR-36 found.
+

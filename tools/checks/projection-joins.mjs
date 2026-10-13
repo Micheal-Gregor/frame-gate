@@ -11,9 +11,14 @@
  *            `advisory/`, OBJ-34's module, `advisory-join`);
  *          - is the only join of that member in src/ (`joined-twice`).
  *          And no Projection is made any other way: a type ASSERTION whose result carries
- *          the Projection brand (`assertion-join`), or an object literal SPREADING a
- *          branded value - the brand is an enumerable own symbol, so a spread re-brands a
- *          new computation (`spread-join`). Only the kernel mints; its own body is exempt.
+ *          the Projection brand (`assertion-join`); an object literal SPREADING a branded
+ *          value - the brand is an enumerable own symbol, so a spread re-brands a new
+ *          computation (`spread-join`); a call to a user GENERIC whose declared return is a
+ *          bare type parameter, instantiated to a branded type (`launder-join`, as
+ *          catalog-mint decides it; R-38); and `asProjection` reached INDIRECTLY - through
+ *          `.call`, `.apply`, `.bind` or `Reflect.apply` - where its member cannot be read
+ *          off the call (`indirect-join`, as spawn-resolve decides it; R-38). Only the kernel
+ *          mints; its own body is exempt.
  *          Fixtures under tests/fixtures/projection-joins/src/<root>/ are judged at the
  *          path they mirror.
  *          LIMITS: `Object.assign(target, joined)` copies the brand through a library call
@@ -119,6 +124,26 @@ function joinFindings(file, here) {
       }
     }
     if ((ts.isAsExpression(n) || ts.isTypeAssertionExpression(n)) && isBranded(checker.getTypeAtLocation(n))) add(n, "assertion-join");
+    if (ts.isCallExpression(n)) {
+      // launder-join: a user generic whose declared return is a bare type parameter
+      const sig = checker.getResolvedSignature(n);
+      const d = sig && (sig.getDeclaration?.() ?? sig.declaration);
+      const ret = d && d.type;
+      if (d && d !== asProjectionDecl && !program.isSourceFileDefaultLibrary(d.getSourceFile()) && ret && ts.isTypeReferenceNode(ret) &&
+          (d.typeParameters ?? []).some((tp) => tp.name.text === ret.typeName.getText()) && isBranded(checker.getTypeAtLocation(n))) {
+        add(n, "launder-join");
+      }
+      // indirect-join: asProjection through call / apply / bind, or Reflect.apply
+      const callee = n.expression;
+      const namesJoin = (x) => {
+        let s = x && checker.getSymbolAtLocation(x);
+        if (s && s.flags & ts.SymbolFlags.Alias) s = checker.getAliasedSymbol(s);
+        return !!s?.declarations?.some((dd) => dd === asProjectionDecl);
+      };
+      if (ts.isPropertyAccessExpression(callee) && ["call", "apply", "bind"].includes(callee.name.text) && namesJoin(callee.expression)) add(n, "indirect-join");
+      if (ts.isPropertyAccessExpression(callee) && callee.name.text === "apply" && ts.isIdentifier(callee.expression) && callee.expression.text === "Reflect" &&
+          namesJoin(n.arguments[0])) add(n, "indirect-join");
+    }
     if (ts.isObjectLiteralExpression(n) && n.properties.some((p) => ts.isSpreadAssignment(p) && isBranded(checker.getTypeAtLocation(p.expression)))) {
       add(n, "spread-join");
     }

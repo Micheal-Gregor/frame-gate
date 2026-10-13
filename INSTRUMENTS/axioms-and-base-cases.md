@@ -492,3 +492,23 @@ before the classes, and watched failing.
 > The vector is COMPUTED by the harness from the real fold, never hand-written. Its `impl_sha`
 > pins `src/reachability/reachability.ts`, and `rederive.py VEC-01` recomputes it. A harness
 > handed the wrong entry refuses to run.
+
+### MOD-04 fix round (K7 round 10 → R-38) — written before the change, watched failing
+
+**BC-04-10 — the branch rule decides the destructured member (DR-30).**
+> `const [least] = order.currencies(); c === least`, and the same through a `const` one hop, are
+> per-currency branches. Two currencies destructured from DATA are not. A class field holding the
+> least currency is a registered limit.
+
+**BC-04-11 — PC-05: a refusal is attributable by construction (DR-31).**
+> REF-03's named row holds on the orchestrated path: no candidate created, and no later decider
+> asked. `evaluate(u, c, h)` asked again at the refusal's height gives the same evaluation, which
+> names the cheapest unmet currency.
+
+**BC-04-12 — the five omitted forms are decided (DR-32).**
+> A commitment read inside a helper that returns a boolean or a commitment, and is called from
+> (or handed to) an iteration, is a second reachability check; so are `Array.from(xs, fn)` and a
+> library Set's or Map's iteration. A Projection from a generic launder, or `asProjection`
+> reached by `call`, `apply` or `Reflect.apply`, is refused. A helper returning another verdict
+> type is a registered limit.
+

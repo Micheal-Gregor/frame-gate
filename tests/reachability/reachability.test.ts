@@ -48,6 +48,37 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
     // Two unmet (c1 and c2 below c3): the refusal names the CHEAPEST, not the dearest.
     const e3 = gate.evaluate(u, c3, h);
     expect(!isUnknown(e3) && e3.verdict === "unreachable" && e3.cheapestUnmet, "the dearest unmet currency was named").toBe(c1);
+    // PC-05 (R-38): attributable by construction - asking again at the refusal's height gives the
+    // same evaluation, so a refusal stream re-attributes it with no stored state.
+    expect(gate.evaluate(u, c2, h), "re-evaluation at the same height disagreed").toEqual(e);
+  });
+
+  it("test_draw_without_cheaper_commitment_is_refused_on_the_orchestrated_path", () => {
+    // REF-03's row on the path that costs: MOD-05's one append with this gate injected - no
+    // candidate created, no cost incurred (no later decider asked), and the refusal attributable.
+    const { record, commitments, gate } = world();
+    const declarations = new DeclarationLedger({ record, levels: ["easy"] });
+    declarations.declare(u, "easy", "HUMAN");
+    const draws = new DrawContextLog({ record, declarations });
+    const asked: string[] = [];
+    const ledger = new CandidateLedger({
+      record,
+      commitments,
+      currencies: order,
+      independence: new IndependenceLedger({ record }),
+      admission: gate,
+      signatures: { check: () => (asked.push("signature"), "VERIFIED") },
+      ceiling: { admitsDraw: () => (asked.push("ceiling"), "WITHIN") },
+    });
+    const h0 = record.noise();
+    const context = draws.recordDraw(u, { k: "v" }, h0, "cond", h0, "ENGINE");
+    if (isUnknown(context)) throw new Error("setup: the draw was refused");
+    const h = record.noise();
+    expect(ledger.appendCandidate({ context, unit: u, currency: c3, condition: "cond", seed: "s", from: BOTTOM }, "sig", h, "ENGINE")).toEqual(refuse("unreachable"));
+    expect(Number(record.noise()), "no candidate created").toBe(Number(h) + 1);
+    expect(asked, "no cost incurred").toEqual([]);
+    const why = gate.evaluate(u, c3, h);
+    expect(!isUnknown(why) && why.verdict === "unreachable" && why.cheapestUnmet, "the refusal is not attributable").toBe(c1);
   });
 
   it("test_the_candidate_append_asks_the_gate_first_hook_01", () => {
@@ -210,11 +241,16 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
     expect(out.soleSite.fixtures).toEqual({
       "src/facts/conforming-commits-in-a-loop.ts": [],
       "src/facts/conforming-one-fold-read.ts": [],
+      "src/facts/limit-helper-verdict.ts": [],
       "src/facts/limit-recursive-fold.ts": [],
       "src/facts/violating-every-callback.ts": ["second-reachability-check"],
+      "src/facts/violating-helper-by-reference.ts": ["second-reachability-check"],
+      "src/facts/violating-helper-fold.ts": ["second-reachability-check"],
       "src/reachability/conforming-the-one-check.ts": [],
+      "src/spend/violating-array-from.ts": ["second-reachability-check"],
       "src/spend/violating-classic-for.ts": ["second-reachability-check"],
       "src/spend/violating-for-loop.ts": ["second-reachability-check"],
+      "src/spend/violating-set-foreach.ts": ["second-reachability-check"],
     });
   });
 
@@ -222,9 +258,13 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
     const out = reach();
     expect(out.branch.src, "a branch on a particular currency in src/").toEqual([]);
     expect(out.branch.fixtures).toEqual({
+      "src/reachability/conforming-destructured-data.ts": [],
       "src/reachability/conforming-lookup-equality.ts": [],
+      "src/reachability/limit-class-field-least.ts": [],
       "src/reachability/limit-set-membership.ts": [],
       "src/reachability/violating-at-member.ts": ["currency-branch"],
+      "src/reachability/violating-destructured-hop.ts": ["currency-branch"],
+      "src/reachability/violating-destructured-least.ts": ["currency-branch"],
       "src/reachability/violating-indexed-member.ts": ["currency-branch"],
       "src/reachability/violating-least-branch.ts": ["currency-branch"],
       "src/reachability/violating-literal-branch.ts": ["currency-branch"],

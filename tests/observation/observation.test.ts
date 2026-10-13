@@ -102,6 +102,11 @@ describe("BC-07-3 - every configured component, and only those (R-59)", () => {
     const o = w.observe({ colour: given.colour, motion: given.motion, composition: given.composition });
     expect(o.payload.components.map((c) => [c.name, c.author])).toEqual([["composition", "ENGINE"], ["motion", "HUMAN"], ["colour", "DIRECTOR"]]);
     expect(o.payload.candidate).toBe(w.k.at);
+    // ABSENT is kept as a fresh value, never the caller's object.
+    const mine: { kind: "absent"; discharge: { kind: "dischargeable"; task: string } } = { kind: "absent", discharge: { kind: "dischargeable", task: "later" } };
+    const kept = w.observe(vector(mine));
+    mine.discharge.task = "changed";
+    expect(component(kept, "motion"), "the caller's later change reached the record").toEqual({ kind: "absent", discharge: { kind: "dischargeable", task: "later" } });
   });
 });
 

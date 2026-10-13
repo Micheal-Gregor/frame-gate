@@ -243,6 +243,7 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
       "src/facts/conforming-one-fold-read.ts": [],
       "src/facts/limit-helper-verdict.ts": [],
       "src/facts/limit-recursive-fold.ts": [],
+      "src/facts/violating-closure-reader.ts": ["second-reachability-check"],
       "src/facts/violating-every-callback.ts": ["second-reachability-check"],
       "src/facts/violating-helper-by-reference.ts": ["second-reachability-check"],
       "src/facts/violating-helper-fold.ts": ["second-reachability-check"],
@@ -250,6 +251,7 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
       "src/spend/violating-array-from.ts": ["second-reachability-check"],
       "src/spend/violating-classic-for.ts": ["second-reachability-check"],
       "src/spend/violating-for-loop.ts": ["second-reachability-check"],
+      "src/spend/violating-map-foreach.ts": ["second-reachability-check"],
       "src/spend/violating-set-foreach.ts": ["second-reachability-check"],
     });
   });
@@ -265,6 +267,7 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
       "src/reachability/violating-at-member.ts": ["currency-branch"],
       "src/reachability/violating-destructured-hop.ts": ["currency-branch"],
       "src/reachability/violating-destructured-least.ts": ["currency-branch"],
+      "src/reachability/violating-destructured-object-key.ts": ["currency-branch"],
       "src/reachability/violating-indexed-member.ts": ["currency-branch"],
       "src/reachability/violating-least-branch.ts": ["currency-branch"],
       "src/reachability/violating-literal-branch.ts": ["currency-branch"],

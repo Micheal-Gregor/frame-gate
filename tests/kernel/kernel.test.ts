@@ -273,6 +273,7 @@ describe("BC-01-7 - who joins the Projection family, and where (R-35)", () => {
       "src/advisory/violating-advisory-join.ts": ["advisory-join"],
       "src/advisory/violating-spread-join.ts": ["spread-join"],
       "src/condition/violating-dynamic-member.ts": ["dynamic-member"],
+      "src/facts/violating-apply-bind-join.ts": ["indirect-join", "indirect-join"],
       "src/facts/violating-call-join.ts": ["indirect-join"],
       "src/facts/violating-reflect-join.ts": ["indirect-join"],
       "src/facts/violating-wrong-module.ts": ["wrong-module"],

@@ -99,6 +99,12 @@ describe("BC-12-1 - REF-04 (INV-SIG): a signature omitting the lineage digest is
     expect(without?.codes, "a material without its lineage was signed").toEqual([2345]);
     expect(without?.messages.join(" "), "the refusal at parse is not about the lineage").toContain("'lineage'");
     expect(fixtures()["tests/fixtures/lineage/sign-the-material.ts"]?.codes, "the positive control no longer compiles").toEqual([]);
+    // Every SPELLING of the omission (MF-34, pinned before battery 19): left out (above), written
+    // as undefined, spread out.
+    expect(fixtures()["tests/fixtures/lineage/signature-with-undefined-lineage.ts"]?.codes, "an undefined lineage was signed").toEqual([2322]);
+    expect(fixtures()["tests/fixtures/lineage/signature-spread-without-lineage.ts"]?.codes, "a material spread without its lineage was signed").toEqual([2345]);
+    // REGISTERED LIMIT (IR-85): a cast forms it at parse - and it is refused at runtime, below.
+    expect(fixtures()["tests/fixtures/lineage/limit-cast-material.ts"]?.codes, "the registered limit closed silently").toEqual([]);
     // At runtime: the constructed artefact (VEC-05's "without") is refused on MOD-05's append path.
     const w = lineageWorld();
     const k0 = w.commitAt(u, w.c0);
@@ -185,6 +191,11 @@ describe("BC-12-4 - a BOTTOM-from candidate's lineage is a typed marker (R-45)",
     expect(w.gate.check(derived, sb), "a BOTTOM-signed signature verified a derived proposal").toEqual(refuse("malformed-signature"));
     expect(w.gate.check(bottom, sd), "a derived signature verified a BOTTOM proposal").toEqual(refuse("malformed-signature"));
     expect(w.append(bottom).payload.signature).toBe(sb);
+    // A fresh BOTTOM, never the caller's object (pinned before battery 19).
+    const mine: { kind: "no-subject" } = { kind: "no-subject" };
+    const material = w.gate.materialOf({ ...bottom, from: mine });
+    (mine as { kind: string }).kind = "latent";
+    expect([material.from, material.lineage], "the caller's later change reached the material").toEqual([noSubject(), noSubject()]);
   });
 });
 
@@ -337,6 +348,12 @@ describe("BC-12-9 - REF-07 (RC-4): no invalidation before its scope is derived a
     expect(w.invalidations.invalidate(shown, "HUMAN", h)).toEqual(refuse("scope-before-act"));
     nothingAppendedSince(w.record, h);
     expect(w.invalidations.isInvalidated(k0, w.record.noise()), "a refused invalidation took effect").toBe(false);
+    // The SAME height, in both directions (MF-34, pinned before battery 19): a display derived
+    // ABOVE the act's asserted height is refused too.
+    const early = w.record.noise();
+    const later = w.record.noise();
+    expect(w.invalidations.invalidate(w.invalidations.display(k0, later), "HUMAN", early)).toEqual(refuse("scope-before-act"));
+    nothingAppendedSince(w.record, later);
     // Positive (REF-07): derive and display at h, then invalidate at h.
     const now = w.record.noise();
     const inv = w.invalidations.invalidate(w.invalidations.display(k0, now), "HUMAN", now);
@@ -388,6 +405,27 @@ describe("BC-12-11 - what is invalidated, as of a height (R-42, R-46, S-07)", ()
     const kb = w.commitments.commit(b, "HUMAN");
     expect(w.invalidations.isInvalidated(kb, kb.at)).toBe(true);
     expect(w.invalidations.invalidatedAsOf(kb.at)).toEqual([k0.at, k1.at, kb.at]);
+  });
+
+  it("test_every_invalidation_counts_and_only_an_invalidation_is_read", () => {
+    // Pinned before battery 19. A LATER invalidation of an EARLIER commitment: both count, and the
+    // set is in height order.
+    const w = lineageWorld();
+    const kv = w.commitAt(v, w.c0);
+    const k0 = w.commitAt(u, w.c0);
+    w.invalidate(k0);
+    const second = w.invalidate(kv);
+    expect(w.invalidations.invalidatedAsOf(second.at), "an invalidation was not counted, or the set is out of order").toEqual([kv.at, k0.at]);
+    // Only the ledger's own entries are read: HUMAN, naming a commitment and its scope height.
+    const x = lineageWorld();
+    const k = x.commitAt(u, x.c0);
+    const h = x.record.noise();
+    const forged = x.record.append({ author: "ENGINE", payload: { kind: "invalidation", commitment: k.at, scopeAt: h } });
+    expect(x.invalidations.isInvalidated(k, forged), "a non-HUMAN invalidation was read").toBe(false);
+    const noScope = x.record.append({ author: "HUMAN", payload: { kind: "invalidation", commitment: k.at } });
+    expect(x.invalidations.isInvalidated(k, noScope), "an invalidation naming no scope height was read").toBe(false);
+    const noCommitment = x.record.append({ author: "HUMAN", payload: { kind: "invalidation", scopeAt: h } });
+    expect(x.invalidations.invalidatedAsOf(noCommitment), "an invalidation naming no commitment was read").toEqual([]);
   });
 
   it("test_the_scope_is_frozen_where_it_was_displayed", () => {

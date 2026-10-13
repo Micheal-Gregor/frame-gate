@@ -12,7 +12,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { asProjection, isUnknown, noSubject, refuse, uncomputable, type RecordHeight } from "../../src/kernel/index.js";
 import { CurrencyOrder, DeclarationLedger, IndependenceLedger, type Currency, type Unit } from "../../src/catalog/index.js";
-import { BOTTOM, CandidateLedger, CommitmentLedger, DrawContextLog } from "../../src/facts/index.js";
+import { BOTTOM, CandidateLedger, DrawContextLog, type Commitment } from "../../src/facts/index.js";
 import {
   REACHABILITY_GATE,
   Reachability,
@@ -20,6 +20,7 @@ import {
   type ReachabilityEvaluation,
 } from "../../src/reachability/index.js";
 import { inMemoryRecord } from "../catalog/in-memory-record.js";
+import { factWorld } from "../support/fact-world.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");
@@ -30,11 +31,13 @@ const v = "u2" as Unit;
 
 /** The real MOD-03 order and MOD-05 fold, and MOD-04 over them. */
 function world() {
-  const record = inMemoryRecord();
-  const commitments = new CommitmentLedger({ record, invalidations: { isInvalidated: () => false } });
-  const reachability = new Reachability({ currencies: order, commitments });
+  // R-41: commitments accept real candidates, drawn through the real path (tests/support). The
+  // invalidation set is the test's to fill - a stand-in for MOD-12.
+  const invalidated = new Set<number>();
+  const f = factWorld({ currencies: ["c1", "c2", "c3"], invalidations: { isInvalidated: (k) => invalidated.has(Number(k.at)) } });
+  const reachability = new Reachability({ currencies: order, commitments: f.commitments });
   const gate = new ReachabilityGate({ reachability });
-  return { record, commitments, reachability, gate };
+  return { ...f, reachability, gate, invalidate: (k: Commitment) => void invalidated.add(Number(k.at)) };
 }
 const verdictOf = (e: ReachabilityEvaluation) => (isUnknown(e) ? e : e.verdict);
 
@@ -56,7 +59,7 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
   it("test_an_unreachable_draw_is_refused_on_the_orchestrated_path", () => {
     // REF-03's row on the path that costs: MOD-05's one append with this gate injected - no
     // candidate created, no cost incurred (no later decider asked), and the refusal attributable.
-    const { record, commitments, gate } = world();
+    const { record, commitments, gate, commitAt } = world();
     const declarations = new DeclarationLedger({ record, levels: ["easy"] });
     declarations.declare(u, "easy", "HUMAN");
     const draws = new DrawContextLog({ record, declarations });
@@ -84,7 +87,7 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
   it("test_the_candidate_append_asks_the_gate_first_hook_01", () => {
     // HOOK-01 at @before-candidate-append: MOD-05's one append path, with THIS gate as its
     // injected admission (R-18). Unreachable -> refused, nothing appended, nothing else asked.
-    const { record, commitments, gate } = world();
+    const { record, commitments, gate, commitAt } = world();
     const declarations = new DeclarationLedger({ record, levels: ["easy"] });
     declarations.declare(u, "easy", "HUMAN");
     const draws = new DrawContextLog({ record, declarations });
@@ -106,31 +109,34 @@ describe("BC-04-1 - REF-03: a draw with no commitment below it is refused, befor
     expect(Number(record.noise()), "an unreachable draw appended something").toBe(Number(h) + 1);
     expect(asked, "a decider after the gate was asked: the unreachable draw cost something").toEqual([]);
     // and once c1 is committed, the same draw passes the gate (and goes on to the next guard)
-    commitments.commit(u, c1, "HUMAN");
+    commitAt(u, c1);
     expect(gate.admit(u, c2, record.noise())).toBe("ADMIT");
   });
 });
 
 describe("BC-04-2 - reachable iff every strictly cheaper currency HAS a commitment (IR-42)", () => {
   it("test_reachable_iff_every_cheaper_currency_has_a_commitment", () => {
-    const { record, commitments, gate } = world();
+    const { record, commitments, gate, commitAt } = world();
     const at = () => record.noise();
     const row = () => [c1, c2, c3].map((c) => gate.admit(u, c, at()));
     const A = "ADMIT";
     const R = refuse("unreachable");
     expect(row(), "commitments {}").toEqual([A, R, R]);
-    commitments.commit(u, c1, "HUMAN");
+    commitAt(u, c1);
     expect(row(), "commitments {c1}").toEqual([A, A, R]);
-    commitments.commit(u, c2, "HUMAN");
+    commitAt(u, c2);
     expect(row(), "commitments {c1, c2}").toEqual([A, A, A]);
     // another unit's commitments never answer for this one
     expect([c1, c2, c3].map((c) => gate.admit(v, c, at()))).toEqual([A, R, R]);
   });
 
   it("test_skipping_a_currency_does_not_reach_past_it", () => {
-    // {c2} without c1: c3 is still unreachable - EVERY cheaper currency, not the one below.
-    const { record, commitments, gate } = world();
-    commitments.commit(u, c2, "HUMAN");
+    // c2 in force while c1 is NOT: c3 is still unreachable - EVERY cheaper currency, not the one
+    // below. Under R-41 c2 cannot be committed before c1, so the gap is made by invalidating c1.
+    const { record, gate, commitAt, invalidate } = world();
+    const k1 = commitAt(u, c1);
+    commitAt(u, c2);
+    invalidate(k1);
     const e = gate.evaluate(u, c3, record.noise());
     expect(!isUnknown(e) && e.verdict === "unreachable" && e.cheapestUnmet).toBe(c1);
   });
@@ -138,9 +144,9 @@ describe("BC-04-2 - reachable iff every strictly cheaper currency HAS a commitme
   it("test_an_uncomputable_predecessor_is_unmet_not_bottom", () => {
     // R-20 + IR-42: two effective commitments at c1 is neither a commitment nor BOTTOM, and
     // reachability refuses rather than guesses. The witness keeps the uncomputable answer.
-    const { record, commitments, gate } = world();
-    commitments.commit(u, c1, "HUMAN");
-    commitments.commit(u, c1, "HUMAN");
+    const { record, commitments, gate, commitAt } = world();
+    commitAt(u, c1);
+    commitAt(u, c1);
     const e = gate.evaluate(u, c2, record.noise());
     expect(verdictOf(e)).toBe("unreachable");
     expect(!isUnknown(e) && e.witnesses[0]?.answer).toEqual(uncomputable("two-effective-commitments"));
@@ -156,8 +162,8 @@ describe("BC-04-2 - reachable iff every strictly cheaper currency HAS a commitme
 
 describe("BC-04-3 - one evaluation, with its witnesses (R-34)", () => {
   it("test_one_evaluation_answers_the_verdict_and_its_witnesses", () => {
-    const { record, commitments, gate } = world();
-    const k1 = commitments.commit(u, c1, "HUMAN");
+    const { record, commitments, gate, commitAt } = world();
+    const k1 = commitAt(u, c1);
     const h = record.noise();
     expect(gate.evaluate(u, c3, h)).toEqual({
       verdict: "unreachable",
@@ -185,9 +191,9 @@ describe("BC-04-3 - one evaluation, with its witnesses (R-34)", () => {
 
 describe("BC-04-4 - as of a height, recomputed per call (a Projection, R-35)", () => {
   it("test_reachability_is_as_of_a_height", () => {
-    const { record, commitments, reachability } = world();
+    const { record, commitments, reachability, commitAt } = world();
     const before = record.noise();
-    const k1 = commitments.commit(u, c1, "HUMAN");
+    const k1 = commitAt(u, c1);
     const projection = reachability.of(u, c2);
     expect(verdictOf(projection.compute(before)), "a later commitment reached back in time").toBe("unreachable");
     expect(verdictOf(projection.compute(k1.at))).toBe("reachable");

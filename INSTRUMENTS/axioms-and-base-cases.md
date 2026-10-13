@@ -540,3 +540,42 @@ order, however either side is spelled (WI-11).**
 > Decided over the S3's own §5 table and the suite's own titles, never a list: a substring match
 > by any other title is the defect DR-36 found.
 
+
+## MOD-12 `lineage/` — slice A: MOD-05 work items (R-40, R-41), written before the change, watched failing
+
+**BC-05-30 — a least-currency candidate may inherit from another unit's commitment (R-40, F3).**
+> At the least currency, `from` is BOTTOM (licensed, R-10), or ANOTHER unit's commitment that the
+> fold answers for that unit and currency as of the append height. A superseded commitment of
+> another unit, the SAME unit's own commitment, or a commitment of another unit not in force,
+> answers `Refuse(malformed-from)`. Above the least currency, R-26 is unchanged.
+
+**BC-05-31 — a commitment names the candidate it accepts (R-41, F4, S-07, SEAM-11).**
+> `commit(candidate, "HUMAN")` appends one commitment whose unit and currency are the candidate's,
+> and which records the candidate by height. There is no way to commit without a candidate, and
+> committing with a non-HUMAN author does not compile.
+
+**BC-05-32 — the lineage reader, record-only (R-41).**
+> `derivedFrom(commitment, h)` answers the candidates whose `from` is that commitment, and
+> `acceptedBy(candidate, h)` the commitments that accepted that candidate, each as of `h`, in
+> append order. It needs only the record: no fold, no decider.
+
+**Watched failing, 2026-10-13.** Every test now commits over the REAL facts path
+(`tests/support/fact-world.ts`): a commitment accepts a candidate that was drawn, declared and
+from-checked, so no test can commit what the system could never commit.
+
+- **Against the unchanged MOD-05** (`commit(unit, currency, author)`, no `candidate` field, no
+  lineage reader, least currency BOTTOM-only): **43 failed** across the facts, reachability and
+  isolation suites, and **16 type errors**. Each is at the new `commit(candidate, author)`
+  signature, at the payload's `candidate`, or at the missing `LineageReader`. The type errors are
+  BC-05-31's parse-level half: committing without a candidate does not compile.
+- **Not every red was its own subject.** BC-05-30's NEGATIVE cases (superseded, not yet in force,
+  the unit's own) are refusals the old code also gave, because it refused every commitment at the
+  least currency. They were red only through setup. They pin the new branch's limits, and the
+  battery proves them. BC-05-30's positive case and BC-05-32 were red on their subjects.
+- **Corrected before the source changed, by reading the reds.** (1) The "not yet in force" case
+  drew its context above the append height, so `context-mismatch` would have answered, not the
+  from-check. The context is now drawn before it. (2) The own-unit rule was pinned only at the
+  same currency, so a check comparing the (unit, currency) pair would survive. u's own commitment
+  at c1 is now refused as an inheritance at c0. (3) Added: a HUMAN commitment-kind entry naming no
+  candidate is not read as a commitment (the recognizer's R-41 clause).
+- **After the change:** `tsc` clean, **188 / 188**; VEC-01 re-derives unchanged.

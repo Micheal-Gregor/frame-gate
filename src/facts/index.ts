@@ -3,7 +3,8 @@
  *
  * The append-only fact substrate the gate guards: the commitments that make further
  * draws reachable (slice 1), the context of each draw (slice 2), and the candidates
- * drawn (slice 3). Every cross-module decider is handed in at construction (R-18).
+ * drawn (slice 3), and the record-only lineage between them (R-41). Every cross-module
+ * decider is handed in at construction (R-18).
  *
  * Deliberately NOT exported: a "current commitment" or "current declaration" read, any
  * way to build a Commitment, DrawContext, ResolutionLabel or Candidate except through its
@@ -18,6 +19,7 @@ export {
   type FactRecord,
   type InvalidationReader,
 } from "./commitment-ledger.js";
+export { LineageReader, type AcceptingCommitment, type DerivedCandidate } from "./lineage-reader.js";
 export {
   DrawContextLog,
   type DeclarationReader,

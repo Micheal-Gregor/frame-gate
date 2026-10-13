@@ -28,9 +28,25 @@ function world(): { inputs: CandidateLedgerInputs; record: TestRecord; at: Recor
   const commitments = new CommitmentLedger({ record, invalidations: never });
   const independence = new IndependenceLedger({ record });
   independence.declareIndependence(u, true, "HUMAN");
-  const k0 = commitments.commit(u, c0, "HUMAN");
+  // R-41: k0 accepts a real candidate at c0 (BOTTOM, licensed), appended through a setup ledger.
+  const h0 = record.noise();
+  const draws = new DrawContextLog({ record, declarations });
+  const ctx0 = draws.recordDraw(u, { colour: "red" }, h0, "setup", h0, "ENGINE");
+  if (!("payload" in ctx0)) throw new Error("setup: the draw was refused");
+  const setup = new CandidateLedger({
+    record,
+    commitments,
+    currencies: order,
+    independence,
+    admission: { admit: () => "ADMIT" },
+    signatures: { check: () => "VERIFIED" },
+    ceiling: { admitsDraw: () => "WITHIN" },
+  });
+  const s0 = setup.appendCandidate({ context: ctx0, unit: u, currency: c0, condition: "setup", seed: "s", from: BOTTOM }, "sig", record.noise(), "ENGINE");
+  if (!("payload" in s0)) throw new Error("setup: the candidate was refused");
+  const k0 = commitments.commit(s0, "HUMAN");
   const h = record.noise();
-  const context = new DrawContextLog({ record, declarations }).recordDraw(u, { colour: "red" }, h, "k", h, "ENGINE");
+  const context = draws.recordDraw(u, { colour: "red" }, h, "k", h, "ENGINE");
   if (!("payload" in context)) throw new Error("setup: the draw was refused");
   const inputs: CandidateLedgerInputs = {
     record,

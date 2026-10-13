@@ -16,8 +16,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { height, isUnknown, type RecordHeight } from "../../src/kernel/index.js";
 import type { RecordPort } from "../../src/ports/index.js";
-import { CurrencyOrder, type Currency, type Unit } from "../../src/catalog/index.js";
-import { CommitmentLedger } from "../../src/facts/index.js";
+import { CurrencyOrder, DeclarationLedger, IndependenceLedger, type Currency, type Unit } from "../../src/catalog/index.js";
+import { BOTTOM, CandidateLedger, CommitmentLedger, DrawContextLog, type Commitment } from "../../src/facts/index.js";
 import { Reachability, ReachabilityGate } from "../../src/reachability/index.js";
 
 /** A record for a fixture: append-only, read as of a height (IR-31). */
@@ -52,7 +52,31 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
         for (const requested of spec.requested) {
           const record = fixtureRecord();
           const commitments = new CommitmentLedger({ record, invalidations: { isInvalidated: () => false } });
-          for (const c of set) commitments.commit(unit, c as Currency, "HUMAN");
+          // R-41: each commitment in the cell's set accepts a real candidate, drawn in cost order -
+          // BOTTOM (licensed) at the least currency, then the commitment below.
+          const declarations = new DeclarationLedger({ record, levels: ["fixture"] });
+          const independence = new IndependenceLedger({ record });
+          const draws = new DrawContextLog({ record, declarations });
+          const setup = new CandidateLedger({
+            record,
+            commitments,
+            currencies: order,
+            independence,
+            admission: { admit: () => "ADMIT" },
+            signatures: { check: () => "VERIFIED" },
+            ceiling: { admitsDraw: () => "WITHIN" },
+          });
+          declarations.declare(unit, "fixture", "HUMAN");
+          independence.declareIndependence(unit, true, "HUMAN");
+          let below: Commitment | typeof BOTTOM = BOTTOM;
+          for (const c of set) {
+            const h = record.append({ kind: "fixture-height" });
+            const context = draws.recordDraw(unit, {}, h, "fixture", h, "ENGINE");
+            if (isUnknown(context)) throw new Error(`VEC-01 fixture: draw refused (${context.kind})`);
+            const candidate = setup.appendCandidate({ context, unit, currency: c as Currency, condition: "fixture", seed: "fixture", from: below }, "fixture", record.append({ kind: "fixture-height" }), "ENGINE");
+            if (isUnknown(candidate)) throw new Error(`VEC-01 fixture: candidate refused (${candidate.kind})`);
+            below = commitments.commit(candidate, "HUMAN");
+          }
           const gate = new ReachabilityGate({ reachability: new Reachability({ currencies: order, commitments }) });
           const at = record.append({ kind: "fixture-height" });
           const answer = gate.admit(unit, requested as Currency, at);

@@ -1,7 +1,6 @@
-// POSITIVE CONTROL: a caller narrowed through mayDecide commits.
+// POSITIVE CONTROL: a caller narrowed through mayDecide commits the candidate it accepts.
 import { mayDecide, type Author } from "../../../src/ports/index.js";
-import type { Currency, Unit } from "../../../src/catalog/index.js";
-import type { CommitmentLedger } from "../../../src/facts/index.js";
-export function humanCommits(ledger: CommitmentLedger, unit: Unit, currency: Currency, author: Author) {
-  return mayDecide(author) ? ledger.commit(unit, currency, author) : null;
+import type { Candidate, CommitmentLedger } from "../../../src/facts/index.js";
+export function humanCommits(ledger: CommitmentLedger, accepted: Candidate, author: Author) {
+  return mayDecide(author) ? ledger.commit(accepted, author) : null;
 }

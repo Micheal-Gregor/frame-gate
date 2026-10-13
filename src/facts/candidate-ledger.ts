@@ -20,8 +20,9 @@
 //                    in force; it must be this unit's, this condition's, and not newer - and
 //                    not already bound: one draw, one candidate (R-33).
 //   3. FROM        - MOD-05's own check (R-26): `from` IS the effective commitment at the
-//                    currency immediately below, as of the append height; BOTTOM only at
-//                    the least currency of a unit licensed independent then (R-10).
+//                    currency immediately below, as of the append height. At the least
+//                    currency it is BOTTOM, for a unit licensed independent then (R-10), or
+//                    ANOTHER unit's commitment in force then - F3's inheritance (R-40).
 //   4. SIGNATURE   - MOD-12, injected (R-18): it receives the whole proposal, `from`
 //                    included, and digests it under its own encoding (R-27, HOOK-04).
 //   5. CEILING     - MOD-11, injected (R-25): the scope's remaining ceiling (REF-16).
@@ -221,15 +222,26 @@ export class CandidateLedger {
   /**
    * R-26. Above the least currency, `from` must BE the effective commitment at the currency
    * immediately below, as of `at`. At the least currency there is nothing below, so `from`
-   * must be BOTTOM, licensed by an independence act in force at `at` (R-10). A read that
-   * answers "none" is the malformation; any other Unknown is passed through, not collapsed.
+   * is BOTTOM, licensed by an independence act in force at `at` (R-10), or - F3's
+   * inheritance (R-40) - ANOTHER unit's commitment, which the fold answers for that unit and
+   * currency as of `at`. A read that answers "none" is the malformation; any other Unknown is
+   * passed through, not collapsed.
    */
   #checkFrom(proposal: CandidateProposal, at: RecordHeight): "WELL-FORMED" | UnknownValue {
     const below = this.#currencies.predecessors(proposal.currency);
     if (isUnknown(below)) return below;
     const immediate = below.at(-1);
     if (immediate === undefined) {
-      if ("payload" in proposal.from) return refuse("malformed-from");
+      if ("payload" in proposal.from) {
+        // Inheritance (R-40): another unit's - never this unit's own, at any currency - and in
+        // force as of `at`. The fold is asked for the pair the commitment names; agreement by
+        // height means the record holds exactly that commitment, in force, for that pair.
+        const donor = proposal.from.payload;
+        if (donor.unit === proposal.unit) return refuse("malformed-from");
+        const inForce = this.#commitments.effectiveCommitment(donor.unit, donor.currency, at);
+        if (isUnknown(inForce)) return inForce.kind === "no-subject" ? refuse("malformed-from") : inForce;
+        return inForce.at === proposal.from.at ? "WELL-FORMED" : refuse("malformed-from");
+      }
       const license = this.#independence.independenceAt(proposal.unit, at);
       if (isUnknown(license)) return license.kind === "no-subject" ? refuse("malformed-from") : license;
       return license.payload.independent ? "WELL-FORMED" : refuse("malformed-from");
@@ -244,21 +256,23 @@ export class CandidateLedger {
   #candidatesWhere(at: RecordHeight, keep: (payload: CandidatePayload) => boolean): readonly Candidate[] {
     const out: Candidate[] = [];
     this.#record.readAsOf(at).forEach((fact, position) => {
-      if (!this.#isCandidate(fact) || !keep(fact.payload)) return;
+      if (!isCandidateEntry(fact) || !keep(fact.payload)) return;
       // The one place a Candidate is minted on read.
       out.push(Object.freeze({ author: fact.author, at: height(position + 1), payload: fact.payload }) as Candidate);
     });
     return Object.freeze(out);
   }
+}
 
-  /**
-   * A candidate, recognised by kind among every module's facts. Provenance rests on the
-   * static guards - no candidate-kind entry is built outside src/facts (BC-05-6), and only
-   * `appendCandidate` appends one (S-01, the paths map) - and at runtime on PC-02.
-   */
-  #isCandidate(fact: unknown): fact is { author: Author; payload: CandidatePayload } {
-    if (typeof fact !== "object" || fact === null || !("payload" in fact) || !("author" in fact)) return false;
-    const payload = (fact as { payload: unknown }).payload;
-    return typeof payload === "object" && payload !== null && (payload as { kind?: unknown }).kind === "candidate";
-  }
+/**
+ * A candidate entry, recognised by kind among every module's facts - the ONE rule, shared by
+ * this ledger and the lineage reader (R-41). Provenance rests on the static guards - no
+ * candidate-kind entry is built outside src/facts (BC-05-6), and only `appendCandidate`
+ * appends one (S-01, the paths map) - and at runtime on PC-02. MOD-05-internal: not
+ * re-exported from facts/index.ts.
+ */
+export function isCandidateEntry(fact: unknown): fact is { author: Author; payload: CandidatePayload } {
+  if (typeof fact !== "object" || fact === null || !("payload" in fact) || !("author" in fact)) return false;
+  const payload = (fact as { payload: unknown }).payload;
+  return typeof payload === "object" && payload !== null && (payload as { kind?: unknown }).kind === "candidate";
 }

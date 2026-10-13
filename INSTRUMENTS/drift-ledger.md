@@ -137,6 +137,9 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-72 | **The joins rule, by TYPE and by every door the build names (R-39, WI-12).** `asProjection` is recognised by its type wherever it is held: as a receiver of call, apply or bind, or as an argument to ANY library function (`Reflect.apply`, `Function.prototype.call.call`). `any` flowing into a Projection-typed position (initializer, return, argument, property, assignment) and a user type guard (`x is` / `asserts x is`) are refused, as catalog-mint refuses them for ledger brands. A GENERIC user higher-order function is decided by the launder rule. Registered: a NON-generic higher-order function with a declared Projection return | benign | MOD-01, MOD-04 (R-35, R-39) |
 | IR-73 | **A reader handed to an iteration, decided by the argument's TYPE (R-39, WI-13).** If any call signature the argument carries is declared by a reader, the hand-off is a second check, whatever its spelling: an identifier, a method reference, a factory's result, or `.bind` (whose receiver is consulted, since the library may rebuild the bound type). Inline closures are judged by the read inside them, so nothing is counted twice. A read-wrapping helper whose result is boolean, nullish allowed, is a reader. Registered: a reader called from a USER-written iteration helper | benign | MOD-04 (CLAUDE.md; R-39) |
 | IR-74 | **S3 §5 property (B) is decided by rule (R-39, WI-14).** `tests/spec/s5-names.test.ts` reads the §5 table and the §2 module table from the frozen S3. For every refusal row whose module is built, it counts the suite's cases whose FULL name (describe titles and own title, parsed by TypeScript) the §5 name matches, and requires exactly one. It was watched red on DR-36's colliding title (REF-03 counted 2). REF-03's orchestrated path is covered by `test_an_unreachable_draw_is_refused_on_the_orchestrated_path`, a test §5 does not name (ODG-FG-08's observation) | benign | all built modules (S3 §5) |
+| IR-75 | **The lineage reader answers unbranded records (R-41).** `LineageReader.derivedFrom` and `acceptedBy` return `{at, unit, currency, from}` and `{at, unit, currency, candidate}`: heights and the fields that link them, never a `Candidate` or a `Commitment`. Those are minted only in their owner ledgers (the mint rule, BC-05-6). It takes heights, not branded facts, so MOD-12 walks a closure of heights and mints nothing | benign | MOD-05, MOD-12 |
+| IR-76 | **One recognizer per ledger kind (R-41).** What the record holds as a commitment (`isCommitmentEntry`: HUMAN, kind `commitment`, naming a candidate) and as a candidate (`isCandidateEntry`) is each ONE MOD-05-internal function. The ledger that folds and the lineage reader share it, so the two cannot read different sets. Neither is re-exported from `facts/index.ts`. The commitment recognizer now REQUIRES the candidate field: a commitment-kind entry naming none was not appended by this ledger | benign | MOD-05 |
+| IR-77 | **`commit` does not check the accepted candidate's lineage. OPEN, for MOD-12.** As before R-41, commit reads nothing: a read needs a height the act does not have. So a candidate derived from K can be committed AFTER K was invalidated, provided it was never accepted before. Its commitment is in force, and it lies outside the closure that invalidation displayed (R-42, as of its derivation height). With a re-commitment K' in force at K's currency, that later commitment makes the next currency REACHABLE on a lineage the human un-approved. The reachability condition holds literally (every cheaper currency has a commitment); the lineage does not (it derives from K, not K'). The handoff does not say: F4 moves only an invalidated commitment's OWN candidate to PassedOver. To be ruled with MOD-12's scope (slice C) | latent | MOD-05, MOD-12, MOD-04, MOD-09 |
 
 ## Log
 
@@ -531,4 +534,16 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   stated in F4, S-07 and SEAM-11, not in F2's OBJ-12, which the builder built from. Both are
   MF-32's shape across FACETS: a module's carried rows read in one facet, with the clauses that
   bind it in another.
+
+- **2026-10-13 — MOD-12 slice A: the MOD-05 work items under R-40 and R-41.** The tests came
+  first, over a shared real-path world (`tests/support/fact-world.ts`), and were watched red: 43
+  failed, 16 type errors. Then the change: `commit(candidate, "HUMAN")`, the commitment payload's
+  `candidate`, the inheritance branch in `#checkFrom`, and `LineageReader` (record-only). Every
+  earlier commit site in the tests, the fixtures and the VEC-01 harness now commits a real
+  candidate, and VEC-01 re-derives unchanged. MOD-04's "skipping" case could no longer be built as
+  written: under R-41, c2 cannot be committed without c1. It is rebuilt as c1 committed, then
+  invalidated. That is a test change to a closed module, not a source change. `new-object.py`
+  wrote the object model with CRLF on Windows, a whole-file diff, and it was restored to LF. The
+  builder's own LF-writing scripts had masked this in earlier modules. IR-75..IR-77; IR-77 is
+  carried to slice C's gate. 188/188.
 

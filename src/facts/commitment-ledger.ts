@@ -7,6 +7,10 @@
 // Appends HUMAN commitments; folds the effective commitment per (unit, currency) as of
 // a height (OBJ-12 Commitment, OBJ-31 CommitGate; MOD-05).
 //
+// R-41: a commitment ACCEPTS a candidate. `commit(candidate, "HUMAN")` takes its unit and
+// currency from the candidate and records the candidate by height (IR-43), so F4's Accepted
+// set is read by key and never inferred.
+//
 // Scaffolded by tools/new-object.py, then hand-fixed for strict TypeScript (MF-21).
 //
 // A commitment is a HUMAN act appended to the record (INV-PROV). `effective(u, c)` is a
@@ -21,6 +25,7 @@
 import { height, noSubject, uncomputable, type AppendedFact, type Gate, type RecordHeight, type UnknownValue } from "../kernel/index.js";
 import type { RecordPort } from "../ports/index.js";
 import type { Currency, Unit } from "../catalog/index.js";
+import type { Candidate } from "./candidate-ledger.js";
 
 declare const COMMITTED: unique symbol;
 
@@ -28,6 +33,8 @@ export interface CommitmentPayload {
   readonly kind: "commitment";
   readonly unit: Unit;
   readonly currency: Currency;
+  /** The candidate this commitment accepts, by its height (IR-43; R-41). */
+  readonly candidate: RecordHeight;
 }
 
 /** OBJ-12 — nominal: only `CommitmentLedger.commit` and its fold mint one. */
@@ -84,12 +91,19 @@ export class CommitmentLedger {
     Object.freeze(this);
   }
 
-  /** Appends a HUMAN commitment for `(unit, currency)`. Takes no diagnostic and no observation. */
-  commit(unit: Unit, currency: Currency, author: "HUMAN"): Commitment {
+  /** Appends a HUMAN commitment accepting `candidate` (R-41). Takes no diagnostic and no observation. */
+  commit(candidate: Candidate, author: "HUMAN"): Commitment {
     // No "is one already in force?" check: that is a read, and a read needs a height
     // this act does not have. A second commitment is appended and the fold answers
     // `uncomputable` for it (R-20) - the record says what happened, the read says what holds.
-    const payload: CommitmentPayload = Object.freeze({ kind: "commitment", unit, currency });
+    // The unit and currency are the candidate's: a commitment cannot name a pair its
+    // candidate was not drawn for.
+    const payload: CommitmentPayload = Object.freeze({
+      kind: "commitment",
+      unit: candidate.payload.unit,
+      currency: candidate.payload.currency,
+      candidate: candidate.at,
+    });
     // What the record holds carries no height: the record assigns it (IR-31).
     const at = this.#record.append(Object.freeze({ author, payload }));
     // The one place a Commitment is minted on append.
@@ -100,7 +114,7 @@ export class CommitmentLedger {
   effectiveCommitment(unit: Unit, currency: Currency, at: RecordHeight): Commitment | UnknownValue {
     const inForce: Commitment[] = [];
     this.#record.readAsOf(at).forEach((fact, position) => {
-      if (!this.#isCommitmentOf(fact, unit, currency)) return;
+      if (!isCommitmentEntry(fact) || fact.payload.unit !== unit || fact.payload.currency !== currency) return;
       // A fact's height is its 1-based position: a RecordHeight is a count of appends
       // (OBJ-10; IR-31). The one place a Commitment is minted on read.
       const commitment = Object.freeze({ author: fact.author, at: height(position + 1), payload: fact.payload }) as Commitment;
@@ -113,23 +127,25 @@ export class CommitmentLedger {
     if (second !== undefined) return uncomputable("two-effective-commitments");
     return first;
   }
+}
 
-  /**
-   * This ledger's own entries, recognised by kind among every module's facts. As with
-   * the catalog's ledgers (R-12; IR-35): an entry that says `author: "HUMAN"` with this
-   * kind IS read as a commitment - the record is shared and untyped, so provenance
-   * beyond this rests on the static forge guard (no commitment-kind entry is built or
-   * appended outside src/facts, BC-05-6) and, at runtime, on PC-02's identity binding.
-   */
-  #isCommitmentOf(fact: unknown, unit: Unit, currency: Currency): fact is { author: "HUMAN"; payload: CommitmentPayload } {
-    if (typeof fact !== "object" || fact === null || !("payload" in fact) || !("author" in fact)) return false;
-    const payload = (fact as { payload: unknown }).payload;
-    if (typeof payload !== "object" || payload === null) return false;
-    return (
-      (fact as { author: unknown }).author === "HUMAN" &&
-      (payload as { kind?: unknown }).kind === "commitment" &&
-      (payload as { unit?: unknown }).unit === unit &&
-      (payload as { currency?: unknown }).currency === currency
-    );
-  }
+/**
+ * A commitment entry, recognised by kind among every module's facts - the ONE rule for what
+ * the record holds as a commitment, shared by the fold and the lineage reader (R-41) so the
+ * two can never read different sets. As with the catalog's ledgers (R-12; IR-35): an entry
+ * that says `author: "HUMAN"` with this kind, naming a candidate, IS read as a commitment -
+ * the record is shared and untyped, so provenance beyond this rests on the static forge guard
+ * (no commitment-kind entry is built or appended outside src/facts, BC-05-6) and, at runtime,
+ * on PC-02's identity binding. MOD-05-internal: not re-exported from facts/index.ts.
+ */
+export function isCommitmentEntry(fact: unknown): fact is { author: "HUMAN"; payload: CommitmentPayload } {
+  if (typeof fact !== "object" || fact === null || !("payload" in fact) || !("author" in fact)) return false;
+  const payload = (fact as { payload: unknown }).payload;
+  if (typeof payload !== "object" || payload === null) return false;
+  return (
+    (fact as { author: unknown }).author === "HUMAN" &&
+    (payload as { kind?: unknown }).kind === "commitment" &&
+    // R-41: every commitment names the candidate it accepts.
+    typeof (payload as { candidate?: unknown }).candidate === "number"
+  );
 }

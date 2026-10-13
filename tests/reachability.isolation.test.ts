@@ -4,19 +4,18 @@
 import { describe, expect, it } from "vitest";
 import { noSubject, type RecordHeight, type UnknownValue } from "../src/kernel/index.js";
 import { CurrencyOrder, type Currency, type Unit } from "../src/catalog/index.js";
-import { CommitmentLedger, type Commitment } from "../src/facts/index.js";
+import type { Commitment } from "../src/facts/index.js";
 import { Reachability, type CommitmentFold } from "../src/reachability/index.js";
-import { inMemoryRecord } from "./catalog/in-memory-record.js";
+import { factWorld } from "./support/fact-world.js";
 
 const u = "u1" as Unit;
 const order = new CurrencyOrder({ currencies: ["c0", "c1"] });
 const [c0, c1] = order.currencies() as readonly [Currency, Currency];
 
-/** A fold where u has committed at c0. */
+/** A fold where u has committed at c0, through the real path (R-41). */
 function committed(): { fold: CommitmentFold; at: RecordHeight } {
-  const record = inMemoryRecord();
-  const ledger = new CommitmentLedger({ record, invalidations: { isInvalidated: () => false } });
-  return { fold: ledger, at: ledger.commit(u, c0, "HUMAN").at };
+  const w = factWorld({ currencies: ["c0", "c1"], invalidations: { isInvalidated: () => false } });
+  return { fold: w.commitments, at: w.commitAt(u, c0).at };
 }
 const nothing: CommitmentFold = { effectiveCommitment: (): Commitment | UnknownValue => noSubject() };
 

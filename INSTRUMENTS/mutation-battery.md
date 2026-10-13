@@ -565,3 +565,20 @@ path residue, registered with a `limit-` fixture.
 killed by its test as well, so neither rests on the compiler. After the run, the module-close
 clause map added the SEAM-19 parse pin and IR-61.
 
+
+## Round 14 — MOD-05 work items WI-07 / WI-08 (R-32, R-33), before MOD-04 opens
+
+Run on committed tree `77ff1ea` with the round-5 discipline.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| G1 | the spent check removed: a context binds many candidates | KILLED (test) | `test_a_draw_context_binds_one_candidate` |
+| G2 | spent checked AFTER `from` | KILLED (test) | same |
+| G3 | spent checked BEFORE the mismatch check | KILLED (test) | same |
+| G4 | the spent read at a made-up "now" | KILLED (test) | `test_no_operation_answers_the_current_declaration` (statically: `#candidatesWhere` is a read by the wrapper fixed point) |
+| G5 | `paths`: wrapped relays no longer followed (the argument itself only) | KILLED (test) | `test_each_ledger_kind_has_exactly_one_append_path` |
+| G6 | `paths`: shorthand properties no longer read as the parameter they name | KILLED (test) | same (the plain wrapped fixture) |
+
+**Six of six killed on the first pass.** No plausible single mutation closes the registered
+destructured-relay limit: following a binding element still leaves the caller's argument
+without a kind at its top level. Its pin stands guard against a future widening.

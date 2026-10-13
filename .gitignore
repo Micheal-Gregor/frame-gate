@@ -16,4 +16,4 @@ node_modules/
 .k7/
 
 # PipelineGate (RD-28): the store's receipts are committed; its lock files are not.
-.pipelinegate/*.lock
+.pipelinegate/**/*.lock

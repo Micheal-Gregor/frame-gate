@@ -1,0 +1,1 @@
+{"code_digest": "sha256:488ad61ae8ad40a15a0d8a6070ab579295b6fb0f83d02f3379c522af472cc4ef", "id": "battery_complete", "kind": "mechanical", "refusal_names": ["BUILD_ONLY_KILL", "EMPTY_BATTERY", "NOT_THIS_CONTENT", "RESTORE_UNVERIFIED", "SURVIVOR", "UNNAMED_CLAIM"], "v": 1}

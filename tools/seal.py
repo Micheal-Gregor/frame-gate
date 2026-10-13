@@ -104,6 +104,13 @@ library's public operations.
 
 # --------------------------------------------------------------------------- helpers
 
+def write_text_kept(path: Path, text: str) -> None:
+    """Write text as UTF-8 bytes. Text mode would turn every \\n into \\r\\n on Windows (F7, the Frame Gate trial),
+    so this writes LF, or CRLF only where the file being rewritten already uses it."""
+    crlf = path.is_file() and b"\r\n" in path.read_bytes()
+    path.write_bytes(text.replace("\r\n", "\n").replace("\n", "\r\n" if crlf else "\n").encode("utf-8"))
+
+
 def git(root: Path, *a: str, check: bool = False) -> str:
     try:
         r = subprocess.run(["git", "-C", str(root), *a],
@@ -262,11 +269,10 @@ def signatures(rel: str, text: str) -> dict:
             out[cls.name] = ops
         return out
     if rel.endswith((".js", ".mjs", ".ts", ".jsx", ".tsx")):
-        # IR-34 (framework trial MF-24): PARSED by the TypeScript compiler, not guessed.
-        # The template's regex took the first "class <word>" anywhere (comments
-        # included), read one class per file, and could not see a method with a
-        # return-type annotation or a typed / destructured constructor parameter -
-        # so for TypeScript the declaration comparison was blind.
+        # IR-34 (framework trial MF-24): PARSED by the TypeScript compiler, not guessed - a LOCAL
+        # ruling ported onto 2.6.5 (R-66). The template's regex took the first "class <word>"
+        # anywhere (comments included), read one class per file, and could not see a method with a
+        # return-type annotation or a typed / destructured constructor parameter.
         import json as _json
         import subprocess as _sp
         import tempfile as _tf
@@ -403,6 +409,19 @@ def sweep(root: Path, cfg: dict) -> tuple[list[dict], list[str]]:
         steps.append(step("reviewed", not drift,
                           f"covered by {nearest}" if not drift else
                           f"code changed after {nearest}: {', '.join(drift[:6])}"))
+
+    # Credited review's backstop: a module may have been reviewed on its diff since its last full review, so
+    # every module's final content must have had one FULL review in a concluded round (tools/manifests.py).
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import manifests
+        gaps = manifests.backstop(root, cfg, root / "INSTRUMENTS")
+        steps.append(step("full-review", not gaps,
+                          "every module's final content has had a full review" if not gaps else
+                          "; ".join(gaps[:6]) + (f" (+{len(gaps) - 6} more)" if len(gaps) > 6 else "")
+                          + ". Run tools/k7-run.py --full --modules <these> before sealing."))
+    except Exception as exc:                       # the step reports, it never crashes the sweep
+        steps.append(step("full-review", False, f"could not compute the backstop: {exc}"))
 
     for key, name in (("test_command", "full-suite"), ("rederive_all", "rederive-all")):
         cmd = cfg.get(key)
@@ -543,19 +562,18 @@ def cmd_apply(root: Path, cfg: dict, approved_by: str, accept_failures: bool) ->
                 + ", ".join(s["step"] for s in failed)]
     sec += ["", "**Carried forward:**", ""] + [f"- {c}" for c in carried or ["(nothing)"]]
     rec.parent.mkdir(exist_ok=True)
-    rec.write_text((rec.read_text(encoding="utf-8") if rec.is_file() else head)
-                   + "\n".join(sec) + "\n", encoding="utf-8")
+    write_text_kept(rec, (rec.read_text(encoding="utf-8") if rec.is_file() else head) + "\n".join(sec) + "\n")
 
     # 2. Retire the Phase 4 resident contract; install the Phase 5 one.
     claude = root / "CLAUDE.md"
     archive = root / "governance" / "archive" / f"CLAUDE-{tag}.md"
     archive.parent.mkdir(parents=True, exist_ok=True)
     if claude.is_file():
-        archive.write_text(claude.read_text(encoding="utf-8"), encoding="utf-8")
-    claude.write_text(f"# {concept} — Phase 5 (library sealed at `{tag}`)\n\n"
+        archive.write_bytes(claude.read_bytes())
+    write_text_kept(claude, f"# {concept} — Phase 5 (library sealed at `{tag}`)\n\n"
                       f"The engine build instruction is archived at "
                       f"`governance/archive/CLAUDE-{tag}.md`. Read it only to find operation "
-                      f"names.\n\n" + contract.read_text(encoding="utf-8"), encoding="utf-8")
+                      f"names.\n\n" + contract.read_text(encoding="utf-8"))
 
     # 3. The UI tree's working files, if this is the first seal.
     ui = root / (cfg.get("ui_root") or "ui")
@@ -563,7 +581,7 @@ def cmd_apply(root: Path, cfg: dict, approved_by: str, accept_failures: bool) ->
     for name, body in (("gaps.md", GAPS_TEMPLATE), ("surface-map.md", SURFACE_TEMPLATE),
                        ("interface-contract.md", CONTRACT_TEMPLATE)):
         if not (ui / name).exists():
-            (ui / name).write_text(body, encoding="utf-8")
+            write_text_kept(ui / name, body)
 
     # 4. State, commit, tag.
     subprocess.run([sys.executable, str(root / "tools" / "state.py"), "set", "phase=5",
@@ -607,17 +625,18 @@ def cmd_begin_extension(root: Path, cfg: dict, s3: str, s2: str | None) -> int:
         print(f"seal: {contract.relative_to(root)} missing.", file=sys.stderr)
         return 1
 
-    (root / "CLAUDE.md").write_text(
+    write_text_kept(
+        root / "CLAUDE.md",
         (root / s3).read_text(encoding="utf-8").rstrip("\n") + "\n\n---\n\n"
         + f"> Extension build over `{tag}`. Files present at `{tag}` are frozen (gate.py); "
-        f"build new modules only.\n\n" + contract.read_text(encoding="utf-8"), encoding="utf-8")
+        f"build new modules only.\n\n" + contract.read_text(encoding="utf-8"))
 
     pj = root / ".metaframework" / "project.json"
     data = load_cfg(root)
     data["s3_document"] = s3
     if s2:
         data["s2_document"] = s2
-    pj.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_text_kept(pj, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
     subprocess.run([sys.executable, str(root / "tools" / "state.py"), "set", "phase=4",
                     "current_module=", f"next_action=Extension build over {tag}: run the C4 anchor on {s3}",

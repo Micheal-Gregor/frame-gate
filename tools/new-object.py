@@ -112,6 +112,13 @@ def test_refuses_to_construct_when_an_input_is_missing():
 """
 
 
+def write_text_kept(path: Path, text: str) -> None:
+    """Write text as UTF-8 bytes. Text mode would turn every \\n into \\r\\n on Windows (F7, the Frame Gate trial),
+    so this writes LF, or CRLF only where the file being rewritten already uses it."""
+    crlf = path.is_file() and b"\r\n" in path.read_bytes()
+    path.write_bytes(text.replace("\r\n", "\n").replace("\n", "\r\n" if crlf else "\n").encode("utf-8"))
+
+
 def die(msg: str, code: int = 1) -> int:
     print(f"new-object: {msg}", file=sys.stderr)
     return code
@@ -198,11 +205,11 @@ def main() -> int:
                                                   "calls differing in one input, answers differ\n")
 
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(body, encoding="utf-8")
+    write_text_kept(target, body)
     tp = root / test_rel
     tp.parent.mkdir(parents=True, exist_ok=True)
     if not tp.exists():
-        tp.write_text(test, encoding="utf-8")
+        write_text_kept(tp, test)
 
     om = root / "INSTRUMENTS" / "object-model-and-parameters.md"
     row = (f"| {name} | {rel} | {a.traces or '(trace me)'} | {a.purpose or '(one line)'} | "
@@ -215,7 +222,7 @@ def main() -> int:
                 while j < len(lines) and lines[j].startswith("|"):
                     j += 1
                 lines.insert(j, row)
-                om.write_text("\n".join(lines) + "\n", encoding="utf-8")
+                write_text_kept(om, "\n".join(lines) + "\n")
                 break
 
     print(f"new-object: wrote {rel} and {test_rel}, and added the object-model row.\n"

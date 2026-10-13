@@ -347,6 +347,36 @@ def load_verdict(root: Path, n: str) -> dict | None:
         return None
 
 
+def check_owner_close(root: Path, n: str) -> str:
+    """RD-28: '' when the owner's receipts exist for round n's modules (or no store is declared), else the reason."""
+    try:
+        cfg = json.loads((root / ".metaframework" / "project.json").read_bytes().decode("utf-8"))
+    except (OSError, ValueError):
+        return ""
+    if not cfg.get("pipelinegate_command"):
+        return ""                                    # credited review from verdict files alone (RD-27)
+    vf = root / "INSTRUMENTS" / f"k7-verdict-{n}.json"
+    if not vf.is_file():
+        return f"closed-by-owner-{n} closes round {n}, and INSTRUMENTS/k7-verdict-{n}.json does not exist."
+    tools = Path(__file__).resolve().parent
+    sys.path.insert(0, str(tools))
+    try:
+        import manifests
+        import receipts
+        reviewed = json.loads(vf.read_bytes().decode("utf-8")).get("reviewed") or {}
+        built = manifests.build(root, cfg)
+        mods = [s["module"] for s in reviewed.get("scope", [])] or [x for x in reviewed.get("modules", []) if x in built]
+        missing = [x for x in mods if x in built and
+                   receipts.standing(root, cfg, receipts.h_of(built[x]["manifest"]), "owner-triage") != "ACCEPT"]
+    except Exception as exc:                         # fail closed: a close the gate cannot check is not a close
+        return f"cannot read the owner's receipts for round {n} ({exc}); failing closed."
+    if missing:
+        return (f"closed-by-owner-{n}: no owner ACCEPT receipt at owner-triage for the current content of "
+                f"{', '.join(missing)}. On the owner's word: python tools/receipts.py owner-close --round {n} "
+                f"--person <the owner's principal>; then tag.")
+    return ""
+
+
 def check_verdict(root: Path, n: str, tree: str, what: str) -> str:
     """Return an empty string if the verdict authorises `what`, else the reason."""
     v = load_verdict(root, n)
@@ -499,6 +529,14 @@ def main() -> int:
     if m:
         reason = check_verdict(root, m.group(1), tree, f"tagging k7-pass-{m.group(1)}")
         return decide(not reason, reason)
+
+    # RD-28: an owner's close is a receipt. With a PipelineGate store declared, `closed-by-owner-N` needs the owner's
+    # ACCEPT at owner-triage on the current content of every module in round N's scope.
+    m = re.search(r"\bgit\s+tag\b[^\n;&|]*?\bclosed-by-owner-(\d+)\b", norm)
+    if m and not re.search(r"\bgit\s+tag\s+(-l|--list|-d|--delete)\b", norm):
+        reason = check_owner_close(root, m.group(1))
+        if reason:
+            return decide(False, reason)
 
     if re.search(r"\bgit\s+merge\b", norm) and not re.search(r"--abort|--continue", norm):
         if seal:

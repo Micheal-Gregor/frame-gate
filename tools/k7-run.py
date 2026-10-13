@@ -21,18 +21,33 @@ After a seal: K7 reviews extension modules only (--modules is required), the
 sealed files must be unchanged, and in Phase 5 the runner refuses outright —
 Phase 5 does not run K7.
 
-PORTED, not copied (MetaFramework 2.3.0 migration, R-03; trial finding MF-16).
-This is the 2.3.0 template runner with this repo's local rulings re-applied:
-IR-22 (name the dirty files), R-07 (scratch worktree; a dirty-after verdict is
-refused), the positive-magnitude deduction wording, and raw-output preservation
-on a schema failure.
+Credited review (the F1 design, stage 1; tools/manifests.py). Each module in
+scope gets a mode, written into the verdict's reviewed.scope:
+  credited  its content's fingerprint was in scope of a concluded round:
+            not reviewed again
+  diff      reviewed on what changed since its base (the reviewed commit of
+            the newest concluded round that had it in scope) and the
+            unchanged code that change depends on or that calls it
+  full      never concluded, or --full
+A round whose modules are all credited is not spent: nothing is spawned and
+no verdict is written. The seal's backstop (seal.py) asks for one full review
+of every module's final content.
+
+PORTED, not copied (MetaFramework 2.6.5 adoption, R-66; earlier R-03, MF-16). This is the 2.6.5
+template runner with this repo's local rulings re-applied: IR-22 (name the dirty files), R-07 (a
+scratch worktree is the reviewer's only writable place; a dirty-after verdict is refused), IR-67
+(the verdict read robustly, and raw output kept on any parse or schema failure - the template's
+greedy brace regex is MF-33), R-15's detector-scope paragraph, and the positive-magnitude deduction
+wording.
 
 Usage:
-    k7-run.py [--root .] [--modules MOD-01,MOD-02] [--timeout 1800] [--dry-run]
-Exit: 0 verdict written (any verdict), 1 preflight/validation failure, 2 usage.
+    k7-run.py [--root .] [--modules MOD-01,MOD-02] [--full] [--timeout 1800] [--dry-run]
+Exit: 0 verdict written (any verdict), or nothing to review; 1 preflight/validation
+failure, 2 usage.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -43,11 +58,11 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import manifests as mf                                       # noqa: E402  credited review
+import receipts as rc                                        # noqa: E402  the gates as receipts (RD-28)
+
 RUNNER_OWNED = ("reviewed", "reviewer", "preflight", "progress", "schema_version")
-
-
-def now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 # R-07: the reviewer's only writable place. Gitignored, inside the repo so that
@@ -65,6 +80,34 @@ def scratch_down(root: Path) -> None:
     subprocess.run(["git", "-C", str(root), "worktree", "remove", "--force", SCRATCH],
                    capture_output=True, text=True)
     subprocess.run(["git", "-C", str(root), "worktree", "prune"], capture_output=True, text=True)
+
+
+def extract_verdict(raw: str) -> dict | None:
+    """The reviewer's verdict object out of its stdout (IR-67, MF-33).
+
+    A greedy brace regex runs from the FIRST brace in the output to the last, so prose that merely
+    mentions a set - `{}`, `{c1}` - makes it parse the wrong span and fail, discarding the whole
+    review. Now: the whole output if it is one JSON object; otherwise every `{` from the LAST
+    backwards, decoded with raw_decode, and the first verdict-shaped dict wins."""
+    try:
+        whole = json.loads(raw)
+        if isinstance(whole, dict):
+            return whole
+    except json.JSONDecodeError:
+        pass
+    decoder = json.JSONDecoder()
+    for i in reversed([k for k, ch in enumerate(raw) if ch == "{"]):
+        try:
+            obj, _ = decoder.raw_decode(raw, i)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(obj, dict) and "verdict" in obj and "checks" in obj:
+            return obj
+    return None
+
+
+def now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def git(root: Path, *a: str) -> str:
@@ -93,31 +136,6 @@ def run_tool(root: Path, script: str, *args: str) -> dict:
         return {"status": "fail", "violations": [
             {"file": script, "rule": "checker_unparseable",
              "detail": (r.stderr or r.stdout or "no output")[:300]}]}
-
-
-def extract_verdict(raw: str) -> dict | None:
-    """The reviewer's verdict object out of its stdout (IR-67).
-
-    A greedy brace regex (open-brace, dot-star, close-brace) ran from the FIRST brace in the output to the last, so prose that merely
-    mentions a set - `{}`, `{c1}`, as any review of VEC-01 does - made it parse `{}` and fail
-    on "extra data", discarding the whole review (K7 round 10's first attempt). Now: the whole
-    output if it is one JSON object; otherwise every `{` from the LAST backwards, decoded with
-    raw_decode, and the first verdict-shaped dict wins."""
-    try:
-        whole = json.loads(raw)
-        if isinstance(whole, dict):
-            return whole
-    except json.JSONDecodeError:
-        pass
-    decoder = json.JSONDecoder()
-    for i in reversed([k for k, ch in enumerate(raw) if ch == "{"]):
-        try:
-            obj, _ = decoder.raw_decode(raw, i)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(obj, dict) and "verdict" in obj and "checks" in obj:
-            return obj
-    return None
 
 
 def next_round(inst: Path) -> int:
@@ -197,6 +215,7 @@ Frozen S3:       {s3}
 Round:           {rnd}
 Modules in scope: {modules}
 
+{scope_text}
 Run the CC-1..CC-7 battery defined in your agent file against the working tree.
 Use only the declared commands:
   full suite:      {test_command}
@@ -239,10 +258,60 @@ runner computes those and will discard yours.
 """
 
 
+def scope_text(root: Path, scope: list[dict], om: dict) -> str:
+    """The prompt's scope section: each module's mode, what it is given, and the diff-mode rules."""
+    lines = ["Scope of this round (computed by the runner from each module's content; credited review):"]
+    for e in scope:
+        m = e["module"]
+        # Injection seams (OS-3) are not imports. The object model names them: "injected into MOD-05" on MOD-12's row
+        # sends MOD-12's reviewer to MOD-05's call path (the DR-37 case), so both directions are listed.
+        names = sorted(x for x in om if x != m and any(re.search(rf"\b{x}\b", r) for r in om[m]["rows"]))
+        named_by = sorted(x for x, rec in om.items() if x != m and any(re.search(rf"\b{m}\b", r) for r in rec["rows"]))
+        if e["mode"] == "credited":
+            how = (f"has an ACCEPT receipt at k7 or owner-triage" if e.get("credit") == "receipt"
+                   else f"was reviewed in concluded round {e['credit_round']}")
+            lines.append(f"  {m}  CREDITED: its content (manifest {e['manifest'][:12]}) {how}. Do not review it on its own.")
+            continue
+        if e["mode"] == "full":
+            lines.append(f"  {m}  FULL: review the whole module.")
+        else:
+            changed = git(root, "diff", "--stat", e["base"], "HEAD", "--",
+                          *e["files"]) or "(no change in its own files: a dependency or its object-model row changed)"
+            lines.append(f"  {m}  DIFF from base {e['base'][:7]} (round {e['base_round']}, concluded). Changed:")
+            lines += [f"        {ln}" for ln in changed.splitlines()]
+        rel = []
+        if e["deps"]:
+            rel.append(f"it imports {', '.join(e['deps'])}")
+        if e["importers"]:
+            rel.append(f"imported by {', '.join(e['importers'])}")
+        if names:
+            rel.append(f"its object-model rows name {', '.join(names)} (an injection seam, OS-3: read the code it is handed to)")
+        if named_by:
+            rel.append(f"named in the object model by {', '.join(named_by)} (an injection seam, OS-3)")
+        if rel:
+            lines.append(f"        Related: {'; '.join(rel)}.")
+        if e["unresolved"]:
+            lines.append(f"        Imports the runner could not resolve (read them yourself): {'; '.join(e['unresolved'][:6])}")
+    lines += [
+        "",
+        "Rules for this scope:",
+        "- A DIFF module is reviewed on its changes since its base AND the unchanged code those changes depend on",
+        "  or that calls them, following imports and injection seams (the object model names what each class is",
+        "  handed). Read that code in full. A defect found there is a finding against the module whose code holds it.",
+        "- Mechanical checks run as declared, the full suite included. A judgement check that passed at the base is",
+        "  re-assessed only where the changes touch what it reads; say which checks you carried and why.",
+        "- A CREDITED module is out of scope unless the scope above leads you into its code.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
     ap.add_argument("--modules", default="")
+    ap.add_argument("--full", action="store_true",
+                    help="review every module in scope in full (the owner's call, or the seal's backstop)")
     ap.add_argument("--timeout", type=int, default=1800)
     ap.add_argument("--dry-run", action="store_true",
                     help="run preflight and print the prompt; spawn nothing")
@@ -313,9 +382,14 @@ def main() -> int:
     # STATE.json is excluded: the SessionStart hook rewrites it on every session,
     # so counting it would make the tree permanently dirty and block every review.
     # It is session bookkeeping, not reviewed content.
+    # The PipelineGate store (RD-28) is excluded likewise: it is append-only and verified by its own chain, and the
+    # runner itself appends the pending k7 receipts before the reviewer starts.
+    store = re.search(r"--store\s+(\"[^\"]+\"|'[^']+'|\S+)", cfg.get("pipelinegate_command") or "")
+    store_rel = store.group(1).strip("\"'") if store else ".pipelinegate"
+
     def worktree_clean() -> bool:
         return git(root, "status", "--porcelain", "--",
-                   ".", ":(exclude)STATE.json") == ""
+                   ".", ":(exclude)STATE.json", f":(exclude){store_rel}") == ""
 
     clean_before = worktree_clean()
     struct = run_tool(root, "structure-check.py", "--root", str(root))
@@ -328,16 +402,12 @@ def main() -> int:
                   "violations": struct["violations"] + em["violations"]}
 
     if not clean_before:
-        # IR-22: name it. The previous round's own verdict file is the usual cause -
-        # the runner writes INSTRUMENTS/k7-verdict-N.json and then requires the tree
-        # it just dirtied to be clean - and an unnamed refusal sends the reader to
-        # STATE.json, which is excluded and therefore never the answer.
-        porcelain = git(root, "status", "--porcelain", "--", ".", ":(exclude)STATE.json")
-        for line in porcelain.splitlines()[:20]:
+        # IR-22: name it - an unnamed refusal sends the reader to STATE.json, which is excluded
+        # and therefore never the answer.
+        for line in git(root, "status", "--porcelain", "--", ".", ":(exclude)STATE.json", f":(exclude){store_rel}").splitlines()[:20]:
             print(f"  {line}", file=sys.stderr)
-        return die("working tree is dirty; K7 reviews a committed tree only. "
-                   "Commit the lines above (a prior verdict is evidence and belongs "
-                   "in the tree) or discard them, then re-run.")
+        return die("working tree is dirty; K7 reviews a committed tree only. Commit the lines above "
+                   "(a prior verdict is evidence and belongs in the tree) or discard them, then re-run.")
     if struct["status"] == "fail":
         for v in struct["violations"][:10]:
             print(f"  {v.get('file','')}: {v.get('rule')}: {v.get('detail')}",
@@ -350,19 +420,64 @@ def main() -> int:
     anchor = git(root, "tag", "-l", "s3-anchor-*").splitlines()
     rnd = next_round(inst)
     prior = load_prior(inst, rnd)
-    modules = [m for m in args.modules.split(",") if m] or ["(all)"]
+
+    # ---- credited review: each module's mode ------------------------------
+    tracked = set(git(root, "ls-files").splitlines())
+    om = mf.object_model(root, tracked)
+    modules = [m for m in args.modules.split(",") if m] or sorted(om)
+    unknown = [m for m in modules if m not in om]
+    if unknown:
+        return die(f"{', '.join(unknown)} not in INSTRUMENTS/object-model-and-parameters.md (with a File "
+                   f"the repo tracks); a module enters the object model before it is reviewed")
+    scope = mf.scope(root, cfg, inst, modules, args.full)
+    if all(e["mode"] == "credited" for e in scope):
+        print("k7-run: every module in scope is credited (its content was reviewed in a concluded round): "
+              + ", ".join(f"{e['module']} by " + (f"round {e['credit_round']}" if e.get("credit") == "verdict" else "its receipts")
+                          for e in scope)
+              + ". Nothing to review; no round spent. Pass --full to review anyway.")
+        return 0
+
+    # ---- RD-28: the gates as receipts (when the repo declares its PipelineGate store) ---------------------------
+    reviewing = [e for e in scope if e["mode"] != "credited"]
+    built = mf.build(root, cfg) if rc.enabled(cfg) else {}
+    agent_def = ""
+    if rc.enabled(cfg):
+        try:
+            no_battery = [e["module"] for e in reviewing
+                          if rc.standing(root, cfg, rc.h_of(built[e["module"]]["manifest"]), "battery") != "ACCEPT"]
+            agent_def = rc.charter(root, cfg)
+        except rc.PgError as exc:
+            return die(f"the PipelineGate store could not answer: {exc}")
+        if no_battery:
+            return die("RD-10/RD-28: no battery ACCEPT receipt for this content of "
+                       + ", ".join(no_battery) + ". Run the battery, then `python tools/receipts.py battery --module "
+                       "MOD-NN --record <its record>` for each. K7 not spawned.")
 
     prompt = PROMPT.format(
-        root=root, s3=s3_doc or "(governance/S3)", rnd=rnd, scratch=SCRATCH,
+        root=root, s3=s3_doc or "(governance/S3)", rnd=rnd,
         modules=", ".join(modules),
+        scope_text=scope_text(root, scope, om),
         test_command=cfg.get("test_command") or "(undeclared)",
         test_select=cfg.get("test_select") or "(undeclared)",
         rederive_all=cfg.get("rederive_all") or "(undeclared)",
-        seal_note=seal_note)
+        seal_note=seal_note, scratch=SCRATCH)
 
     if args.dry_run:
         print(prompt)
         return 0
+
+    # The pending receipts: one per module handed to the reviewer. The engine refuses a reviewer whose charter is not
+    # the one k7_verdict@1 pins (DECIDER_NOT_IN_RUBRIC): caught here, before a round is spent.
+    if rc.enabled(cfg):
+        for e in reviewing:
+            try:
+                ans = rc.k7(root, cfg, built[e["module"]]["manifest"], agent_def)
+            except rc.PgError as exc:
+                return die(f"the k7 receipt for {e['module']} could not be appended: {exc}")
+            if rc.nu(ans) != "LATENT":
+                return die(f"the engine answered {rc.nu(ans)} for {e['module']} at k7, not a pending review. A charter "
+                           f"whose digest ({agent_def[:19]}…) is not the one k7_verdict@1 pins refuses as "
+                           f"DECIDER_NOT_IN_RUBRIC: the owner admits a new version (tools/receipts.py setup). K7 not spawned.")
 
     agent = cfg.get("reviewer_agent") or ".claude/agents/k7-reviewer.md"
     # `or` not a get() default: an explicit null means "use the default".
@@ -391,7 +506,7 @@ def main() -> int:
         # IR-67: never discard a review. The raw output is evidence for the owner, written
         # BEFORE refusing, so an unreadable verdict costs a re-read, not a re-review.
         kept = inst / f"k7-unparsed-{rnd}.txt"
-        kept.write_text(f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}", encoding="utf-8")
+        kept.write_bytes(f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}".encode("utf-8"))
         return die(f"reviewer emitted no readable verdict object; raw output preserved at {kept}")
     verdict_text = json.dumps(supplied, indent=2)
 
@@ -401,15 +516,13 @@ def main() -> int:
 
     clean_after = worktree_clean()
     if not clean_after:
-        # R-07: now that the reviewer can write, a dirty tree after review is not a
-        # warning to record - it is a reviewer that changed what it reviewed. The
-        # output is kept for the owner; no verdict is written.
+        # R-07: the reviewer can write, so a dirty tree after review is a reviewer that changed what
+        # it reviewed - not a warning to record. The output is kept for the owner; no verdict.
         raw_out = inst / f"k7-raw-{rnd}.json"
-        raw_out.write_text(verdict_text, encoding="utf-8")
-        for line in git(root, "status", "--porcelain", "--", ".", ":(exclude)STATE.json").splitlines()[:20]:
+        raw_out.write_bytes(verdict_text.encode("utf-8"))
+        for line in git(root, "status", "--porcelain", "--", ".", ":(exclude)STATE.json", f":(exclude){store_rel}").splitlines()[:20]:
             print(f"  {line}", file=sys.stderr)
-        return die("the reviewer left the repository dirty (lines above); verdict REFUSED "
-                   f"(R-07). Raw output preserved at {raw_out}.")
+        return die(f"the reviewer left the repository dirty (lines above); verdict REFUSED (R-07). Raw output preserved at {raw_out}.")
 
     verdict = {
         "schema_version": "1.0",
@@ -419,6 +532,8 @@ def main() -> int:
             "tree_sha": tree, "commit_sha": commit,
             "s3_anchor_tag": anchor[-1] if anchor else "s3-anchor-v1.0",
             "modules": modules,
+            "scope": [{k: e[k] for k in ("module", "mode", "manifest", "base", "base_round", "credit_round",
+                                         "unresolved", "deps", "importers")} for e in scope],
         },
         "reviewer": {
             "agent": "k7-reviewer", "invocation": "subprocess",
@@ -454,15 +569,15 @@ def main() -> int:
     except jsonschema.ValidationError as e:
         path = "/".join(str(p) for p in e.absolute_path) or "(root)"
         raw_out = inst / f"k7-raw-{rnd}.json"
-        raw_out.write_text(verdict_text, encoding="utf-8")
+        raw_out.write_bytes(verdict_text.encode("utf-8"))
         return die(f"verdict failed schema at {path}: {e.message}\n"
                    f"No verdict written. The reviewer's output was non-conforming.\n"
                    f"Raw output preserved at {raw_out}.")
 
     out = inst / f"k7-verdict-{rnd}.json"
-    with tempfile.NamedTemporaryFile("w", dir=str(inst), delete=False,
-                                     encoding="utf-8") as tmp:
-        json.dump(verdict, tmp, indent=2)
+    # Bytes: a text-mode write turns every \n into \r\n on Windows (F7, the Frame Gate trial).
+    with tempfile.NamedTemporaryFile("wb", dir=str(inst), delete=False) as tmp:
+        tmp.write((json.dumps(verdict, indent=2) + "\n").encode("utf-8"))
         tmp.flush()
         os.fsync(tmp.fileno())
         tmp_name = tmp.name
@@ -470,6 +585,21 @@ def main() -> int:
 
     print(f"k7-run: round {rnd} -> {verdict['verdict']} "
           f"(drift {verdict['drift_score']['value']}) written to {out.name}")
+    if rc.enabled(cfg) and verdict["verdict"] == "PASS":
+        transcript = "sha256:" + hashlib.sha256(proc.stdout.encode("utf-8")).hexdigest()
+        for e in reviewing:
+            try:
+                ans = rc.k7(root, cfg, built[e["module"]]["manifest"], agent_def, transcript, "ACCEPT")
+                print(f"k7-run: {e['module']} k7 receipt: {rc.nu(ans)}")
+                if e["mode"] == "full":       # the seal's backstop, as a receipt the verdict file cannot fake
+                    ans = rc.k7(root, cfg, built[e["module"]]["manifest"], agent_def, transcript, "ACCEPT", "full-review")
+                    print(f"k7-run: {e['module']} full-review receipt: {rc.nu(ans)}")
+            except rc.PgError as exc:          # the verdict stands; without the receipt the module is simply not credited
+                print(f"k7-run: WARNING the k7 ACCEPT for {e['module']} was not appended ({exc}); it will be reviewed "
+                      f"again rather than credited", file=sys.stderr)
+    if not clean_after:
+        print("k7-run: WARNING reviewer left the tree dirty; verdict records it",
+              file=sys.stderr)
     return 0
 
 

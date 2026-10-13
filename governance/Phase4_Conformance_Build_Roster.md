@@ -1,4 +1,4 @@
-# Conformance Build Layer — Phase 4 Roster & Code-Conformance Gate (v0.4, input-agnostic)
+# Conformance Build Layer — Phase 4 Roster & Code-Conformance Gate (v0.7, input-agnostic)
 
 *Phase 4 of the #MetaFramework pipeline · The governed build · Reusable across concepts ·
 control system (drift ledger, axioms & base cases, object model & parameters, test strategy).
@@ -254,3 +254,126 @@ else in v0.2 stands.*
   inputs cell, and the contract's Inputs cell. The contract is copied from the signatures, never
   written from memory of the happy path. This applies to classes written after the change; it
   does not reopen sealed files.
+
+---
+
+# v0.5 amendments — RD-25..RD-26
+
+*Appended; everything above stands except where a line below says AMENDS. Adopted by the owner, 13 Oct 2026, battery size as a guide (from the Frame Gate trial's findings F3 and F4, MF-35).*
+
+- **RD-25 · A materiality bar for the record.** AMENDS §1's Interpretation Register ("every decision the handoff didn't
+  make"), §2's B* row ("every un-made decision → Interpretation Register") and §1's "maintained every step".
+  - **What is material.** An interpretation is registered when the builder's choice is material. A choice is
+    material when it changes observable behaviour or a contract:
+    - what a public operation returns, refuses, records or emits;
+    - a signature, or a type at a seam;
+    - a persisted or exchanged format;
+    - declared determinism or side effects;
+    - anything inside an open body, which RC-3 still requires to be linked to its AE when it is written.
+  - **What is not.** A choice that changes none of these is not registered: a private helper's name, an internal
+    structure with identical outputs, how tests are arranged, wording.
+  - **The register's form.** An interpretation is one line: id, the choice, its class (benign / latent / conflicting),
+    and the rule or AE it touches.
+  - **Rulings.** A ruling is one row in `RESOLUTION_RECORD.md`, quoting the owner's words where they decide it, with no
+    narrative copy elsewhere.
+  - **The instruments.** They are updated when a step changes what they record. No entry is written to show activity.
+  - **CC-3 reads with this test.** An unregistered choice is a finding only when it is material; a choice that adds no
+    behaviour is not an invention.
+  - **Observed** (Frame Gate, six modules): 85 interpretations, many changing no behaviour and no contract, and every
+    ruling written twice, as a row and as a narrative section. The record grew faster than the code, and each review
+    read it all.
+
+- **RD-26 · A battery is sized to the change's new claims.** AMENDS RD-10, which says what a battery re-plants but not
+  how many.
+  - **What gets planted.** A battery plants at least one mutation for each NEW or CHANGED claim in the slice: a base
+    case, a refusal, or a test's stated claim. Every mutation names the claim it targets; a mutation that names none is
+    not planted.
+  - **Prior findings are always re-planted.** Each defect shape a K7 round found in the module is re-planted. That is
+    regression, and it is cheap.
+  - **Unchanged claims are not re-planted.** A claim whose code and tests are unchanged since the module's last
+    concluded battery is not re-planted. Its earlier kill is the credit.
+  - **Size.** About 10 to 15 mutations is the usual size. A larger battery states its reason in the battery record:
+    for example, a detector whose reach is itself the claim.
+  - **What stands.** Everything else in RD-10: a committed tree, verified restores, and a build-only kill re-planted
+    so that it dies by TEST.
+  - **Observed** (Frame Gate): the builder sized batteries toward exhaustion. Battery 19 planted 36 mutations in about
+    40 minutes, and nothing in the roster bounded it.
+
+---
+
+# v0.6 amendments — RD-27
+
+*Appended; everything above stands except where a line below says AMENDS. Adopted by the owner, 13 Oct 2026 (from the Frame Gate trial's finding F1 and the F1/F6 design, stage 1).*
+
+- **RD-27 · Credited review.** AMENDS §3's battery mechanics and the K7 runner. RD-9's round cap and the reviewer as a
+  separate process stand.
+  - **The fingerprint.** The runner computes each module's content fingerprint (`tools/manifests.py`). It covers:
+    - the module's files from the object model;
+    - the internal files they import that belong to no module;
+    - the test files that import any of them;
+    - the module's object-model rows;
+    - the content of every module its files import, transitively.
+
+    Imports are resolved to tracked files (RD-13). An internal import that cannot be resolved is recorded, and a module
+    with one is never credited.
+  - **Concluded.** A round is concluded when its verdict is PASS, or when a closing tag (`k7-pass-*`,
+    `closed-by-owner*`, `seal-*`) sits at or after its reviewed commit.
+  - **Modes.** Each module in scope gets one, written into the verdict's `reviewed.scope`:
+    - **credited**: this exact fingerprint was in scope of a concluded round. It is not reviewed again.
+    - **diff**: the module was in scope of a concluded round on other content. It is reviewed on its changes since the
+      base, which is the reviewed commit of the newest such round. The reviewer also reads, in full, the unchanged code
+      those changes depend on or that calls them, following imports and injection seams (the object model names them).
+      A defect found there is a finding against the module whose code holds it.
+    - **full**: the module was never concluded, or the owner asks (`--full`).
+  - **Checks.** Mechanical checks run as declared every round, the full suite included. A judgement check that passed
+    at the base is re-assessed only where the changes touch what it reads, and the reviewer says which checks it
+    carried.
+  - **A round of credited modules is not spent.** Nothing is spawned and no verdict is written.
+  - **The backstop.** `seal.py check` fails its `full-review` step unless every module's final fingerprint had a FULL
+    review in a concluded round. A first review is always full, so only modules last reviewed by diff come back.
+  - **Observed** (the Frame Gate trial, MF-35, and its builder's reading of rounds 8-12 from git):
+    - closed modules were re-reviewed end to end for a handful of changed files;
+    - all three product defects K7 found sat in their round's diff;
+    - DR-37 was completed by unchanged code that a diff-only review would have skipped. Hence the read-in rule, and
+      the backstop.
+
+---
+
+# v0.7 amendments — RD-28
+
+*Appended; everything above stands except where a line below says AMENDS. Adopted by the owner, 13 Oct 2026 (from the Frame Gate trial's finding F6 and the F1/F6 design, stage 2).*
+
+- **RD-28 · The gates are receipts.** AMENDS RD-10, RD-27 and RD-9's owner close, for a repo that declares its
+  PipelineGate store (`pipelinegate_command`). A repo that does not declare one keeps RD-27 as written.
+  - **The store.** The repo keeps its own store, `.pipelinegate/`, its lines committed with the repo. The owner signs
+    its catalog: `bootstrap`, then `battery_complete@1` (mechanical), `k7_verdict@1` (judged, pinned to the digest of
+    the repo's K7 charter) and `owner_triage@1` (judged, pinned to the owner's principal).
+    `tools/receipts.py setup --signer P` prints the commands. The executor never signs.
+  - **Points.** Each module's content manifest (RD-27) is an artifact. Its line carries:
+    - `battery`: the builder's battery record covers this content. Every mutation names its claim, was killed, and had
+      its restore verified; a build-only kill has a test re-plant; an empty battery says why.
+    - `k7`: the reviewer's verdict. It is pending when the round starts, and ACCEPT on a PASS.
+    - `owner-triage`: the owner's close.
+    - `full-review`: ACCEPT on a PASS of a FULL review, or on the owner's close of a round that reviewed the module in
+      full.
+  - **The battery before review is a refusal.** `k7-run.py` does not spawn the reviewer for content whose standing at
+    `battery` is not ACCEPT.
+  - **The reviewer's independence is enforced.** The engine refuses a decider who is the artifact's author
+    (`AUTHOR_IS_JUDGE`), and a reviewer whose charter's digest is not the one the rubric pins
+    (`DECIDER_NOT_IN_RUBRIC`). The runner learns this from the pending receipt, before any round is spent. Changing the
+    charter is therefore a signed act: the owner admits a new rubric version.
+  - **Credit and the backstop are read from standing,** on every call, never from the verdict files:
+    - credited means ACCEPT at `k7` or `owner-triage`;
+    - the seal's full-review step means ACCEPT at `full-review`.
+
+    The verdict files still give each module its diff base.
+  - **The owner's close is a receipt.** `tools/receipts.py owner-close --round N --person P` is run only on the
+    owner's explicit, live word, with the principal the owner names. `gate.py` refuses the `closed-by-owner-N` tag
+    until it exists for every module in round N's scope.
+  - **A RETURN or HALT stays pending.** Its findings live in the verdict file. The sealed library's judged rubrics
+    declare no outcome names, so a RETURN cannot be a receipt without a PipelineGate extension.
+  - **Observed** (the sandbox, against the real engine):
+    - a verdict file edited to claim credit for changed content was credited from the verdict files alone, and
+      refused by the receipts;
+    - the same forgery fooled a backstop read from the verdict file's mode, which is why `full-review` is a receipt;
+    - an edited charter was refused before a round was spent.

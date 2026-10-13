@@ -19,11 +19,9 @@ Placeholders: {entry} (the module's File from the object model), {module},
 {input_file} (a temp file holding the vector's encoded input), {vector_id}.
 The command must write only the encoded output to stdout.
 
-LOCAL RULING, this repo (K7 round 4, DR-07; IR-26). The command must begin with
-`node`, and is launched as the Node binary resolved by shutil.which("node") - never
-as a name handed to the host. The template launched whatever the string split to,
-so `npx tsx ...` reached a .cmd shim that Python cannot start on Windows, and CC-5
-would have failed on the gate's host at MOD-04, the first vector-bearing rung.
+LOCAL RULING, this repo (K7 round 4, DR-07; IR-26), ported onto 2.6.5 (R-66). The command must
+begin with `node`, and is launched as the Node binary resolved by shutil.which("node") - never as
+a name handed to the host: `npx tsx ...` reaches a .cmd shim that Python cannot start on Windows.
 IR-20 holds for this file too: tools/checks/spawn-portability.py reads it.
 
 Usage:
@@ -43,6 +41,13 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+
+def write_text_kept(path: Path, text: str) -> None:
+    """Write text as UTF-8 bytes. Text mode would turn every \\n into \\r\\n on Windows (F7, the Frame Gate trial),
+    so this writes LF, or CRLF only where the file being rewritten already uses it."""
+    crlf = path.is_file() and b"\r\n" in path.read_bytes()
+    path.write_bytes(text.replace("\r\n", "\n").replace("\n", "\r\n" if crlf else "\n").encode("utf-8"))
 
 
 def die(msg: str, code: int = 2) -> int:
@@ -108,16 +113,14 @@ def check_one(root: Path, vec: dict, entries: dict, invoke: str,
                       f"--refresh-provenance once the value re-derives.")
 
     enc = vec.get("encoding", "utf8-json")
-    with tempfile.NamedTemporaryFile("w", suffix=".in", delete=False,
-                                     encoding="utf-8") as tf:
-        tf.write(vec.get("input", ""))
+    # Binary: a text-mode write would turn every \n of the input into \r\n on Windows, and the
+    # entry reads the input as bytes (F7, the Frame Gate trial).
+    with tempfile.NamedTemporaryFile("wb", suffix=".in", delete=False) as tf:
+        tf.write(vec.get("input", "").encode("utf-8"))
         in_file = tf.name
     try:
-        # Split the TEMPLATE, then fill each token. Filling first put a host path
-        # (a Windows temp file is C:\...\tmpXXXX.in) into a string that POSIX-mode
-        # shlex then split, and shlex reads a backslash as an escape: the path
-        # arrived with its separators deleted. Placeholders never contain spaces
-        # the template did not quote, so token-wise filling is exact.
+        # Split the TEMPLATE, then fill each token (IR-26): filling first put a Windows temp path
+        # into a string that POSIX-mode shlex then split, deleting its backslashes.
         argv = [tok.format(entry=entry, module=module, input_file=in_file,
                            vector_id=vid) for tok in shlex.split(invoke)]
         if not argv or argv[0] != "node":
@@ -149,8 +152,7 @@ def check_one(root: Path, vec: dict, entries: dict, invoke: str,
         # so this fails — a record that asserts a false impl_sha is a false record.
         if refresh_provenance:
             vec["impl_sha"] = actual
-            (root / "vectors" / f"{vid}.json").write_text(
-                json.dumps(vec, indent=2) + "\n", encoding="utf-8")
+            write_text_kept(root / "vectors" / f"{vid}.json", json.dumps(vec, indent=2) + "\n")
             return True, f"re-derived; impl_sha re-pinned to {actual[:12]}"
         return False, provenance
     return True, "re-derived"

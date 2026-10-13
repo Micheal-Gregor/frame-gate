@@ -10,8 +10,8 @@
   "k7_round": 13,
   "last_gate_tag": "closed-by-owner-12",
   "seal_tag": "",
-  "next_action": "MOD-07 built, battery 23 11/11; K7 round 14 on MOD-07 (R-62). MOD-08 ruled (R-63..R-65). Owner: tag closed-by-owner-13 on 297fffa if not yet.",
+  "next_action": "2.6.5 adopted (R-66). Owner: name the signing principal; run the printed store setup commands (init, bootstrap, three admits). Then MOD-08 under receipts. Tags: closed-by-owner-14 on 8cd25e7.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T08:03:40+00:00",
-  "updated_by": "session-start:startup"
+  "updated_at": "2026-10-13T08:25:39+00:00",
+  "updated_by": "manual"
 }

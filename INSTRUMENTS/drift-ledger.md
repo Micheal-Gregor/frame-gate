@@ -618,3 +618,5 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 
 - **2026-10-13 — K7 round 14 (MOD-07; Fable 5.1): RETURN, drift 6.** One real defect (DR-46, the read seam); a single-writer residue (DR-47); scope and registration items (DR-48, DR-49). Round 1 of 2 under RD-9.
 
+- **2026-10-13 — MetaFramework 2.6.5 adopted in place (R-66).** RD-27 (credited, diff-scoped review) and RD-28 (receipted gates). The 2.6.5 runner still reads the verdict with the greedy regex (MF-33), so `k7-run.py` was MERGED, not copied, and the MetaFramework session has the finding. `new-object.py` now writes LF itself (F7).
+

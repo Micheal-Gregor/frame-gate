@@ -68,6 +68,26 @@
           "minItems": 1,
           "items": { "type": "string" },
           "description": "Modules in scope for this round."
+        },
+        "scope": {
+          "type": "array",
+          "description": "Credited review (tools/manifests.py): each module's content fingerprint and the mode the runner gave it. Written by the runner; a verdict from before credited review has none.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["module", "mode", "manifest", "base", "base_round", "credit_round", "unresolved", "deps", "importers"],
+            "properties": {
+              "module": { "type": "string", "pattern": "^MOD-[0-9]+$" },
+              "mode": { "enum": ["credited", "diff", "full"] },
+              "manifest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 of the module's canonical manifest." },
+              "base": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$", "description": "diff mode: the reviewed commit of the newest concluded round that had the module in scope." },
+              "base_round": { "type": ["integer", "null"] },
+              "credit_round": { "type": ["integer", "null"], "description": "credited mode: the concluded round whose scope held this fingerprint." },
+              "unresolved": { "type": "array", "items": { "type": "string" }, "description": "Internal imports the runner could not resolve; a module with any is never credited." },
+              "deps": { "type": "array", "items": { "type": "string" } },
+              "importers": { "type": "array", "items": { "type": "string" } }
+            }
+          }
         }
       }
     },
@@ -127,7 +147,7 @@
 
     "checks": {
       "type": "object",
-      "description": "One entry per conformance check. Keys are check IDs (CC-1..CC-7 for K7, PR-1..PR-7 for K8).",
+      "description": "One entry per conformance check. Keys are check IDs (CC-1..CC-7 for K7).",
       "minProperties": 1,
       "additionalProperties": {
         "type": "object",

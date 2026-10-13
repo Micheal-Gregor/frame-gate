@@ -1023,3 +1023,17 @@ On `81a878c`; restores verified.
 
 **4 / 4.** Schema records `MOD-05-round-29.json` (manifest `sha256:5ba175f5…`) and `MOD-11-round-29.json` (manifest `sha256:f33e7063…`). The runner ran twice by mistake on the same commit and manifests, with identical results; the records are the second run's.
 
+## Round 30 — MOD-13 `advisory/`, sized to its claims (R-50)
+
+On `2071c4f`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| A1 | MOD-13: R-82: the advisory is the injected rule's reading | KILLED (test) | `test_the_rule_is_handed_in` |
+| A2 | MOD-13: R-82: the plain rule hands out a copy, never the registry's own features | KILLED (test) | `test_the_advisory_reads_the_units_features` |
+| A3 | MOD-13: the feature source's Unknown is the answer, as itself | KILLED (test) | `test_the_advisory_reads_the_units_features` |
+| A4 | MOD-13: the advisory value is frozen | KILLED (test) | `test_the_rule_is_handed_in` |
+| A5 | MOD-13: DG-F1 / REF-01a: nothing in src reads the advisory - not even a gate module's type | KILLED (test) | `test_no_write_path_from_difficulty_to_a_gate` |
+
+**5 / 5.** Schema record `INSTRUMENTS/battery-records/MOD-13-round-30.json` (manifest `sha256:86fcf332…`), handed to battery_complete@1.
+

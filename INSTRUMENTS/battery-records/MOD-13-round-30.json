@@ -1,0 +1,42 @@
+{
+  "module": "MOD-13",
+  "manifest": "sha256:86fcf33254def3046033590be7b236af90c688e4cee9d7f653d10829ce617266",
+  "commit": "2071c4f",
+  "mutations": [
+    {
+      "id": "A1",
+      "claim": "R-82: the advisory is the injected rule's reading",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "A2",
+      "claim": "R-82: the plain rule hands out a copy, never the registry's own features",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "A3",
+      "claim": "the feature source's Unknown is the answer, as itself",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "A4",
+      "claim": "the advisory value is frozen",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "A5",
+      "claim": "DG-F1 / REF-01a: nothing in src reads the advisory - not even a gate module's type",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

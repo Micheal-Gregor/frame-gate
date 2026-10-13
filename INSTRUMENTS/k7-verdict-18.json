@@ -1,0 +1,173 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 18,
+  "reviewed": {
+    "tree_sha": "29b6b33f055fafcd6f1ba96f8e2ed55ba33c9437",
+    "commit_sha": "e98b594c4dac03242a8b2dc037ad8d487c9d4634",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-11",
+      "MOD-05"
+    ],
+    "scope": [
+      {
+        "module": "MOD-11",
+        "mode": "diff",
+        "manifest": "648acb86fe41113764da79b23f5849c916230ce882870e9c77a22bd2f1a46b89",
+        "base": "4c4ef5a33d79242ba8da2bb364daf8d3e0346ad7",
+        "base_round": 7,
+        "credit_round": null,
+        "unresolved": [],
+        "deps": [
+          "MOD-01",
+          "MOD-03",
+          "MOD-05",
+          "MOD-09"
+        ],
+        "importers": []
+      },
+      {
+        "module": "MOD-05",
+        "mode": "diff",
+        "manifest": "379bc9f1fb92a39710b7829efa7a0978350d2ca796ed570f177a15a2dec23ba7",
+        "base": "26d85913fd0309930058ffb7b663ca3a173e6a87",
+        "base_round": 17,
+        "credit_round": null,
+        "unresolved": [],
+        "deps": [
+          "MOD-01",
+          "MOD-02",
+          "MOD-03"
+        ],
+        "importers": [
+          "MOD-04",
+          "MOD-06",
+          "MOD-07",
+          "MOD-08",
+          "MOD-09",
+          "MOD-11",
+          "MOD-12"
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T20:44:15+00:00",
+    "completed_at": "2026-10-13T21:05:02+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 17,
+    "prior_tree_sha": "5841a0e337dfd81ec6055a63b8f762cf5bc5e261",
+    "prior_failing_checks": [],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "MOD-11 traces both ways. src/spend/scope-ledger.ts -> OBJ-14 Scope (S3 s3:124, 'appended before any draw; spent, never edited': authorize is the one append, :79-97) and OBJ-33 StopCondition (:127 'conditionally-existing member, not a nullable field': ScopePayload = ScopeFields | ScopeFields & {stop}, :42); src/spend/scope-reader.ts -> the record-only reads (IR-121, drift-ledger.md:199); src/spend/scope-gate.ts -> OBJ-30 ScopeGate (:126; HOOK-05 at :65-74, no branch on a currency); src/spend/ratio.ts -> OBJ-26 Ratio (:125 'vector in every representation': RatioValue.counts, :20-23; joined once as 'Ratio', :43, projection-joins pins it in BC-11-8); src/spend/authorization.ts -> OBJ-40 AuthorizationForm (:128 'built with its ratio or not built', :49-54). index.ts is surface only. Object-model rows exist for the module and all five parts (object-model-and-parameters.md:22,51-55) with declared slots matching each constructor (scope-ledger.ts:61-71; scope-gate.ts:43-52; scope-reader.ts:28-32; ratio.ts:33-36; authorization.ts:41-44). S3 s11:322 destinations: REF-15..REF-19 named cases exist (spend.test.ts:136,89,156,174,199), CT-5 N/A-by-absence stated (S3 s6:216; completion-ledger.md:23), HOOK-05 and HOOK-09 (scope-gate.ts:64-74; authorization.ts:49-54), PC-05 and PC-06 enumerated (completion-ledger.md:23). Seams: SEAM-04 (admitsDraw/admitsCandidate handed to MOD-05), SEAM-15 (ThresholdSource, scope-ledger.ts:48-50, asks only whether theta exists), SEAM-16 (the form carries the vector by type, authorization.ts:25-31), SEAM-22 (CandidateCounts.countsAsOf, ratio.ts:26-28), SEAM-24 (DISPATCH_SEMANTICS cited at ports/index.ts:81, consumed by R-78). MOD-05 DIFF from 26d8591: DrawScopeGate and the before-draw ask (draw-context-log.ts:78-80,116-119) -> R-78 (RESOLUTION_RECORD.md:88); ScopeCeiling.admitsCandidate (candidate-ledger.ts:105-107,181) -> R-78 'R-25 amended'; isDrawContextEntry (draw-context-log.ts:201-205) -> IR-126; LineageReader.drawsUnder (lineage-reader.ts:92-98) -> R-78, object-model row :31 updated. Trace citations R-77..R-81 resolve to ACCEPTED live rows (RESOLUTION_RECORD.md:87-91); IR-121..IR-126 present (drift-ledger.md:199-204). No orphan file in either module. Cosmetic, deducted under CC-7: SEAM-26 (MOD-03 -> MOD-11, the currency set indexing the ratio) is mediated entirely by MOD-05's countsAsOf, so Ratio's declared inputs name no MOD-03 source; SCOPE_GATE (scope-gate.ts:21-27) is exported and read by nothing in src or tests."
+    },
+    "CC-2": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "FAILED on one carried rule, demonstrated live against the real orchestrated path in the R-07 worktree .k7/wt (HEAD e98b594 = repository HEAD, .git/worktrees/wt/HEAD) by tests/k7/k7-probes.test.ts under `npx vitest run --root .k7/wt -t \"k7_p\"`: REF-03 / S-01, 'Refuse(unreachable); no candidate created, NO COST INCURRED' (S3 s5:173; governance/S3/facets/F2-gate.md:319 'On refusal: no candidate created, no cost incurred'; candidate-ledger.ts:16,158 'an unreachable draw costs nothing'). Probe k7_p1: MOD-05's DrawContextLog with the real ScopeGate (R-78) and MOD-05's one append with the REAL ReachabilityGate and the real ScopeGate injected; a scope of ceiling 1 at c1 for a unit with nothing committed at c0; recordDraw is admitted and recorded (draw-context-log.ts:118-128), appendCandidate answers refuse('unreachable') (candidate-ledger.ts:159-160), and gate.remaining(u, c1) is then 0, not 1 - 'an unreachable draw consumed the scope's ceiling: expected +0 to be 1'. Probe k7_p1b: after the honest c0 commitment the FIRST reachable draw at c1 under that scope is refuse('scope-exceeded'). The charge is taken at the draw context (lineage-reader.ts:92-98 counts every draw-context under the scope; scope-gate.ts:84-86), which precedes MOD-04's admission (asked only at the candidate append, candidate-ledger.ts:159); before this round R-25's ordering (admission step 1, ceiling step 5) made the ceiling unreachable for an unreachable draw, so this is a regression of the diff, not a closed-gate residue. The build's own BC-05-15 reads 'costs nothing' as 'no later decider is asked' (axioms-and-base-cases.md:343-347; facts.test.ts:511; reachability.test.ts:82) behind a permissive scope stub (reachability.test.ts:65), so the spend is outside its sight. Not halt-class: the owner's words are 'no cost incurred', not an absolute. HELD, read as code paths and killed by mutation (CC-6): no threshold supplied - scope-ledger.ts:89-91 asks only bar.kind and records the component (:92), theta is never copied (R-79); the ratio is never divided - ratio.ts:43 returns the counts vector, Ratio exports no scalar (spend.test.ts:191), no file outside src/spend reads ratio/remaining/stop (grep); no derived state - every read refolds the record (scope-reader.ts:52-58; scope-gate.ts:84-86); no second reachability check; no act accepts a diagnostic - ScopeLedger.authorize is found as an act and judged clean (act-signatures: acts_src includes src/spend/scope-ledger.ts:ScopeLedger.authorize, findings []); difficulty enters no condition; a Scope is never edited (REF-17: authorize takes a form, never a Scope, spend.test.ts:161-165); R-77 superseded-never-timed (M2, M9 killed); R-78 charged by dispatch (M3, M4, M8 killed); R-80 estimate as given (spend.test.ts:235); R-81 form of the same height (M6 killed); REF-15 at the unit's level in force (M5 killed). The five Unknowns: scope-ledger.ts:88,90 pass the declaration's and the bar's Unknown through as itself; every HOOK-05 failure is the hook's one refusal by IR-122 (drift-ledger.md:200), and ScopeReader answers only NoSubject or a record so nothing else is collapsed at scope-gate.ts:70. N/A-by-absence, stated: signatures (MOD-12), populations (MOD-09), ABSENT arithmetic (MOD-07), external naming (src/spend imports kernel, catalog, facts, calibration only). Residue deducted under CC-7, not failed: R-81's same-height check (scope-ledger.ts:81) is the single-writer residue IR-84 registered for MOD-12 - probe k7_p3 authorizes from a form built at h showing 0 draws while the record holds 2, by asserting h - and no MOD-11 register line carries it; IR-124's stale-height bypass of HOOK-05 is demonstrated by k7_p2 (remaining -1), registered latent."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Registered and honoured: R-77 (the latest scope governs; the remainder is not carried - spend.test.ts:100-108), R-78 (gate the draw itself; the candidate's unit and currency are its draw's scope's), R-79 (a component, never evaluated - the payload holds {kind, component} only, scope-ledger.ts:92), R-80 (the estimate as an opaque string, :39,83), R-81 (authorize takes the form; every form carries the ratio at every currency, authorization.ts:49-54, so no branch on 'the least'), IR-121 (record-only reader, unbranded records), IR-122 (one refusal for HOOK-05), IR-123 (ceiling a positive integer, :82), IR-124 (as-of limit), IR-125 (ratio counts returns, ceiling counts dispatches), IR-126 (one draw recognizer). No unregistered mechanism the tests depend on: the `midpoint` SeparationRule is test-only and labelled 'NOT AE-5's answer' (spend.test.ts:35-42), the device MOD-09/MOD-10's credited tests use; the spend-parts bar stub is setup (tests/support/spend-parts.ts:16-19). SCOPE statements scored against the plants (CC-6): every form inside a stated DECIDES was flagged; the KNOWN note of the surface rule (ledger-checks.mjs:25-27) is now incomplete rather than untrue - it names MOD-06's injected readers while the enumerated list at :429-445 also omits DrawScopeGate.admitsDraw, ScopeReads.governing/scopeAt and DrawCharges.drawsUnder, and its entry :442 `declaredAs(d, 'src/facts/candidate-ledger.ts', 'admitsDraw', 'ScopeCeiling')` names a member that no longer exists (ScopeCeiling.admitsCandidate since R-78), so it resolves to nothing - a dead entry in a load-bearing detector, deducted under CC-7. Two fidelity drifts, neither a mechanism the tests rest on: (1) SCOPE_GATE.condition is 'an unexpired scope exists with remaining > 0' (scope-gate.ts:21-22) - the INHERITED wording the S3 s7:249-253 restated to 'a scope exists with remaining greater than zero' because 'no expiry field or rule is proven anywhere', and R-77 rules 'no clock, no expiry field'; the Gate descriptor (OBJ-03) carries the struck predicate; (2) R-81's single-writer residue (k7_p3) is IR-84's shape and is registered for MOD-12 only - MOD-11's register (IR-121..IR-126) is silent on it. Both are carried as blocking items of low severity rather than failing this check, because neither is an unregistered mechanism the suite depends on to pass."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit && npx vitest run   (run as its two declared parts in sequence on the repository at e98b594, Windows PowerShell 5.1 having no &&: tsc printed nothing, exit 0; vitest 44 files, 344/344 passed, exit 0). Each S3 s5 row in scope resolves to exactly one case under the declared single-test command on the repository, each '1 passed | 343 skipped', exit 0: npx vitest run -t \"test_draw_beyond_scope_ceiling_is_refused\" (REF-16, spend.test.ts:89: the (N+1)th draw refuse('scope-exceeded') with nothing appended, a superseded scope with remaining admits nothing, another unit's scope admits nothing); -t \"test_stop_condition_without_bar_is_refused\" (REF-15, :136: theta = bottom under AE5_OPEN -> refuse('no-bar'), nothing appended; with theta the member exists and holds the component only); -t \"test_no_mutating_signature_on_scope\" (REF-17, :156: frozen, authorize is the one operation, a Scope does not compile as a form); -t \"test_ratio_as_quotient_is_malformed\" (REF-18, :174: a number in the ratio's place and arithmetic on it do not compile, zeros included, no scalar exported); -t \"test_authorization_without_ratio_is_refused\" (REF-19, :199: a form without its ratio does not compile, a form of another height is refuse('form-before-act'), declining appends nothing; the mint fixture mint-authorization-form.ts is flagged 'assertion'); -t \"test_draw_without_declaration_is_refused\" (REF-05, facts.test.ts); -t \"test_no_act_signature_accepts_diagnostic\" (REF-06, facts.test.ts:193: act-signatures src findings [] with ScopeLedger.authorize among the found acts). tests/spec/s5-names.test.ts green, so property (B) holds for every built module. Noted under CC-7, not a CC-4 failure (REF-03 is MOD-04's, a closed gate): the two 'no cost incurred' assertions (reachability.test.ts:82; facts.test.ts:511) measure only 'no later decider asked' behind a permissive scope stub, so the scope charge CC-2 found is outside their sight.",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (exit 0: '7 vector(s), all re-derived' - VEC-01..VEC-07, none owned by a module in scope). N/A-by-absence, explicit: S3 s6:216 pins no vector for MOD-05 or MOD-11 ('MOD-01, MOD-02, MOD-03, MOD-05, MOD-06, MOD-07, MOD-11 and MOD-13 pin no value - N/A-by-absence, not a silent pass'), and completion-ledger.md:23 says so for MOD-11; no impl_sha to check in scope. tools/vectors/run.ts changed only to hand the real ledgers a permissive scope stub (:84,:185,:203,:221) so the seven credited vectors still compute from the real implementation; the re-run confirms they do.",
+        "exit_code": 0
+      }
+    },
+    "CC-6": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Every experiment ran in the runner's R-07 worktree .k7/wt (detached at e98b594 = repository HEAD) under the declared commands `npx vitest run --root .k7/wt -t <name>`; the repository was never written. (a) Divergence-injection on the real orchestrated path (k7_p4, PASSED as predicted): a DrawCharges source reporting nothing drawn lets the REAL DrawContextLog, asking the REAL ScopeGate, admit three draws under a ceiling of one, and the honest LineageReader over the same record then answers remaining -2 and admitsDraw refuse('scope-exceeded') - the hook decides on the live charge read, nowhere else; a RatioSource answering an Unknown builds no form (HOOK-09, authorization.ts:51); a no-bar ThresholdSource makes the real ScopeLedger refuse a stop condition with nothing appended (REF-15). k7_p5: one gate read at two heights answers 2 then 1 - as-of, nothing stored. (b) Mutation, ten of ten killed, each attributed by its failure message: M1 scope-gate.ts:73 `> 0` -> `>= 0`: test_draw_beyond_scope_ceiling_is_refused red (the (N+1)th draw recorded at 22); M2 :72 superseded check dropped: same test red ('a superseded scope with remaining admitted a draw'); M3 draw-context-log.ts:118-119 the guarded call DELETED: same test red (the (N+1)th draw recorded); M4 the guarded ORDERING INVERTED - gate asked after the append: same test red ('a refusal appended something: expected 23 to be 22'); M5 scope-ledger.ts:91 no-bar refusal dropped: test_stop_condition_without_bar_is_refused red (a scope with a stop member appended under AE-5 open); M6 :81 form-height check dropped: test_authorization_without_ratio_is_refused red (a stale form authorized); M7 scope-gate.ts:80 currency match dropped: test_a_candidate_is_its_draws_scopes red (a c1 candidate appended under a c0 scope); M8 lineage-reader.ts:95 scope filter dropped: test_draw_beyond_scope_ceiling_is_refused red ('a remainder carried over: expected -2 to be 1'); M9 scope-reader.ts:38 `.at(-1)` -> `.at(0)`: test_governing_scope_and_remaining red (the first scope governs); M10 authorization.ts:51 HOOK-09's check dropped: 'build answers differently when ratio differs' red (a form built carrying an uncomputable as its ratio). Every restore verified: `git diff --no-index --stat` between the repository and .k7/wt is empty for scope-gate.ts, scope-ledger.ts, scope-reader.ts, authorization.ts, draw-context-log.ts, lineage-reader.ts and candidate-ledger.ts. Detector plants (tests/k7/k7-detectors.test.ts runs tools/checks/ledger-checks.mjs and act-signatures.mjs over the worktree and the repository): src/advisory/k7-forge.ts building and appending a scope-kind entry -> forge.src flagged 'catalog-kind-literal' (:13) and 'catalog-kind-append' (:14), and paths.src.scope listed 'K7ScopeBackfill.backfill' beside 'ScopeLedger.authorize' (BC-11-8 spend.test.ts:261 and BC-05-15 facts.test.ts:532 would go red); src/spend/k7-plants.ts asserting a Scope and an AuthorizationForm outside their owning files -> mint.src flagged both 'assertion' (:16 Scope, :17 AuthorizationForm); an MOD-11 act taking a DiagnosticValue -> act-signatures flagged 'diagnostic' (k7AuthorizeOnDiagnostic); the repository baseline is clean (mint.src [], forge.src [], acts findings [], ledgers unlisted/misowned/unbranded [], sc3 []), the owners fixtures pinned (conforming-builds-scope.ts [], violating-builds-commitment.ts ['catalog-kind-literal']). Scored against SCOPE (R-15): no evasion inside a stated DECIDES found. Known-issue candidates, outside every stated DECIDES and so not CC-6 failures: (1) an act taking the UNBRANDED parts of the ratio (`Pick<RatioValue,'counts'>`, k7AuthorizeOnCounts) is unflagged - DG-F4 says the ratio blocks the form and never the spend, and nothing mechanical keeps a ratio out of an act's parameters (IR-119's shape); (2) IR-124: a caller asserting the height before its first draw is admitted past a ceiling of 1 on the real path (k7_p2, remaining -1), registered latent, the record-port binding's (IR-84/PC-03 family); (3) the surface rule's enumerated read list (ledger-checks.mjs:429-445) carries a dead entry (:442 names ScopeCeiling.admitsDraw, which R-78 renamed) and no entry for the R-78/MOD-11 readers - inside its registered KNOWN limit (R-61, DR-44), so a made-up height handed to the scope gate is unseen by `fabricated`. Trace citations conditional on live status: R-77..R-81 ACCEPTED (RESOLUTION_RECORD.md:87-91), R-25/R-51 ACCEPTED. Battery 28's records exist (battery-records/MOD-11-round-28.json 12/12, MOD-05-round-28.json 3/3) but are stamped commit fa0e7e8, not HEAD e98b594 - carried as the builder's claim; H3 was dropped as an equivalent mutant and the clause removed (mutation-battery.md:987), confirmed by reading scope-gate.ts:71-72 (the governing read is by the drawing unit, so another unit's scope never matches) and by BC-11-1 :110-111. Tree integrity: `git status --porcelain` before and after the battery is identical - ' M .pipelinegate/lines/7368...bb7.jsonl', ' M .pipelinegate/lines/7368...b89.jsonl' (the runner's own records, modified before the reviewer's first command) and ' M STATE.json' - and `git diff --stat` shows only those three; nothing reviewed was touched. Reviewer residue remains in .k7/wt only: tests/k7/k7-probes.test.ts, tests/k7/k7-detectors.test.ts, k7-detectors.mjs, k7-detectors.wt.json, k7-detectors.repo.json, src/advisory/k7-forge.ts and src/spend/k7-plants.ts (both neutralised to `export {}`); a copy of k7-detectors.mjs sits in the session scratchpad under the system temp path; the runner deletes the worktree."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form, as a hard grader. Object-model fidelity 7: five classes to OS-1..OS-12, slots checked by operation, values frozen, the stop condition a conditionally existing member by type (scope-ledger.ts:42), Scope and AuthorizationForm nominal with the mint rule listing both, the reader unbranded by design (IR-121); deductions because SCOPE_GATE's declared condition carries 'unexpired' (scope-gate.ts:21-22), the predicate the S3 s7:249-253 struck as unproven and R-77 rules has no field, and because SEAM-26 reaches Ratio only through MOD-05's countsAsOf while the descriptor itself is read by nothing. Axiom coverage 5 (WORST): REF-03 / S-01 'no cost incurred' is false at the scope ceiling on the real orchestrated path (k7_p1: remaining 0 after refuse('unreachable'); k7_p1b: the first reachable draw then refuse('scope-exceeded')) - a regression of this diff, since R-25's ordering had kept the ceiling unasked for an unreachable draw; and R-81's single-writer residue (k7_p3) is unregistered for MOD-11. Base-case support 6: BC-11-1..8 written first and watched red (29/344, axioms-and-base-cases.md:742), real worlds through MOD-05/06/07/09/12, every mutant killed by a named case; deductions because no base case pins the interaction of HOOK-01 and HOOK-05 (an unreachable draw against the ceiling), and the two 'no cost' assertions measure 'no later decider asked' behind a permissive scope stub (reachability.test.ts:65,82; facts.test.ts:511), so the cost that is now spent one call earlier is invisible to them; BC-11-1 relies on a numeric height comparison for 'nothing appended' (spend.test.ts:43), which is fine, and no vacuous or tautological assertion was found in src/spend, the MOD-05 diff or their tests. Extensibility / verification strength 6: a dead entry in a load-bearing detector (ledger-checks.mjs:442 names a member R-78 removed) with the read list silently narrower than before and its KNOWN note naming only MOD-06; IR-124's stale-height bypass demonstrated on the real path (k7_p2); the ratio's unbranded parts can enter an act with no rule claiming otherwise (k7AuthorizeOnCounts unflagged); the battery-28 record is stamped fa0e7e8 while HEAD is e98b594 (IR-118's churn, the builder's claim); SCOPE_GATE is an unread export. No unused import, no hidden state, no literal threshold anywhere in scope. MIN = 5: RETURN."
+    }
+  },
+  "drift_score": {
+    "value": 5,
+    "basis": [
+      {
+        "check_id": "CC-2",
+        "finding": "Worst dimension: axiom coverage. Under R-78's placement a draw MOD-04 refuses as unreachable has already consumed one unit of the governing scope's ceiling (k7_p1: remaining 0 after refuse('unreachable'); k7_p1b: the first reachable draw is refuse('scope-exceeded')), contradicting REF-03 / S-01 'no candidate created, no cost incurred' (S3 s5:173; F2-gate.md:319) and candidate-ledger.ts:16,158 'an unreachable draw costs nothing'; the charge at draw-context-log.ts:118 / lineage-reader.ts:92-98 precedes the admission at candidate-ledger.ts:159, which R-25's ordering had previously kept the ceiling behind.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Base-case support: no base case pins HOOK-01 against HOOK-05 (an unreachable draw and the ceiling); the two 'no cost incurred' assertions (reachability.test.ts:82; facts.test.ts:511) measure only 'no later decider asked' behind a permissive scope stub (reachability.test.ts:65), so the regression above passes the whole suite green.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Object-model fidelity: SCOPE_GATE.condition reads 'an unexpired scope exists with remaining > 0' (scope-gate.ts:21-22) - the inherited wording the S3 s7:249-253 restated away because no expiry field or rule is proven, and R-77 rules 'no clock, no expiry field'; the Gate descriptor re-adopts the struck predicate.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Interpretation hygiene: R-81's same-height check (scope-ledger.ts:81) carries the single-writer residue IR-84 registered for MOD-12 - a form built at h showing 0 draws authorizes a scope while the record holds 2, by asserting h (k7_p3) - and MOD-11's register IR-121..IR-126 does not carry it.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "Verification strength: ledger-checks.mjs:442 names ScopeCeiling.admitsDraw, a member R-78 removed, so the surface read list silently lost the ceiling read and never gained DrawScopeGate.admitsDraw, ScopeReads.governing/scopeAt or DrawCharges.drawsUnder (inside the registered KNOWN limit, whose note names MOD-06 only); IR-124's stale-height bypass of HOOK-05 demonstrated on the real path (k7_p2, remaining -1).",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Extensibility: an act taking the unbranded parts of the ratio (Pick<RatioValue,'counts'>) is outside every stated DECIDES while DG-F4 says the ratio blocks the form and never the spend; SCOPE_GATE is an export read by nothing; battery-28 records are stamped fa0e7e8, not HEAD e98b594.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-2",
+      "module": "MOD-05 facts (draw-context-log.ts:116-119) with MOD-11 spend (scope-gate.ts:84-86, lineage-reader.ts:92-98) - R-78",
+      "required_change": "The property that must hold: a draw MOD-04 refuses as unreachable incurs no cost at the governing scope - its remaining is unchanged and the next reachable draw under that scope is admitted (REF-03 / S-01 'no candidate created, no cost incurred'; candidate-ledger.ts:16). A named test on the real orchestrated path - the real ReachabilityGate and the real ScopeGate injected into MOD-05, no permissive stub - must fail today: under a ceiling-1 scope at c1 with nothing committed at c0, after recordDraw and the unreachable candidate append, gate.remaining(u, c1) must be 1 and recordDraw after the honest c0 commitment must answer a DrawContext (reviewer's k7_p1/k7_p1b reproduce the breach: 0 and refuse('scope-exceeded')). Because the breach sits where two live rulings meet (R-78 'every draw context recorded under a Scope counts' and R-31's admission-at-the-append ordering), the resolution is the owner's recorded decision, not a silent choice: if the owner instead rules that an unreachable dispatch does spend the scope, REF-03's 'no cost incurred' must be re-read in a registered interpretation and BC-05-15's 'costs nothing' narrowed to what the suite actually asserts."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-11 spend (scope-gate.ts:21-22, SCOPE_GATE)",
+      "required_change": "The Gate descriptor's declared condition must be the S3 s7 condition as restated - 'a scope exists with remaining greater than zero' - or R-77's own reading of expiry as supersession; it may not carry 'unexpired', the inherited predicate the S3 (s7:249-253) struck as unproven and R-77 rules has no field. A base case must pin that no gate condition in src/spend names expiry."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "INSTRUMENTS/drift-ledger.md (MOD-11) and tools/checks/ledger-checks.mjs:429-445 (surface SCOPE note)",
+      "required_change": "Register, in one line each: R-81's single-writer residue (a form authorized at an asserted stale height shows a ratio the record no longer holds - IR-84's shape, carried to the RecordPort binding with PC-05), and that the surface rule's enumerated read list is now narrower than its KNOWN note states (the ScopeCeiling.admitsDraw entry is dead since R-78; DrawScopeGate.admitsDraw, ScopeReads.governing/scopeAt and DrawCharges.drawsUnder are not reads to it) - the dead entry removed or the note made true of the list it governs, with the limit pinned."
+    }
+  ],
+  "next_action": "Take the unreachable-draw charge to the owner - decide whether R-78's 'every draw context counts' yields to REF-03's 'no cost incurred' or re-reads it, pin that decision test-first on the real MOD-04 + MOD-11 path, restate SCOPE_GATE's condition to the S3 s7 wording, and register the R-81 residue before re-submitting MOD-11 for its one re-check."
+}

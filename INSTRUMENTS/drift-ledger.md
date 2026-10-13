@@ -674,3 +674,15 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
     - two probes are unpinned.
 
 - **2026-10-13 — MOD-11 `spend/` built (R-77..R-81), with MOD-05's R-78 work item.** Tests were written first and watched red against typed stubs (29 / 344). That count includes MOD-05's and MOD-03's registration pins, red until the scope kind and the Scope and AuthorizationForm brands were listed. Two test-side corrections came after the red run: the ledger-roots pin gained `src/spend`, and BC-11-1 refuses a draw at a pinned height, because the helper had appended its own height marker. 344 / 344.
+
+- **2026-10-13 — K7 round 18 (MOD-11 and MOD-05, DIFF; Fable 5.1): RETURN, drift 5** (CC-2 and CC-7 fail).
+  - **The defect.** Under R-78 an unreachable draw is charged against the scope before MOD-04 refuses it at the candidate append, so it costs a unit, against REF-03's "no cost incurred". The suite stayed green because every "no cost" assertion ran behind an admitting scope stub.
+  - **Also found:**
+    - SCOPE_GATE's condition re-adopts the struck "unexpired" wording (S3 §7);
+    - the R-81 same-height residue is unregistered (IR-84's shape);
+    - the surface rule's read list still names `ScopeCeiling.admitsDraw`, which R-78 renamed, so it silently lost the ceiling read;
+    - IR-124's stale-height bypass was demonstrated (remaining -1);
+    - an act may take `Pick<RatioValue, 'counts'>`;
+    - SCOPE_GATE is read by nothing;
+    - battery 28's records are stamped fa0e7e8. The battery ran there; the receipt commit e98b594 followed, with the same MOD-05 and MOD-11 content.
+  - **Owner, R-84:** reachability at the draw too, and every other finding fixed in the same round. Then battery 29 and the one re-check, round 19.

@@ -46,6 +46,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-36 how golden vectors are computed and re-derived (VEC-01 first) | **ACCEPTED 2026-10-13** (owner, live gate) | A harness in tools/: `rederive_invoke` becomes `node --import tsx tools/vectors/run.ts {vector_id} {entry} {input_file}`. The entry stays the implementing file (VEC-01: `src/reachability/reachability.ts`), so impl_sha pins the fold. The harness reads the input and calls the real implementation, and src/ names no external (REF-02) |
 | R-37 K7 round 10's scope and reviewer | **ACCEPTED 2026-10-13** (owner, live gate) | Modules MOD-04, MOD-05 and MOD-01: the new module plus every work item since `k7-pass-9` (WI-07, WI-08 in MOD-05; WI-10 in MOD-01). Reviewer Fable 5.1, as rounds 8-9; `reviewer_command` unchanged |
 | R-38 K7 round 10 triage (MOD-04 RETURN, drift 6): the fix round | **ACCEPTED 2026-10-13** (owner, live gate) | DR-30: the branch rule DECIDES destructuring (a binding element picked from the loaded order); a class field holding the least is a registered limit. DR-31: PC-05 enumerated for MOD-04 - attributable by construction through re-evaluation at the same height (a pure as-of fold); the refusal stream is deployment, carried forward. DR-32: all five forms DECIDED |
+| R-39 K7 round 11 triage, and MOD-04's gate closes (cap reached) | **ACCEPTED 2026-10-13** (owner, live gate) | DR-33: decide the numeric-string and computed keys, the binding-element hop and the widened-left comparison; REGISTER rest-then-index. DR-34: decide all three (by TYPE; any-flow; type guard). DR-35: decide method reference, factory reader, `.bind`, boolean-or-nullish result; REGISTER the user iteration helper. DR-36: fix now. The gate closes on `closed-by-owner-11` (this record's commit); the fixes are new work, batteried and reviewed at the next module's gate; the drift block lifts for the next module once that work and its battery are recorded |
 
 ---
 
@@ -851,4 +852,22 @@ one fix round and one re-check. **Rulings:**
   Each gets a violating fixture, watched red first.
 
 The re-check (round 11) keeps R-37's scope and reviewer.
+
+## R-39 · K7 round 11 triage, and MOD-04's gate closes
+
+Round 11 (`k7-verdict-11.json`, Fable 5.1, reviewed `724e048`) was MOD-04's re-check: RETURN,
+drift 6. The cap is reached, so this triage closes the gate. **Closed gates stay closed:** what
+follows is new work, reviewed at the next module's gate.
+
+| Item | Disposition |
+|---|---|
+| DR-33 the branch rule's sibling spellings | **Fix now.** Judge a destructured key by its RESOLVED name (a numeric literal, a numeric string, a computed numeric key), as DR-24 did for `kind`. Follow the one hop through a binding element. Strip widening on the CURRENCY side (`as`, `satisfies`, `String(c)`, a template). **Registered:** a rest element read back by a literal index, pinned by a `limit-` fixture |
+| DR-34 the joins rule | **Fix now, all three.** Resolve the receiver of `.call` / `.apply` / `.bind`, and `Reflect.apply`'s target, by TYPE (its call signature's declaration), as the SCOPE claims. Port catalog-mint's any-flow and user type-guard rules to the Projection brand |
+| DR-35 the sole-site rule's by-reference forms | **Fix now:** a reader METHOD handed by reference, a FACTORY call returning a reader, `.bind` of a reader, and a read-wrapping helper whose result is boolean or nullish. **Registered:** a reader called from a USER-written iteration helper, pinned by a `limit-` fixture |
+| DR-36 REF-03's name selects two cases; stale cell; vacuous assertion | **Fix now:** rename the orchestrated-path case so the §5 name selects one; the completion ledger says the orchestrated path is covered by a test §5 does not name (ODG-FG-08's observation); correct the cell; replace the vacuous assertion |
+
+**The close.** The owner places `closed-by-owner-11` on the commit that records this ruling.
+**The next module.** MOD-04 closes at drift 6. The drift block on opening the next module (MOD-12
+`lineage/` or MOD-06 `condition/`, S3 §10) is lifted once the work above and its battery are
+recorded, as R-16 did for MOD-03. The work is reviewed at that module's gate.
 

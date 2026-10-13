@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 19,
+  "reviewed": {
+    "tree_sha": "f9b6492d356542c0514772224a1d71bdc9c25494",
+    "commit_sha": "cfaafc53dd9a6cc0fcd3dc7406048d1f70470f22",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-11",
+      "MOD-05"
+    ],
+    "scope": [
+      {
+        "module": "MOD-11",
+        "mode": "diff",
+        "manifest": "f33e7063a6266f532e0c266648d60b3392d8d43d8e48daf2a8e47180b424e8dc",
+        "base": "4c4ef5a33d79242ba8da2bb364daf8d3e0346ad7",
+        "base_round": 7,
+        "credit_round": null,
+        "unresolved": [],
+        "deps": [
+          "MOD-01",
+          "MOD-03",
+          "MOD-05",
+          "MOD-09"
+        ],
+        "importers": []
+      },
+      {
+        "module": "MOD-05",
+        "mode": "diff",
+        "manifest": "5ba175f5ae44e06e359c9c528fa340fcc1ba6db2720d7182735ea833cba5a62d",
+        "base": "26d85913fd0309930058ffb7b663ca3a173e6a87",
+        "base_round": 17,
+        "credit_round": null,
+        "unresolved": [],
+        "deps": [
+          "MOD-01",
+          "MOD-02",
+          "MOD-03"
+        ],
+        "importers": [
+          "MOD-04",
+          "MOD-06",
+          "MOD-07",
+          "MOD-08",
+          "MOD-09",
+          "MOD-11",
+          "MOD-12"
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T21:39:57+00:00",
+    "completed_at": "2026-10-13T21:47:08+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 18,
+    "prior_tree_sha": "29b6b33f055fafcd6f1ba96f8e2ed55ba33c9437",
+    "prior_failing_checks": [
+      "CC-2",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Re-assessed only where the fix round (81a878c) touches what CC-1 reads; everything else is carried from round 18, whose CC-1 passed on the same files. New code and its traces: ScopeGate.currencyOf (src/spend/scope-gate.ts:77-81) traces to R-84 ('the scope gate tells it the scope's currency', RESOLUTION_RECORD.md:94) and has an interface-contract row (ui/interface-contract.md, ScopeGate.currencyOf). DrawScopeGate.currencyOf and the new admission slot on DrawContextLog (src/facts/draw-context-log.ts:79-83, 89, 95-100, 116-117, 139-142) trace to R-84 'the draw log gains an admission slot'. The object-model row now lists 'record, declarations, scopes, admission' (object-model-and-parameters.md:29), which matches the constructor. IR-127..IR-130 are present (drift-ledger.md:205-208). R-84 and R-85 are ACCEPTED live rows (RESOLUTION_RECORD.md:94-95). No orphan code: the only new export is currencyOf, which draw-context-log.ts:139 calls. SCOPE_GATE is now read by a test (spend.test.ts:274), which closes round 18's 'read by nothing' note. One cosmetic drift remains, carried under CC-7. CandidateLedger's header (candidate-ledger.ts:28) still reads '5. CEILING - MOD-11, injected (R-25): the scope's remaining ceiling (REF-16)', and its object-model row still says 'ceiling'. Since R-78 that step is the scope MATCH (admitsCandidate, :179-182), and the ceiling is charged at the draw."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "I rebuilt round 18's failing scenario live in the R-07 worktree .k7/wt (HEAD cfaafc5 = repository HEAD, per .git/worktrees/wt/HEAD) with tests/k7/k7-probes.test.ts under `npx vitest run --root .k7/wt -t \"k7_p\"`. The draw log uses MOD-04's real ReachabilityGate and MOD-11's real ScopeGate; nothing is stubbed. REF-03 / S-01 'no candidate created, no cost incurred' now HOLDS. k7_p1 (a ceiling-1 scope at c1, nothing committed at c0): recordDraw answers refuse('unreachable') and gate.remaining(u,c1) stays 1. After the honest c0 commitment, recordDraw under the same scope answers a DrawContext and remaining becomes 0. Round 18's k7_p1/k7_p1b reproduced 0 and refuse('scope-exceeded') here. Beyond the shape I named in round 18, I ran independent scenarios: k7_p1c (three currencies, c0 committed, c1 not, a c2 scope: refused unreachable, remaining unchanged); k7_p7 (u drawing under v's scope is refused and v's remaining is untouched). The code path: draw-context-log.ts:139-144 reads the declaration, then the scope's currency, then MOD-04's admit for that currency, then HOOK-05, and appends only at :153. A refusal at any step appends nothing. The candidate append still asks the same gate first (candidate-ledger.ts:159). Because admitsCandidate requires candidate currency = scope currency (scope-gate.ts:87), reachability is asked of the same currency at both points (IR-130). That is the same gate asked twice, not a second fold: soleSite stays green (reachability.test.ts:247). Rules carried from round 18 and re-read where the diff touches them: no threshold supplied; ratio never divided; no derived state (currencyOf refolds via scopeAt, scope-reader.ts:42-44); difficulty in no condition; no act accepts a diagnostic (REF-06 green). Unknowns: a NoSubject from the declaration reader becomes refuse('no-declaration') and any other Unknown passes through unchanged (:133); MOD-04's Unknown passes through unchanged (:142). One low-severity collapse, registered and not failed: draw-context-log.ts:140 maps ANY Unknown from currencyOf to refuse('scope-exceeded'), unlike the pass-through at :133. The real reader yields only NoSubject (scope-reader.ts:43), and IR-122/IR-130 register this as the hook's one refusal. Known-issue candidates, outside the carried rules as ruled. (1) k7_p10: a draw recorded while reachable, followed by a MOD-12 invalidation of the c0 commitment before the candidate returns, leaves the scope charged (remaining 0) while the candidate is refuse('unreachable'). R-78 'spent by dispatch, not by return' makes this the owner's ruling, not a breach of REF-03, which concerns the refused draw. (2) k7_p11: a draw that asserts a height below a later invalidation is admitted and charged (IR-124's as-of family, registered latent). N/A-by-absence, as in round 18: signatures, populations, ABSENT arithmetic, external naming. Not halt-class: 'no cost incurred' is not stated as absolute."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "All three of round 18's CC-3 items are closed against the tree. (1) SCOPE_GATE.condition is now 'a scope exists with remaining greater than zero' (scope-gate.ts:21-23), the S3 s7 wording. A base case pins the whole descriptor by equality (spend.test.ts:274), and mutant M4 below kills it. (2) The R-81 single-writer residue is registered as IR-127 (latent, drift-ledger.md:205), with IR-84's shape cited. (3) The dead read-list entry `declaredAs(..., 'admitsDraw', 'ScopeCeiling')` is removed (ledger-checks.mjs:443-448 no longer carries it). The surface rule's KNOWN note now names ScopeCeiling.admitsCandidate, DrawScopeGate.admitsDraw/currencyOf, ScopeReads and DrawCharges as not-reads, with its reason (an identity height) (ledger-checks.mjs:24-31), and IR-129 registers it. The note is now true of the list it governs. Also registered: IR-128 (an act may take the ratio's unbranded parts, held by review) and IR-130 (the gate asked twice; a draw naming no scope is HOOK-05's refusal before reachability). No unregistered mechanism the tests depend on. fact-world's `reachable` flag defaults to an always-ADMIT stand-in, which is labelled setup (fact-world.ts:41-49, 68-70), and the one REF-03-vs-HOOK-05 test turns it on. The tools/vectors and isolation stubs `currencyOf: () => \"c0\" as never` are setup and are deducted only as code quality (CC-7). The edit to ui/interface-contract.md follows the established per-module practice (it has been edited in every module commit since MOD-07) and adds the currencyOf row and the R-84 refusals. Independence note: the closure SHAPE (reachability at the draw too) is the owner's ruling R-84, not mine, so certifying it is in scope. The PROPERTY and scenario that BC-11-9 pins were named by K7 round 18. I therefore did not take BC-11-9 alone as proof; I falsified the fix with my own additional scenarios (k7_p1c, k7_p7) and divergence runs (k7_p8, k7_p9)."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit && npx vitest run   (run as its two declared parts in sequence on the repository at cfaafc5, because Windows PowerShell 5.1 has no &&: tsc printed nothing, exit 0; vitest 44 files, 347/347 passed, exit 0; tests/spec/s5-names.test.ts green, so each S3 s5 name of a built module selects exactly one case). Round 18's per-REF single-test selections for REF-15..REF-19, REF-05 and REF-06 are carried: their tests and code are unchanged except spend.test.ts:57, which now injects MOD-04's real gate, and they ran green in the full run. The new case test_an_unreachable_draw_costs_nothing (BC-11-9, spend.test.ts:117-131) closes round 18's base-case gap: REF-03's 'no cost incurred' was asserted only behind a permissive scope stub, and is now asserted on the real MOD-04 + MOD-11 path with genuine forbidden input (a draw at c1 with nothing committed at c0). It checks nothing appended, remaining unchanged, and the first reachable draw then charged.",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (exit 0: '7 vector(s), all re-derived', VEC-01..VEC-07). N/A-by-absence, explicit: S3 s6 pins no vector for MOD-05 or MOD-11 (completion-ledger.md MOD-11 row: 'n/a by absence'), so there is no impl_sha in scope to check. tools/vectors/run.ts changed only to hand DrawContextLog its new currencyOf and admission setup stand-ins (:84, :200, :384), and the seven credited vectors still compute from the real implementation, as the re-run confirms.",
+        "exit_code": 0
+      }
+    },
+    "CC-6": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Every experiment ran in the runner's R-07 worktree .k7/wt (detached at cfaafc5), and the repository was never written. (a) Divergence-injection on the real orchestrated path, both as predicted. k7_p8: a DrawContextLog over the same record, with the REAL ScopeGate but an always-ADMIT admission, lets the unreachable c1 draw through, and the real gate then answers remaining 0. So the REF-03-vs-HOOK-05 guarantee rests on the injected admission. k7_p9: a DrawScopeGate whose currencyOf lies (answers the least currency) while admitsDraw is the real one lets the same draw spend the scope (remaining 0). So the guarantee also rests on currencyOf telling the scope's currency. (b) Mutation under the declared single-test command `npx vitest run --root .k7/wt -t <name>`. Three of three guarded-path mutants were killed, plus one detector mutant, each attributed by its failure message. M1: draw-context-log.ts:141-142, the admission call DELETED -> test_an_unreachable_draw_costs_nothing red ('an unreachable draw was not refused'). M2: the guarded ORDERING INVERTED, so reachability is asked after the append -> same test red ('a refusal appended something: expected 7 to be 6'). M3: scope-gate.ts:80, currencyOf answering 'c0' instead of the scope's currency -> same test red ('an unreachable draw was not refused'), run alone after a contaminated first run was discarded. M4: SCOPE_GATE.condition restored to 'an unexpired scope ...' -> test_spend_is_registered red (the descriptor diff names the condition). Round 18's ten mutants (M1..M10) are carried: the files they mutated are unchanged apart from the lines above, and battery 29's records (INSTRUMENTS/battery-records/MOD-05-round-29.json and MOD-11-round-29.json, commit 81a878c, both killed) are the builder's claim, consistent with what I killed. Restore was verified: `git diff --no-index --stat src .k7/wt/src` is empty. Scored against SCOPE (R-15): the surface rule's DECIDES did not change. Its KNOWN note now registers the MOD-11 seams it does not read (IR-129), so a fabricated height handed to currencyOf is outside a stated DECIDES: a known-issue candidate, not a CC-6 failure. Other known-issue candidates, outside every stated DECIDES: (1) nothing mechanical requires that DrawContextLog and CandidateLedger are handed the SAME AdmissionDecider. IR-130's 'the same gate asked twice' holds by composition only (fact-world.ts:68-78), which belongs to the binding layer (PC family). (2) k7_p10/k7_p11 as in CC-2. Trace citations conditional on live status: R-78, R-81, R-84 and R-85 are ACCEPTED (RESOLUTION_RECORD.md:88, 91, 94, 95). Tree integrity: `git status --porcelain` before and after the battery is identical: ' M .pipelinegate/lines/7368...a62d.jsonl', ' M .pipelinegate/lines/7368...8dc.jsonl' (the runner's records, modified before my first command) and ' M STATE.json'. Nothing reviewed was touched. Reviewer residue remains in .k7/wt only (tests/k7/k7-probes.test.ts), and the runner deletes it. Process note per R-85: this reviewer is the same model as the builder, so separation is by process only."
+    },
+    "CC-7": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form, hard-graded. Object-model fidelity 8: SCOPE_GATE carries the S3 s7 wording and is pinned; currencyOf is a declared slot checked at construction (draw-context-log.ts:113-117); the object-model row and the interface contract are updated. One point off because CandidateLedger's header (candidate-ledger.ts:28) and its object-model row still describe step 5 as the 'remaining ceiling' when it is the scope match, and SEAM-26 still reaches Ratio only via MOD-05's countsAsOf (carried). Axiom coverage 8: REF-03 / S-01 'no cost incurred' now holds at the ceiling on the real path (k7_p1, k7_p1c, k7_p7). The residues are registered: IR-124 stale height, IR-127 R-81 single-writer, IR-130 same gate asked twice. The invalidation-between-dispatch-and-return charge (k7_p10) is R-78's ruled semantics and appears in no register line as an explicit consequence; it is a known-issue candidate. Base-case support 8: BC-11-9 was written first and watched red (axioms-and-base-cases.md:744-748), and it is killed by three distinct mutants. The draw log's admission isolation case was tightened after passing vacuously (draw-context-log.isolation.test.ts:59-60), and currencyOf has its OS-12 case. One point off because BC-11-9 is the scenario round-18 K7 named, so I treated it as unverified by me until my own scenarios confirmed it. Extensibility / verification strength 7 (WORST): the same-admission binding between the draw log and the candidate ledger is held by composition only. draw-context-log.ts:140 collapses any Unknown from currencyOf into the hook's refusal, against the module's own pass-through discipline three lines above (IR-122/IR-130 register it). An act taking the ratio's unbranded parts is held by review only (IR-128). The setup stubs use `\"c0\" as never` casts (tools/vectors/run.ts:84, 200, 384; facts.test.ts; reachability.test.ts; candidate-ledger.isolation.test.ts:33), which hide a type obligation rather than meet it. No unused import, no hidden state, no literal threshold, and no vacuous assertion in the diff. MIN = 7: conforms with registered interpretations; no drift block applies."
+    }
+  },
+  "drift_score": {
+    "value": 7,
+    "basis": [
+      {
+        "check_id": "CC-7",
+        "finding": "Worst dimension: extensibility / verification strength. IR-130's 'the same gate asked twice' rests on composition alone: nothing mechanical requires that DrawContextLog and CandidateLedger are handed the same AdmissionDecider (fact-world.ts:68-78). draw-context-log.ts:140 collapses any Unknown from currencyOf into refuse('scope-exceeded'), against the pass-through at :133 (registered via IR-122/IR-130). IR-128's unbranded-ratio act is held by review only. The setup stubs bypass the Currency type with `\"c0\" as never` (tools/vectors/run.ts:84, 200, 384 and four test files).",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-1",
+        "finding": "Object-model fidelity: CandidateLedger's header (candidate-ledger.ts:28) and its object-model row still name step 5 'CEILING ... the scope's remaining ceiling (REF-16)', but since R-78 step 5 is the scope match (admitsCandidate, :179-182) and the ceiling is charged at the draw. SEAM-26 reaches Ratio only via MOD-05's countsAsOf (carried from round 18).",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-2",
+        "finding": "Axiom coverage: a draw dispatched while reachable, followed by a MOD-12 invalidation before the candidate returns, leaves the scope charged while the candidate is refuse('unreachable') (k7_p10). This is R-78's 'spent by dispatch' as ruled, but it is not written as a consequence in any register line. The stale-height admission at the draw (k7_p11) is IR-124's registered latent family.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Base-case support: BC-11-9 pins the exact scenario K7 round 18 named. It was scored as unverified by this reviewer until the independent scenarios k7_p1c (three currencies) and k7_p7 (foreign scope) and the divergence runs k7_p8/k7_p9 confirmed it.",
+        "deduction": 2
+      }
+    ]
+  },
+  "verdict": "PASS",
+  "blocking": [],
+  "next_action": "Record this PASS for MOD-11 and MOD-05, and log the known-issue candidates (the same-admission binding held only by composition, k7_p10's charge on invalidation between dispatch and return, the stale CEILING wording at candidate-ledger.ts:28, the `as never` setup casts) as low-severity work items before MOD-13 begins."
+}

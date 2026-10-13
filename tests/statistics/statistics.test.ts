@@ -9,7 +9,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { asProjection, isUnknown, noSubject, refuse, undetermined, type RecordHeight } from "../../src/kernel/index.js";
+import { asProjection, isUnknown, noSubject, refuse, uncomputable, undetermined, type RecordHeight } from "../../src/kernel/index.js";
 import type { Currency, Unit } from "../../src/catalog/index.js";
 import { LineageReader, type Candidate, type Commitment } from "../../src/facts/index.js";
 import { RevisionLog, Samples, type ConditionIdentity } from "../../src/condition/index.js";
@@ -180,6 +180,11 @@ describe("BC-08-7 - an unknown propagates as itself; each axis joins the family 
     const mixed = { of: () => asProjection("Sample", () => refuse("mixed-conditions")) };
     expect(new Dispersion({ samples: mixed, observations: w.observations }).of(u, w.c1, X, "a").compute(w.record.noise())).toEqual(refuse("mixed-conditions"));
     expect(new Location({ samples: mixed, observations: w.observations }).of(u, w.c1, X, "a").compute(w.record.noise())).toEqual(refuse("mixed-conditions"));
+    // ... and an observation source's Unknown other than NoSubject is the answer too, never "unobserved".
+    w.member(0.4);
+    const broken = { observationOf: () => uncomputable("two-observations") };
+    expect(new Dispersion({ samples: w.samples, observations: broken }).of(u, w.c1, X, "a").compute(w.record.noise())).toEqual(uncomputable("two-observations"));
+    expect(new Location({ samples: w.samples, observations: broken }).of(u, w.c1, X, "a").compute(w.record.noise())).toEqual(uncomputable("two-observations"));
     const joins = (JSON.parse(execFileSync(process.execPath, [resolve(repo, "tools/checks/projection-joins.mjs")], { cwd: repo, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 })) as { joins: string[] }).joins;
     expect(joins.filter((j) => j.startsWith("Dispersion ") || j.startsWith("Location "))).toEqual(["Dispersion src/statistics/dispersion.ts", "Location src/statistics/location.ts"]);
   });

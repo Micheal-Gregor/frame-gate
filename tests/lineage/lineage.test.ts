@@ -130,9 +130,11 @@ describe("BC-12-2 - a signature is the digest of its whole material (R-43)", () 
     const sig = w.gate.sign(w.gate.materialOf(p));
     expect(w.gate.sign(w.gate.materialOf(p)), "one material signed twice differs").toBe(sig);
     expect(w.gate.check(p, sig)).toBe("VERIFIED");
-    // The digest is the PORT's (OBJ-39): nothing in MOD-12 chooses it.
+    // The digest is the PORT's (OBJ-39): nothing in MOD-12 chooses it. The SAME material under
+    // another port gives that port's digest of the same bytes - compared over one material, not
+    // two, whose lineages would differ by themselves (battery 19, M8 survived the weaker form).
     const other = new SignatureGate({ digests: { digest: (b) => `other:${sha256.digest(b)}` } });
-    expect(other.sign(other.materialOf(p)), "the signature does not come from the injected digest").not.toBe(sig);
+    expect(other.sign(w.gate.materialOf(p)), "the signature is not the injected port's digest").toBe(`other:${sig}`);
     // Sensitive to EVERY field the material carries: one variant per field, the set read off the
     // material itself (RD-12). `lineage` moves with `from` (BC-12-5, VEC-05).
     const variants: Readonly<Record<string, CandidateProposal>> = {

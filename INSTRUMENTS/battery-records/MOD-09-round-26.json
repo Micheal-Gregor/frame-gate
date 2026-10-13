@@ -1,0 +1,119 @@
+{
+  "module": "MOD-09",
+  "manifest": "sha256:c796e27050591ebb21f3e4fbe64725377a8df2f16e56e1570500f18f8e6b2a9f",
+  "commit": "cabe897",
+  "mutations": [
+    {
+      "id": "C1",
+      "claim": "REF-11: an empty Accepted is no-bar on the population branch; the rule is not consulted",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C2",
+      "claim": "REF-11: an empty PassedOver is no-bar on the population branch",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C3",
+      "claim": "R-69: the rule's no-bar is the answer as given, with the rule's own cause",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C4",
+      "claim": "OBJ-22: \u03b8 comes with the sample size behind it - both populations' scored members",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C5",
+      "claim": "AE-5: the rule is handed Accepted's scores, then PassedOver's",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C6",
+      "claim": "HOOK-08: PassedOver's own exclusion count rides on every return",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C7",
+      "claim": "HOOK-03 / REF-12: \u03b8 is a branded Threshold; a plain number is not one",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C8",
+      "claim": "REF-13 / X21: an invalidated commitment no longer accepts its candidate",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C9",
+      "claim": "SEAM-10: the level is the declaration recorded at draw time, not the current one",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C10",
+      "claim": "One bar per level: levels are never merged",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C11",
+      "claim": "OBJ-23: a member of an open sample is in neither population",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C12",
+      "claim": "SEAM-23: a sample closed by a revision contributes to PassedOver",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C13",
+      "claim": "R-70: an ABSENT component is excluded, never scored",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C14",
+      "claim": "SEAM-09 / ST-F2: an exclusion is counted on the side it would have joined",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C15",
+      "claim": "an observation source's Unknown other than NoSubject is the answer, never 'unobserved'",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    },
+    {
+      "id": "C16",
+      "claim": "OBJ-23: each population reads in candidate-height order",
+      "killed": true,
+      "killed_by": "test",
+      "restore_verified": true
+    }
+  ]
+}

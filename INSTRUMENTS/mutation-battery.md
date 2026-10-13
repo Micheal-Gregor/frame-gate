@@ -915,3 +915,28 @@ On `29a638e`; restores verified.
 
 **13 / 13.** Schema record `INSTRUMENTS/battery-records/MOD-08-round-25.json`, manifest `sha256:96d0c9d8…`, handed to battery_complete@1.
 
+## Round 26 — MOD-09 `calibration/`, sized to its claims (R-50)
+
+On `cabe897`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| C1 | REF-11: an empty Accepted is no-bar on the population branch; the rule is not consulted | KILLED (test) | `test_bar_with_empty_population_returns_bottom` |
+| C2 | REF-11: an empty PassedOver is no-bar on the population branch | KILLED (test) | `test_bar_with_empty_population_returns_bottom` |
+| C3 | R-69: the rule's no-bar is the answer as given, with the rule's own cause | KILLED (test) | `test_the_injected_rule_decides_separation` |
+| C4 | OBJ-22: θ comes with the sample size behind it - both populations' scored members | KILLED (test) | `test_the_injected_rule_decides_separation` |
+| C5 | AE-5: the rule is handed Accepted's scores, then PassedOver's | KILLED (test) | `test_the_injected_rule_decides_separation` |
+| C6 | HOOK-08: PassedOver's own exclusion count rides on every return | KILLED (test) | `test_exclusion_counts_present_on_both_populations` |
+| C7 | HOOK-03 / REF-12: θ is a branded Threshold; a plain number is not one | KILLED (test) +tsc | `test_threshold_assignment_is_malformed` |
+| C8 | REF-13 / X21: an invalidated commitment no longer accepts its candidate | KILLED (test) | `test_invalidated_commitment_moves_to_passed_over` |
+| C9 | SEAM-10: the level is the declaration recorded at draw time, not the current one | KILLED (test) | `test_membership_reads_the_declaration_recorded_at_draw_time` |
+| C10 | One bar per level: levels are never merged | KILLED (test) | `test_membership_reads_the_declaration_recorded_at_draw_time` |
+| C11 | OBJ-23: a member of an open sample is in neither population | KILLED (test) | `test_passed_over_is_read_from_closed_samples` |
+| C12 | SEAM-23: a sample closed by a revision contributes to PassedOver | KILLED (test) | `test_passed_over_is_read_from_closed_samples` |
+| C13 | R-70: an ABSENT component is excluded, never scored | KILLED (test) | `test_exclusion_counts_present_on_both_populations` |
+| C14 | SEAM-09 / ST-F2: an exclusion is counted on the side it would have joined | KILLED (test) | `test_exclusion_counts_present_on_both_populations` |
+| C15 | an observation source's Unknown other than NoSubject is the answer, never 'unobserved' | KILLED (test) | `test_populations_are_computed_as_of_a_height` |
+| C16 | OBJ-23: each population reads in candidate-height order | KILLED (test) | `test_passed_over_is_read_from_closed_samples` |
+
+**16 / 16.** Schema record `INSTRUMENTS/battery-records/MOD-09-round-26.json`, manifest `sha256:c796e270…`, handed to battery_complete@1. A first pass aborted after C4 on a console-encoding error in the runner (cp1252 could not print "θ"), restores verified; this is the full re-run.
+

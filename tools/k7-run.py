@@ -95,6 +95,31 @@ def run_tool(root: Path, script: str, *args: str) -> dict:
              "detail": (r.stderr or r.stdout or "no output")[:300]}]}
 
 
+def extract_verdict(raw: str) -> dict | None:
+    """The reviewer's verdict object out of its stdout (IR-67).
+
+    A greedy brace regex (open-brace, dot-star, close-brace) ran from the FIRST brace in the output to the last, so prose that merely
+    mentions a set - `{}`, `{c1}`, as any review of VEC-01 does - made it parse `{}` and fail
+    on "extra data", discarding the whole review (K7 round 10's first attempt). Now: the whole
+    output if it is one JSON object; otherwise every `{` from the LAST backwards, decoded with
+    raw_decode, and the first verdict-shaped dict wins."""
+    try:
+        whole = json.loads(raw)
+        if isinstance(whole, dict):
+            return whole
+    except json.JSONDecodeError:
+        pass
+    decoder = json.JSONDecoder()
+    for i in reversed([k for k, ch in enumerate(raw) if ch == "{"]):
+        try:
+            obj, _ = decoder.raw_decode(raw, i)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(obj, dict) and "verdict" in obj and "checks" in obj:
+            return obj
+    return None
+
+
 def next_round(inst: Path) -> int:
     ns = [int(m.group(1)) for p in inst.glob("k7-verdict-*.json")
           if (m := re.search(r"k7-verdict-(\d+)\.json$", p.name))]
@@ -361,14 +386,14 @@ def main() -> int:
     completed = now()
 
     raw = proc.stdout.strip()
-    m = re.search(r"\{.*\}", raw, re.S)
-    if not m:
-        return die(f"reviewer emitted no JSON object.\n--- stdout ---\n{raw[:600]}\n"
-                   f"--- stderr ---\n{proc.stderr[:400]}")
-    try:
-        supplied = json.loads(m.group(0))
-    except json.JSONDecodeError as e:
-        return die(f"reviewer JSON unparseable: {e}")
+    supplied = extract_verdict(raw)
+    if supplied is None:
+        # IR-67: never discard a review. The raw output is evidence for the owner, written
+        # BEFORE refusing, so an unreadable verdict costs a re-read, not a re-review.
+        kept = inst / f"k7-unparsed-{rnd}.txt"
+        kept.write_text(f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}", encoding="utf-8")
+        return die(f"reviewer emitted no readable verdict object; raw output preserved at {kept}")
+    verdict_text = json.dumps(supplied, indent=2)
 
     # The reviewer does not get to certify its own independence.
     for k in RUNNER_OWNED:
@@ -380,7 +405,7 @@ def main() -> int:
         # warning to record - it is a reviewer that changed what it reviewed. The
         # output is kept for the owner; no verdict is written.
         raw_out = inst / f"k7-raw-{rnd}.json"
-        raw_out.write_text(m.group(0), encoding="utf-8")
+        raw_out.write_text(verdict_text, encoding="utf-8")
         for line in git(root, "status", "--porcelain", "--", ".", ":(exclude)STATE.json").splitlines()[:20]:
             print(f"  {line}", file=sys.stderr)
         return die("the reviewer left the repository dirty (lines above); verdict REFUSED "
@@ -429,7 +454,7 @@ def main() -> int:
     except jsonschema.ValidationError as e:
         path = "/".join(str(p) for p in e.absolute_path) or "(root)"
         raw_out = inst / f"k7-raw-{rnd}.json"
-        raw_out.write_text(m.group(0), encoding="utf-8")
+        raw_out.write_text(verdict_text, encoding="utf-8")
         return die(f"verdict failed schema at {path}: {e.message}\n"
                    f"No verdict written. The reviewer's output was non-conforming.\n"
                    f"Raw output preserved at {raw_out}.")

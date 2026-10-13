@@ -10,8 +10,8 @@
   "k7_round": 10,
   "last_gate_tag": "k7-pass-9",
   "seal_tag": "",
-  "next_action": "MOD-04 BUILT (178/178, VEC-01 re-derived, battery 15 21/21). K7 round 10 running on MOD-04, MOD-05, MOD-01 (R-37, Fable 5.1). PASS -> owner tags k7-pass-10 and pushes; then MOD-12 lineage / MOD-06 condition.",
+  "next_action": "MOD-04 fix round (R-38) done; battery 16 12/12; 179/179. K7 round 11 - the one re-check (RD-9) - running on MOD-04, MOD-05, MOD-01 (Fable 5.1). PASS -> owner tags k7-pass-11; otherwise owner triage closes the gate.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T03:17:46+00:00",
-  "updated_by": "refresh"
+  "updated_at": "2026-10-13T04:03:43+00:00",
+  "updated_by": "manual"
 }

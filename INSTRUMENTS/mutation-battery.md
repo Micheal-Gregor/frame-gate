@@ -630,3 +630,32 @@ written for MOD-03, now guarding MOD-04's "no per-currency branch". H19 plants a
 reachability check in MOD-05's REAL source, and the sole-site rule sees it there. H21 shows that
 VEC-01's provenance is live: changing the fold by one comment character breaks its `impl_sha`.
 
+## Round 16 — MOD-04's fix round (R-38), before K7 round 11
+
+Run on committed tree `129d7b3` with the round-5 discipline. Before the run, four claims of the fix
+that no fixture pinned were pinned:
+
+- numeric-keyed object destructuring;
+- `.apply` and `.bind` joins;
+- Map iteration;
+- a commitment-returning reader that closes over its height, found only through the fixed point.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| I1 | branch: binding elements no longer followed (DR-30 reopened) | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| I2 | branch: numeric-keyed object destructuring dropped | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| I3 | branch: 'the order' widened back to ANY Currency collection (data pairs flagged) | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| I4 | branch: the order's one const hop dropped | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| I5 | sole site: iterating owners narrowed back to Array | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| I6 | sole site: the reader fixed point removed | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| I7 | sole site: a reader handed by reference no longer seen | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| I8 | a REGISTERED LIMIT closed silently (any helper return type made a reader) | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| I9 | joins: generic launder no longer seen | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| I10 | joins: only .call followed (apply / bind dropped) | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| I11 | joins: Reflect.apply no longer followed | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| I12 | REF-03 on the orchestrated path: admission asked after the signature (cost incurred) | KILLED (test) | `test_draw_without_cheaper_commitment_is_refused_on_the_orchestrated_path` |
+
+**Twelve of twelve killed on the first pass.** I2, I10 and I5 (for Map) would have survived
+without the pre-battery pins. I3 shows the narrowing to the LOADED order is load-bearing: widened
+back to any Currency collection, the conforming data pair is flagged.
+

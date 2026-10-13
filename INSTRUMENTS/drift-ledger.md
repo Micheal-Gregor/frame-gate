@@ -477,3 +477,7 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   - **DR-32:** all five forms are decided (IR-70).
   - **Green:** 179/179, `tsc` clean.
 
+- **2026-10-13 — Builder battery round 16 (MOD-04 fix round): 12/12 killed on the first pass.**
+  Four pins were added before the run. K7 round 11, the one re-check (RD-9), follows on R-37's
+  scope and reviewer (R-38).
+

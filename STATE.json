@@ -10,8 +10,8 @@
   "k7_round": 12,
   "last_gate_tag": "closed-by-owner-11",
   "seal_tag": "",
-  "next_action": "MOD-07 observation built (R-58..R-60), 257/257. Next: battery 23 (sized to MOD-07), then K7 round 14 (scope to rule).",
+  "next_action": "MOD-07 built, battery 23 11/11; K7 round 14 on MOD-07 (R-62). MOD-08 ruled (R-63..R-65). Owner: tag closed-by-owner-13 on 297fffa if not yet.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T07:58:27+00:00",
+  "updated_at": "2026-10-13T08:03:20+00:00",
   "updated_by": "manual"
 }

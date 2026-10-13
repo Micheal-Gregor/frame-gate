@@ -828,3 +828,23 @@ On `52a508d`; restores verified.
 
 **4 / 4.** MOD-06's gate is closed by owner triage (R-61).
 
+## Round 23 — MOD-07 `observation/`, sized to its claims (R-50)
+
+On `677b0e8`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| B1 | score: a non-finite number becomes a Score | KILLED | `test) (test_a_score_is_any_finite_number` |
+| B2 | isAbsent: never true | KILLED | `test) (test_an_observation_is_read_component_by_component` |
+| B3 | scoredComponents: ABSENT zeroed, not omitted | KILLED | `test) (test_all_absent_vector_is_accepted_and_stored` |
+| B4 | observe: an unknown component accepted | KILLED | `test) (test_an_observation_states_every_configured_component` |
+| B5 | observe: a missing component accepted | KILLED | `test) (test_an_observation_states_every_configured_component` |
+| B6 | observe: recorded in the given order, not the configured one | KILLED | `test) (test_an_observation_states_every_configured_component` |
+| B7 | observe: an Undischargeable component scored later | KILLED | `test) (test_the_latest_observation_is_in_force` |
+| B8 | observationOf: the first, not the latest | KILLED | `test) (test_the_latest_observation_is_in_force` |
+| B9 | recognizer: an entry with no components read | KILLED | `test) +tsc (test_the_latest_observation_is_in_force` |
+| B10 | authorOf: the fact's author, not the component's | KILLED | `test) (test_an_observation_is_read_component_by_component` |
+| B11 | observe: the caller's ABSENT kept, not a fresh copy | KILLED | `test) (test_an_observation_states_every_configured_component` |
+
+**11 / 11.**
+

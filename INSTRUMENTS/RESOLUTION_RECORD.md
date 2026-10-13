@@ -69,6 +69,10 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-59 an observation's components (MOD-07) | **ACCEPTED 2026-10-13** (owner, live gate) | A CONFIGURED, closed list loaded once at construction; every observation states every configured component (a Score or ABSENT); a missing or unknown name is refused |
 | R-60 which observation of a candidate is in force (MOD-07) | **ACCEPTED 2026-10-13** (owner, live gate) | The LATEST complete vector at or below the height; earlier ones stay in the record. A later vector may not score a component an earlier one marked Undischargeable: refused |
 | R-61 K7 round 13 triage (RETURN, drift 6): MOD-06's gate closes | **ACCEPTED 2026-10-13** (owner, live gate) | FIX NOW, test-first: DR-42 (Chains surfaces the fold's Unknown); DR-43 (a lossless number encoding); DR-45 (IR lines, style). KNOWN LIMIT (R-50): DR-44, stated in the surface rule's SCOPE. A small battery; NO re-check. Tag `closed-by-owner-13` on this commit |
+| R-62 K7's scope for the remaining modules (standing) | **ACCEPTED 2026-10-13** (owner, live gate) | Each gate reviews ONLY its new module plus any dependency it changed, named in the round's record (`--modules <new>` on Fable 5.1); no scope question per gate; the owner may override one. Round 14: MOD-07 |
+| R-63 DG-F5: the dispersion and centre statistics (MOD-08) | **ACCEPTED 2026-10-13** (owner, live gate) | Dispersion = the SAMPLE standard deviation (n-1); location's centre = the arithmetic MEAN. VEC-03's statistic identity: "sample-sd" |
+| R-64 which scores the statistics summarize (MOD-08) | **ACCEPTED 2026-10-13** (owner, live gate) | PER COMPONENT: a member counts for a component only if its observation in force scores it (VEC-03 rule iv); ABSENT contributes nothing |
+| R-65 dispersion of a sample closed by a revision (J3) | **ACCEPTED 2026-10-13** (owner, live gate) | `NoSubject` - the distribution no longer obtains; distinct from the floor's `Undetermined(AE-3)`. A sample closed by a COMMITMENT is still measured |
 
 ---
 

@@ -711,3 +711,9 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   - **The findings.** BC-13-2's scan read top-level import and export statements in .ts files only. K7 planted three escapes in src/facts - a type query, a dynamic `import()`, and a static import in a .mjs file - and the suite stayed green. The detector had no SCOPE block. BC-13-1 pinned the Unknown by deep equality, not identity.
   - **The fix round (the builder's one, RD-9).** The detector became `tools/checks/advisory-reach.ts`, every form resolved, with a SCOPE and a fixture per form (IR-137). BC-13-1 now pins the Unknown by identity.
   - **Verification.** Battery 31 re-plants K7's three escapes, and two more forms, IN src.
+
+- **2026-10-13 — K7 round 21 (MOD-13, FULL; the one re-check; Opus 5.5): RETURN, drift 6** (CC-3, CC-6 and CC-7 fail).
+  - The round-20 evasions, re-planted in fresh spellings, were all flagged, and both new mutations were killed.
+  - **F3.** A .mjs in src/facts imports `"../Advisory/index.ts"`. The containment test compares path spelling case-sensitively, so it misses the import, while the case-insensitive Windows host loads the very module.
+  - **CC-3.** The SCOPE overclaims "any form": `require` is decided by callee name, so an aliased require, `createRequire` and `module.require` are unregistered. The .d.ts boundary is unstated, and IR-136's wording is unconditional.
+  - **Owner, R-86:** fix now, test-first; a small battery; no re-check; `closed-by-owner-21`.

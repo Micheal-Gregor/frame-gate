@@ -3,15 +3,15 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "b332ad9b76bf3d2eeb08e52b8288c0eceae3ce81",
-  "tree": "c23aae79674e0323769fc22a99f6d357e93b6e61",
+  "head": "6f27e48737bcfb0c472b194b33f1c70cdf5c6989",
+  "tree": "735e8862627ac1695dc3d376579890912e9bc8ab",
   "dirty": true,
   "current_module": "MOD-08",
-  "k7_round": 19,
+  "k7_round": 20,
   "last_gate_tag": "closed-by-owner-14",
   "seal_tag": "",
   "next_action": "K7 round 20 RETURNED MOD-13 (drift 5): the fix round (BC-13-2's detector widened) is built; battery 31, then the one re-check (round 21).",
   "blocked_on": null,
-  "updated_at": "2026-10-13T22:09:28+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-10-13T22:11:56+00:00",
+  "updated_by": "session-start:startup"
 }

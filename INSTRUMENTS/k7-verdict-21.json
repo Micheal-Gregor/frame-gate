@@ -1,0 +1,131 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 21,
+  "reviewed": {
+    "tree_sha": "735e8862627ac1695dc3d376579890912e9bc8ab",
+    "commit_sha": "6f27e48737bcfb0c472b194b33f1c70cdf5c6989",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-13"
+    ],
+    "scope": [
+      {
+        "module": "MOD-13",
+        "mode": "full",
+        "manifest": "ca7f071f04076dcac3570ded86c7efa72bf264fa049380dbc570e2098ba451a7",
+        "base": null,
+        "base_round": null,
+        "credit_round": null,
+        "unresolved": [],
+        "deps": [
+          "MOD-01",
+          "MOD-03"
+        ],
+        "importers": []
+      }
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T22:11:50+00:00",
+    "completed_at": "2026-10-13T22:21:00+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 20,
+    "prior_tree_sha": "c23aae79674e0323769fc22a99f6d357e93b6e61",
+    "prior_failing_checks": [
+      "CC-3",
+      "CC-6",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Carried from round 20 and confirmed by re-reading. `git diff b332ad9 HEAD -- src` is empty, so MOD-13's source has not changed since round 20. src/advisory/index.ts traces to object-model-and-parameters.md:23. difficulty-advisory.ts traces to OBJ-34 (S3 s2:77, s3:132; R-82, R-83, DG-F1). plain-rule.ts traces to R-82. FeatureSource (difficulty-advisory.ts:31-33) is the SEAM-27 target (S3:164). The new tools/checks/advisory-reach.ts is a test instrument, registered as IR-137. I found no orphan code and no S3 node without a destination."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Carried: the round touched no running code in src/advisory. I re-read the three files. The constructor refuses a missing or malformed units/rule (difficulty-advisory.ts:40-43). The registry's Unknown is returned as itself (:52), not coalesced or nulled. `advisory(unit)` takes no height (:50) and never calls asProjection. There is no threshold and no stored derivation. In the committed tree no src file outside src/advisory reaches the module: the BC-13-2 test is green on the unmodified tree. Whether that stays true under evasion is CC-6."
+    },
+    "CC-3": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "IR-135, IR-136 and IR-137 are registered, and R-82/R-83 are live. The defect is the SCOPE (R-15) at tools/checks/advisory-reach.ts:4-19, which claims more than the detector decides and leaves out limits it has. (1) The rule line (:5) and the restated BC-13-2 (axioms-and-base-cases.md, fix-round block) say 'in any form' / 'in ANY specifier form'. But `require` is matched by the literal callee name `require` (:49), so an aliased require (`const load = require; load(\"../advisory/index.js\")`, planted as .k7/wt/src/facts/k7-createrequire.cjs) is neither flagged nor refused as computed. createRequire(...)(...) and module.require(...) behave the same way. None of these is registered as a LIMIT or pinned by a limit- fixture. (2) The SCOPE leans on its caller to drop declaration files ('every loadable source file given'; advisory.test.ts:43 excludes .d.ts) and never says so. A .d.ts bridge in src (global `type X = import(\"../advisory/index.js\").AdvisoryValue` used by a gate signature in a .ts file) passes this detector and tsc. In this tree it is caught by a different detector: the catalog-mint ambient-declaration check failed 4 tests. So this is a statement gap, not a suite escape. (3) IR-136 (drift-ledger.md:214) still says 'no gate condition ... can name an AdvisoryValue' as an unconditional fact. IR-137 narrows only its 'only mechanism' wording."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit -p .k7/wt && npx vitest run --root .k7/wt",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "not_applicable",
+      "mechanical": false,
+      "rationale": "N/A by absence, stated: S3 s6:216 names MOD-13 among the modules that pin no value, and completion-ledger.md agrees. I ran the declared `python3 tools/rederive.py --all`: 7 of 7 re-derived (VEC-01..VEC-07). None belongs to MOD-13, so there is no MOD-13 vector that could be stale or hand-written."
+    },
+    "CC-6": {
+      "status": "fail",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx vitest run --root .k7/wt -t \"test_no_write_path_from_difficulty_to_a_gate\"",
+        "exit_code": 0
+      }
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Four-dimension form, because the drift ledger does not score D1-D6. Object-model fidelity 9. Axiom coverage 8. Extensibility 8: the rule is injected, there is no hidden state, and the instance is frozen. Base-case support 6, the worst dimension: there is an in-DECIDES CC-6 evasion (F3). BC-13-1 is now pinned by identity (advisory.test.ts:28-29), and my mutation (returning `{...features}`) went red. Independence note: the round-20 required changes were written by K7 as properties (every form, identity), not as code. The builder designed reachesInto. I falsified the closure with my own spellings instead of trusting battery 31. Re-planted in fresh spellings in .k7/wt/src/facts: a nested-generic type query with './../', a backtick dynamic import, a .jsx static import, and extensionless and directory specifiers in a .mjs. All were flagged. Tree integrity: `git status --porcelain` showed the same two entries before and after the battery: STATE.json and one .pipelinegate/lines/*.jsonl, which the runner wrote (its LATENT k7 line) before I started. I changed neither. Every planting and mutation was made only in the runner's .k7/wt worktree (R-07). Deletion was refused by the sandbox, so caught plantings were neutralised in place, and the two mutations were reverted."
+    }
+  },
+  "drift_score": {
+    "value": 6,
+    "basis": [
+      {
+        "check_id": "CC-6",
+        "finding": "WORST DIMENSION: base-case support. In-DECIDES evasion F3. .k7/wt/src/facts/k7-case.mjs contains `import { DifficultyAdvisory } from \"../Advisory/index.ts\"`: a .mjs static import declaration, a form the SCOPE claims to resolve and test for containment. resolveSpecifier returns ...\\src\\Advisory\\index.ts, and contains() (external-isolation.ts:61-65) compares paths case-sensitively, so the containment test is false. On the Windows gate host the runtime loads the very module: a probe through the declared single-test command showed the imported class `=== DifficultyAdvisory` and computing an advisory value. With F3 planted, tsc was clean (.mjs is outside tsc's include) and test_no_write_path_from_difficulty_to_a_gate passed (exit 0). In the full suite, no failure beyond the four caused by my inert .d.ts stubs (which the sandbox would not let me delete) flagged it. Containment is decided on the path's spelling, not on the file's identity, so 'RESOLVED (RD-13)' falls short on a case-insensitive filesystem.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "The SCOPE at advisory-reach.ts:4-19 and the restated BC-13-2 claim 'any form'. But require is decided by callee name (:49), so an aliased require, createRequire or module.require is neither flagged nor refused, and none is registered as a LIMIT with a limit- fixture. The SCOPE also relies on its caller to drop .d.ts without saying so, and IR-136's unconditional 'no gate condition can name an AdvisoryValue' still stands.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "Credited. The round-20 evasions, re-planted by me in fresh spellings, were all flagged. Mutation M1 (advisory returns a structurally equal copy of the Unknown) went red on test_the_advisory_reads_the_units_features. Mutation M2 (type-query branch disabled in advisory-reach.ts) went red on test_no_write_path_from_difficulty_to_a_gate through its fixture pin.",
+        "deduction": 0
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-6",
+      "module": "MOD-13",
+      "required_change": "BC-13-2's containment must be decided on file identity, not path spelling. A specifier that resolves to a file inside src/advisory must be flagged however that file's path is spelled: case variants on a case-insensitive host, and by the same property symlink or junction aliases. test_no_write_path_from_difficulty_to_a_gate must fail when a .mjs/.js/.cjs/.jsx file in src outside src/advisory statically imports the advisory through a case-variant directory spelling (K7 round 21, F3), re-planted by someone other than the builder. If the shared containment primitive is changed, MOD-02's external-isolation detector must be re-verified against the same property."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-13",
+      "required_change": "Make advisory-reach.ts's SCOPE (R-15) and the restated BC-13-2 true. Either decide calls that load a module through an alias of require (a bound alias, createRequire(...)(...), module.require) or register each as a LIMIT pinned by a limit- fixture the detector must not flag. State in the SCOPE that declaration files are outside its decision and name what decides them. Remove 'any form' wherever the enumerated forms are not exhaustive. Qualify IR-136's 'no gate condition can name an AdvisoryValue' by the detectors and limits that actually carry it."
+    }
+  ],
+  "next_action": "Return MOD-13 to the owner for triage with the CC-6 case-variant containment evasion (F3) and the CC-3 SCOPE overclaim, since the fix round has already been spent."
+}

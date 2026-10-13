@@ -40,8 +40,10 @@
  *   paths    DECIDES, per ledger kind, every function in src/ whose RecordPort.append
  *            argument's TYPE carries it - outward through inline closures to the member -
  *            and every function that hands such an argument to a GENERIC RELAY: a
- *            function passing a parameter whose type carries no kind to RecordPort.append,
- *            directly or through another relay, found to a fixed point (R-31, DR-29).
+ *            function passing a parameter whose type carries no kind to RecordPort.append -
+ *            as the argument itself, or WRAPPED inside the entry it builds (an object
+ *            literal, `Object.freeze`, a shorthand property; R-32) - directly or through
+ *            another relay, found to a fixed point (R-31, DR-29).
  *            (S-01: "exactly one entry point; no alternate, bulk, administrative,
  *            backfill or test path"); the test pins one per kind, for every ledger.
  *            Fixtures under tests/fixtures/ledger-paths/src/<root>/ are judged at the
@@ -49,6 +51,8 @@
  *            LIMITS: an entry whose type carries no kind at any call - typed `unknown` or
  *            `any` (limit-untyped-entry.ts; forge registers the same residue); a relay
  *            reached indirectly, through `.call` / `.apply` (limit-indirect-relay.ts); a
+ *            relay receiving its entry by DESTRUCTURING - a binding element, not a
+ *            parameter (limit-destructured-relay.ts; R-32); a
  *            TYPED helper - its parameter already carries the kind - is the path itself,
  *            so two callers sharing it count once, as the helper (limit-typed-helper.ts).
  *            In src/ the exact per-kind map still turns red the moment a path moves into
@@ -682,6 +686,42 @@ function nameOfFn(fn, sf) {
  * found to a fixed point. Map: declaration -> the parameter indexes it relays. A relay whose
  * parameter DOES carry a kind is already the path itself, so it is not followed further.
  */
+/**
+ * The relay's parameters an append argument is BUILT FROM (R-32, WI-07): the argument itself,
+ * or any parameter appearing as a value inside the expression that builds it - an object
+ * literal, `Object.freeze(...)`, a shorthand property - with the owner found outward through
+ * inline closures. A destructured binding is not a parameter, so it is not followed: that
+ * residue is a registered limit (limit-destructured-relay.ts).
+ */
+function relayedParams(arg, fn) {
+  const out = [];
+  const ownerOfSymbol = (sym) => {
+    const d = sym?.valueDeclaration;
+    if (!d || !ts.isParameter(d)) return undefined;
+    for (let f = fn; f; f = isInlineClosure(f) ? enclosingFunction(f) : undefined) {
+      if (d.parent === f) return { fn: f, index: f.parameters.indexOf(d) };
+    }
+    return undefined;
+  };
+  const visit = (n) => {
+    if (ts.isFunctionLike(n)) return;
+    if (ts.isShorthandPropertyAssignment(n)) {
+      const o = ownerOfSymbol(checker.getShorthandAssignmentValueSymbol(n));
+      if (o) out.push(o);
+      return;
+    }
+    if (ts.isIdentifier(n)) {
+      const q = n.parent;
+      const isName = q && ((ts.isPropertyAssignment(q) && q.name === n) || (ts.isPropertyAccessExpression(q) && q.name === n));
+      const o = isName ? undefined : ownerOfSymbol(checker.getSymbolAtLocation(n));
+      if (o) out.push(o);
+      return;
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(arg);
+  return out;
+}
 const RELAYS = (() => {
   const relays = new Map();
   const calls = [];
@@ -705,8 +745,7 @@ const RELAYS = (() => {
       for (const i of isPortAppend(d) ? [0] : [...(relays.get(d) ?? [])]) {
         const arg = n.arguments[i];
         if (!arg || kindsCarried(checker.getTypeAtLocation(arg)).length > 0) continue;
-        const o = ownerOfParam(arg, enclosingFunction(n));
-        if (o && add(o.fn, o.index)) grew = true;
+        for (const o of relayedParams(arg, enclosingFunction(n))) if (add(o.fn, o.index)) grew = true;
       }
     }
   }

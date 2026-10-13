@@ -70,47 +70,54 @@ describe("CandidateLedger in isolation", () => {
     expect(a).not.toEqual(b);
   });
 
+  // Each side of a comparison comes from its OWN world, identical but for the one input varied,
+  // so a draw context bound by side a cannot answer for side b (R-33).
   it("appendCandidate answers differently when admission differs", () => {
-    const { inputs, proposal, at } = world();
-    const a = new CandidateLedger(inputs).appendCandidate(proposal, "sig", at, "ENGINE");
-    const b = new CandidateLedger({ ...inputs, admission: { admit: () => refuse("unreachable") } }).appendCandidate(proposal, "sig", at, "ENGINE");
+    const one = world();
+    const two = world();
+    const a = new CandidateLedger(one.inputs).appendCandidate(one.proposal, "sig", one.at, "ENGINE");
+    const b = new CandidateLedger({ ...two.inputs, admission: { admit: () => refuse("unreachable") } }).appendCandidate(two.proposal, "sig", two.at, "ENGINE");
     expect(a).not.toEqual(b);
   });
 
   it("appendCandidate answers differently when signatures differs", () => {
-    const { inputs, proposal, at } = world();
-    const a = new CandidateLedger({ ...inputs, signatures: { check: () => refuse("malformed-signature") } }).appendCandidate(proposal, "sig", at, "ENGINE");
-    const b = new CandidateLedger(inputs).appendCandidate(proposal, "sig", at, "ENGINE");
+    const one = world();
+    const two = world();
+    const a = new CandidateLedger({ ...one.inputs, signatures: { check: () => refuse("malformed-signature") } }).appendCandidate(one.proposal, "sig", one.at, "ENGINE");
+    const b = new CandidateLedger(two.inputs).appendCandidate(two.proposal, "sig", two.at, "ENGINE");
     expect(a).not.toEqual(b);
   });
 
   it("appendCandidate answers differently when ceiling differs", () => {
-    const { inputs, proposal, at } = world();
-    const a = new CandidateLedger({ ...inputs, ceiling: { admitsDraw: () => refuse("scope-exceeded") } }).appendCandidate(proposal, "sig", at, "ENGINE");
-    const b = new CandidateLedger(inputs).appendCandidate(proposal, "sig", at, "ENGINE");
+    const one = world();
+    const two = world();
+    const a = new CandidateLedger({ ...one.inputs, ceiling: { admitsDraw: () => refuse("scope-exceeded") } }).appendCandidate(one.proposal, "sig", one.at, "ENGINE");
+    const b = new CandidateLedger(two.inputs).appendCandidate(two.proposal, "sig", two.at, "ENGINE");
     expect(a).not.toEqual(b);
   });
 
   it("appendCandidate answers differently when commitments differs", () => {
-    const { inputs, proposal, at } = world();
-    const a = new CandidateLedger(inputs).appendCandidate(proposal, "sig", at, "ENGINE");
-    const b = new CandidateLedger({ ...inputs, commitments: { effectiveCommitment: () => noSubject() } }).appendCandidate(proposal, "sig", at, "ENGINE");
+    const one = world();
+    const two = world();
+    const a = new CandidateLedger(one.inputs).appendCandidate(one.proposal, "sig", one.at, "ENGINE");
+    const b = new CandidateLedger({ ...two.inputs, commitments: { effectiveCommitment: () => noSubject() } }).appendCandidate(two.proposal, "sig", two.at, "ENGINE");
     expect(a).not.toEqual(b);
   });
 
   it("appendCandidate answers differently when currencies differs", () => {
-    const { inputs, proposal, at } = world();
-    const a = new CandidateLedger(inputs).appendCandidate(proposal, "sig", at, "ENGINE");
+    const one = world();
+    const two = world();
+    const a = new CandidateLedger(one.inputs).appendCandidate(one.proposal, "sig", one.at, "ENGINE");
     const flat = { currencies: () => [c1], predecessors: () => [] };
-    const b = new CandidateLedger({ ...inputs, currencies: flat }).appendCandidate(proposal, "sig", at, "ENGINE");
+    const b = new CandidateLedger({ ...two.inputs, currencies: flat }).appendCandidate(two.proposal, "sig", two.at, "ENGINE");
     expect(a).not.toEqual(b);
   });
 
   it("appendCandidate answers differently when independence differs", () => {
-    const { inputs, proposal, at } = world();
-    const least = bottomAtLeast(proposal);
-    const a = new CandidateLedger(inputs).appendCandidate(least, "sig", at, "ENGINE");
-    const b = new CandidateLedger({ ...inputs, independence: { independenceAt: () => noSubject() } }).appendCandidate(least, "sig", at, "ENGINE");
+    const one = world();
+    const two = world();
+    const a = new CandidateLedger(one.inputs).appendCandidate(bottomAtLeast(one.proposal), "sig", one.at, "ENGINE");
+    const b = new CandidateLedger({ ...two.inputs, independence: { independenceAt: () => noSubject() } }).appendCandidate(bottomAtLeast(two.proposal), "sig", two.at, "ENGINE");
     expect(a).not.toEqual(b);
   });
 

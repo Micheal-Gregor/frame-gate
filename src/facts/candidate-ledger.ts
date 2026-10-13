@@ -17,7 +17,8 @@
 //                    no later decider is even asked.
 //   2. CONTEXT     - the draw this candidate was drawn under (R-31): REF-05 by construction,
 //                    since only `recordDraw` mints a DrawContext and only with a declaration
-//                    in force; it must be this unit's, this condition's, and not newer.
+//                    in force; it must be this unit's, this condition's, and not newer - and
+//                    not already bound: one draw, one candidate (R-33).
 //   3. FROM        - MOD-05's own check (R-26): `from` IS the effective commitment at the
 //                    currency immediately below, as of the append height; BOTTOM only at
 //                    the least currency of a unit licensed independent then (R-10).
@@ -164,6 +165,10 @@ export class CandidateLedger {
     if (context.payload.unit !== proposal.unit || context.payload.condition !== proposal.condition || succeeds(context.at, at)) {
       return refuse("context-mismatch");
     }
+    // One draw, one candidate (R-33): a context already bound as of `at` is spent. This reads
+    // MOD-05's own record at a height - never the catalog (F1 S-14).
+    const [alreadyBound] = this.#candidatesWhere(at, (p) => p.context === context.at);
+    if (alreadyBound !== undefined) return refuse("context-spent");
     // 3. FROM (R-26) - MOD-05's own check, against its own fold.
     const lineage = this.#checkFrom(proposal, at);
     if (lineage !== "WELL-FORMED") return lineage;

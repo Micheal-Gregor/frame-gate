@@ -413,3 +413,20 @@ without a declaration (DR-27, R-31).**
 > `COMMIT_GATE` states: the condition is a human act present for (unit, currency); it is closed by
 > `HUMAN_ACT`; its proposals are `Diagnostic` and `Observation`; it records `Commitment`; on
 > failure it refuses with guard `commit-gate`. It is frozen.
+
+### MOD-05 work items after its gate (K7 round 9 → R-32, R-33)
+
+Written before the change, and watched failing.
+
+**BC-05-28 — S-01 holds through a WRAPPED relay (WI-07, R-32).**
+> A helper that builds the appended entry from one of its own parameters, as
+> `record.append(Object.freeze({ author, payload }))` with `payload: T`, relays that parameter. A
+> caller handing it a candidate payload is a second candidate append path, and the paths map
+> shows it. A DESTRUCTURED relay is a registered limit, pinned by a `limit-` fixture that must
+> stay unflagged.
+
+**BC-05-29 — one draw, one candidate (WI-08, R-33).**
+> A draw context already bound by a candidate in force as of the append height answers
+> `Refuse(context-spent)`, and nothing is appended. Context checks run in order (another unit,
+> another condition, or newer → `context-mismatch`; then spent), all before `from`. An unused
+> older context still binds, carrying its own draw's declaration.

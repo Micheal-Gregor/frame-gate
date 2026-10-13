@@ -468,11 +468,13 @@ describe("BC-05-15 - one guarded append; an unreachable draw costs nothing (S-01
       "resolution-label": ["DrawContextLog.label"],
     });
     expect(Object.fromEntries(Object.entries(out.paths.fixtures).map(([k, v]) => [k, v.map((x) => `${x.kind} ${x.fn}`).sort()]))).toEqual({
+      "src/facts/limit-destructured-relay.ts": [],
       "src/facts/limit-indirect-relay.ts": [],
       "src/facts/limit-typed-helper.ts": ["candidate TypedHelper.#write"],
       "src/facts/limit-untyped-entry.ts": [],
       "src/facts/violating-backfill-path.ts": ["candidate CandidateBackfill.backfill", "candidate CandidateBackfill.replay"],
       "src/facts/violating-generic-relay.ts": ["candidate RelayBackfill.backfill", "candidate RelayBackfill.viaTwoRelays"],
+      "src/facts/violating-wrapped-relay.ts": ["candidate WrappedBackfill.backfill", "candidate WrappedBackfill.frozen"],
     });
   });
 });
@@ -530,6 +532,29 @@ describe("BC-05-24 - the bound context must be this draw's (R-31)", () => {
     // draw's (succeeds is strict, R-09) - pinned before battery 13.
     const exact = propose(c1, k0, "cond");
     expect(candidate(ledger.appendCandidate(exact, "sig", exact.context.at, "ENGINE")).payload.context).toBe(exact.context.at);
+  });
+});
+
+describe("BC-05-29 - one draw, one candidate (WI-08, R-33)", () => {
+  it("test_a_draw_context_binds_one_candidate", () => {
+    const { record, commitments, ledger, draw, propose } = candidateWorld();
+    const k0 = commitments.commit(u, c0, "HUMAN");
+    const p = propose(c1, k0);
+    const first = candidate(ledger.appendCandidate(p, "sig", record.noise(), "ENGINE"));
+    const h = record.noise();
+    expect(isRefusal(ledger.appendCandidate(p, "sig", h, "ENGINE"), "context-spent"), "a draw context bound a second candidate").toBe(true);
+    nothingAppendedSince(record, h);
+    // context checks run in order: a mismatched context answers mismatch, even when spent
+    const spentElsewhere = { ...p, unit: v };
+    expect(isRefusal(ledger.appendCandidate(spentElsewhere, "sig", record.noise(), "ENGINE"), "context-mismatch")).toBe(true);
+    // and spent is checked before `from`: a spent context with a bad from answers spent
+    expect(isRefusal(ledger.appendCandidate({ ...p, from: BOTTOM }, "sig", record.noise(), "ENGINE"), "context-spent")).toBe(true);
+    // an unused OLDER context still binds - its declaration is its own draw's
+    const older = draw(u, "cond");
+    record.noise();
+    const fresh = { ...p, context: older };
+    expect(candidate(ledger.appendCandidate(fresh, "sig", record.noise(), "ENGINE")).payload.context).toBe(older.at);
+    expect(first.payload.context).toBe(p.context.at);
   });
 });
 
@@ -608,7 +633,9 @@ describe("BC-05-16 - from is the effective commitment immediately below, as of t
     const commitmentAtLeast = propose(c0, k0);
     expect(malformed(ledger.appendCandidate(commitmentAtLeast, "sig", record.noise(), "ENGINE")), "a commitment as from at the least currency, licensed").toBe(true);
     const withdrawn = independence.declareIndependence(u, false, "HUMAN");
-    expect(malformed(ledger.appendCandidate(atLeast, "sig", withdrawn.at, "ENGINE")), "a withdrawn license counted").toBe(true);
+    const afterWithdrawal = propose(c0, BOTTOM); // a fresh draw: atLeast's context is bound (R-33)
+    expect(malformed(ledger.appendCandidate(afterWithdrawal, "sig", record.noise(), "ENGINE")), "a withdrawn license counted").toBe(true);
+    expect(Number(withdrawn.at)).toBeLessThan(Number(record.noise()));
   });
 
   it("test_an_unanswerable_from_check_passes_the_unknown_through", () => {

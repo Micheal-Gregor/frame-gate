@@ -3,15 +3,15 @@
   "concept": "The Frame Gate",
   "phase": 4,
   "branch": "master",
-  "head": "724e048b49ad2a032b8e2dc23787a38d193ffffc",
-  "tree": "a8c9dbf135161b4b2f058a4e73f295082fa9d1ec",
-  "dirty": true,
+  "head": "826fd19cda414db569aa03dd771b59b0b1b3f9fc",
+  "tree": "b6c41a4eb150790d818876861903a6c10f728def",
+  "dirty": false,
   "current_module": "MOD-12",
   "k7_round": 11,
-  "last_gate_tag": "k7-pass-9",
+  "last_gate_tag": "closed-by-owner-11",
   "seal_tag": "",
   "next_action": "MOD-12 built; battery 19 36/36 (M8 survived once, test sharpened). R-49: K7 round 12 = MOD-12, MOD-05, MOD-04 on Fable 5.1. Next: run K7 round 12 on the committed tree.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T06:04:58+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-10-13T06:05:51+00:00",
+  "updated_by": "session-start:startup"
 }

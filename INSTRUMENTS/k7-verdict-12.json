@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 12,
+  "reviewed": {
+    "tree_sha": "b6c41a4eb150790d818876861903a6c10f728def",
+    "commit_sha": "826fd19cda414db569aa03dd771b59b0b1b3f9fc",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-12",
+      "MOD-05",
+      "MOD-04"
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T06:05:34+00:00",
+    "completed_at": "2026-10-13T06:30:34+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 11,
+    "prior_tree_sha": "a8c9dbf135161b4b2f058a4e73f295082fa9d1ec",
+    "prior_failing_checks": [
+      "CC-3",
+      "CC-4",
+      "CC-6",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Trace holds for the code: src/lineage/signature-gate.ts -> OBJ-32 (S3 s3:131, HOOK-04 s7:227, REF-04 s5:174, VEC-05 s6:211; R-43..R-45); src/lineage/invalidation-scope.ts -> OBJ-28 (s3:130; R-42) joined once through the kernel as 'InvalidationScope' (projection-joins output asserted at lineage.test.ts:329-330); src/lineage/invalidation-ledger.ts -> OBJ-18 (s3:129; REF-07 s5:177; R-46..R-48); src/facts/lineage-reader.ts -> R-41 (RESOLUTION_RECORD.md:896-905; IR-75/IR-76); DisplayedScope -> R-48 (IR-79); CommitmentPayload.candidate -> R-41; R-40 inheritance branch at candidate-ledger.ts:235-244. No orphan file in src/; every REF/VEC/HOOK destination the S3 assigns MOD-12 exists. Object-model rows for all three MOD-12 classes present (object-model-and-parameters.md:34-36) with Decides YES on the two injected deciders. FAIL on the instruments: INSTRUMENTS/completion-ledger.md:17 carries 'PC-05' with NO disposition - S3 s8:268 says PC-05 'also bears on MOD-11 and MOD-12' and s11:323 lists it in MOD-12's PC-enum cell; MOD-04's row (completion-ledger.md:16) enumerates PC-05 with its mechanism (IR-68) while MOD-12's row names the ID and nothing else - DR-31's shape one row down (round 10 failed CC-1 on exactly this). No IR (IR-75..IR-85) states how a MOD-12 refusal (`malformed-signature`, `scope-before-act`) is attributable. Also stale: the same cell reads 'Awaiting battery 19 and K7 round 12' while battery 19 (36/36 after the M8 re-run) is recorded at mutation-battery.md:724-779 - the DR-36 cell defect again."
+    },
+    "CC-2": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Read as code paths and re-verified live in .k7/wt (826fd19, byte-identical to the repository except my k7-* probe files). HELD: SEAM-17/SEAM-18 and REF-07 - `invalidate` takes only a DisplayedScope that `display` alone mints after `renderer.present(scope)` (invalidation-ledger.ts:71-77, :80-89), same height in both directions (:83; pinned lineage.test.ts:345-358); R-42 closure to a fixed point through acceptances (invalidation-scope.ts:62-81); R-46 born-superseded (invalidation-ledger.ts:106-110); R-19 - the fold reads the real ledger (BC-12-12) and reachability above an invalidated K refuses; S3 s7:255 registration placement - MOD-05 resolves no import into src/lineage or src/reachability (lineage.test.ts:294-304, by resolution); ODG-FG-01 - MOD-12 owns one Projection; nothing derived is stored (every answer refolds; the DisplayedScope token is consumed, not kept). Divergence E1 (check forced VERIFIED), E2 (signature call deleted at candidate-ledger.ts:177-178), E3 (signature asked before admission), E4 (R-47 check at :83 removed), E5 (born-superseded loop at :110 dropped), E6 (lineage digest made constant), E7 (renderer never called) each compiled and each was killed by its named test on the real orchestrated path. FAIL on one carried rule - OBJ-32 'signature covers the lineage digest' / CLAUDE.md 'Do not sign a candidate without covering the commitment it derives from' / R-43 'what is unforgeable is the BINDING' - demonstrated live (probe k7_p1, .k7/wt/tests/k7/k7-probes.test.ts): `const phantom: Commitment = { ...k0, payload: { ...k0.payload, candidate: height(9999) } }` compiles with no assertion, no any, no generic (a spread keeps the brand); signed over its own material it PASSED `CandidateLedger.appendCandidate` with the real SignatureGate injected - `#checkFrom` agrees with the fold BY HEIGHT ONLY (candidate-ledger.ts:243, :252) and `SignatureGate.#lineageOf` digests the CALLER's object (signature-gate.ts:105-114), never the commitment the record holds at from.at, which `#checkFrom` already has in hand as `effective`/`inForce`. The appended candidate's stored signature does not verify against the genuine k0 (`check({...p, from: k0}, stored.signature)` -> malformed-signature): HOOK-04's condition is false on an appended candidate. Scope of the gap, stated exactly: inside src/ the static forge rule DOES decide this spread (`catalog-kind-spread`, test_only_the_catalog_builds_or_appends_a_catalog_entry went red on my src/lineage/k7-tamper.ts), so the hole is at the RUNTIME seam for any proposer outside src/ - tests/, tools/vectors/run.ts, and every deployment adapter that forms a proposal - where the brand is erased and PC-02 (author identity) does not apply because an ENGINE may legitimately propose. No IR registers that the from-object's FIELDS are trusted beyond its height (R-26's 'agreement by height means the record holds exactly that commitment' is true of existence, not of the object's contents). The property that must hold: the lineage digest (or the from-check) must be a function of the commitment the RECORD holds at from.at as of `at`, not of the caller's copy. N/A-by-absence, stated: thresholds, populations, ratio arithmetic, observation components, scope expiry. Also noted (CC-7): height arithmetic in sort comparators `a.at - b.at` (invalidation-scope.ts:78) and `a - b` (invalidation-ledger.ts:112) - 'height in, number out' is arithmetic by the owner's own R-09 while the kernel exports `compare` for exactly this; BC-01-5's detector is scoped to kernel exports so nothing sees it."
+    },
+    "CC-3": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "No unregistered mechanism the tests depend on: IR-75..IR-85 register the lineage reader, the positional encoding (IR-80), the cast limit (IR-85), REF-07's reading (IR-81), the height-less check (IR-82), IR-83 (commitment heights, not candidates, at SEAM-11 - a latent interpretation MOD-09 inherits), IR-84 (single-writer residue). R-40..R-48 are live in RESOLUTION_RECORD.md:884-973; every trace citation I followed resolves to a live entry. IR-80's class is understated, not wrong: `TextEncoder` (signature-gate.ts:118) is a WHATWG host global, not an ECMAScript built-in like JSON, and external-isolation.ts decides IMPORTS, so a global is invisible to REF-02's detector - registered as benign, better recorded as latent. FAIL on SCOPE (R-15) statements, probed in .k7/wt with `npx tsc --noEmit -p .k7/wt` clean and the named tests run by the declared single-test command; the positive controls (k7-c1-control: `c === order.currencies()[0]`; k7-j1/k7-j3: asProjection via namespace and element access in src/facts) were each flagged alone, so the detectors read the planted directories. (1) reach-checks.mjs `soleSite` (SCOPE :7-24) defines a commitment read by the Commitment brand plus a height (:141-145) and registers three limits - but a second reachability check written over the RAW record (`record.readAsOf(at)` scanned for kind==='commitment' per predecessor, k7-s21 in src/spend) and a callback handed through `Array.prototype.every.call(below, fn)` (k7-s1) both evade with test_reachability_is_decided_in_one_place green; neither is decided nor registered, and the raw-record fold is literally the 'removed duplicate growing back' the rule exists for. (2) projection-joins.mjs (SCOPE :7-32) registers Object.assign and a user higher-order function, but a Projection re-made through the LIBRARY generic `new Proxy(p, { get })` with its compute swapped (k7-j11 in src/facts) is typed Projection<T> with no assertion and evades `test_projection_joins_follow_the_s3_partition` - a door to DG-F1 that is neither decided nor registered. (3) reach-checks `branch` (SCOPE :25-43) omits limits it has: a `let` one-hop binding (k7-b12; the statement says `const`), the order copied by spread into an array literal then destructured (k7-b2, the sibling of the registered rest-then-index limit), a position comparison `order.currencies().indexOf(c) === 0` (k7-b4), a pick through `.find((_, i) => i === 0)` (k7-b9), and the equality moved into a helper (k7-b14) - all unflagged, all unregistered; these are known-issue candidates under R-15, the omitted limits are the CC-3 defect (DR-26's shape). Covered by a sibling rule, not a gap: the spread of a branded ledger value in src/ is decided by forge (`catalog-kind-spread`), though the `mint` statement (ledger-checks.mjs:5-11) does not say so. Independence: WI-11..WI-14's shapes were prescribed by round 11's blocking list (a Fable 5.1 reviewer) and restated by R-39; I am the same model, so I did not accept the diff - I killed D1/D3 and found the b1 evasion inside the same clause (CC-6). The owner should weigh that caveat against R-13's precedent."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit && npx vitest run   (run as its two declared commands in sequence on the repository at 826fd19: tsc exit 0, no diagnostics; vitest 23 files, 219/219 passed, exit 0). Then the s5 join under the declared single-test command: npx vitest run -t \"test_signature_without_lineage_digest_is_refused\" -> 1 passed | 218 skipped (REF-04, lineage.test.ts:96); -t \"test_append_before_scope_derivation_is_refused\" -> 1 passed | 218 skipped (REF-07, :340); -t \"test_draw_without_cheaper_commitment_is_refused\" -> 1 passed | 218 skipped (REF-03; DR-36's collision is closed). Genuine forbidden inputs: REF-04 at parse pins TS2345 naming 'lineage' with a positive control and the undefined/spread spellings (lineage.test.ts:98-107), at runtime a constructed material without its lineage is refused on the real signed append path with nothing appended (:109-118); REF-07 at parse pins TS2345 on an undisplayed scope (:342-343), at runtime a display at another height than the act's is refused in both directions, nothing appended (:345-358). REF-05/REF-06 remain one case each (tests/spec/s5-names.test.ts asserts property (B) by rule over every built module, green). N/A-by-absence: MOD-05 pins no further refusal row. Observation, not a defect: s5-names.test.ts:50 treats a module as built when its directory exists - creating src/spend/ for my probes made REF-15..19 count as 0 in the worktree.",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (exit 0: 'ok VEC-01 MOD-04 \u00c2\u00b7 Reachability re-derived'; 'ok VEC-05 MOD-12 \u00c2\u00b7 SignatureGate re-derived'; '2 vector(s), all re-derived'). Provenance checked independently of the tool: Get-FileHash SHA256 src/lineage/signature-gate.ts = 710E1C96...A3083 = vectors/VEC-05.json:10 impl_sha; src/reachability/reachability.ts = 249288DB...70566 = VEC-01 impl_sha; state COMPUTED; computed_by names the R-36 harness with the implementing file as entry, and tools/vectors/run.ts:151-154 refuses any other entry. Independent re-derivation (probe k7_p2, .k7/wt/tests/k7/k7-probes.test.ts, run by the declared single-test command): the heights counted by hand from the harness's appends (declare=1, independence=2, h0=3, draw=4, at=5, candidate=6, k=7, h1=8, draw=9), the lineage as the hand-written positional JSON '[\"commitment-lineage\",7,\"HUMAN\",\"commitment\",\"u\",\"c0\",6]' and the two materials as hand-written JSON strings, sha256'd with node:crypto WITHOUT calling SignatureGate - equal to the pinned `with` and `without` exactly. Computed, not transcribed: with the lineage digest made constant (E6 in .k7/wt) `python3 tools/rederive.py --all --root .k7/wt` exited 1 ('recomputed ... but the pinned value is ...') and test_vec_05_re_derives_from_the_signature_gate went red. IR-06 honoured: the two values are asserted unequal, never compared by distance (lineage.test.ts:249). VEC-02/03/04/06/07 remain DEFERRED against unbuilt modules with discharge conditions at completion-ledger.md:31-36; VEC-06's joint dependency on MOD-12 is now satisfiable from MOD-12's side.",
+        "exit_code": 0
+      }
+    },
+    "CC-6": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "All experiments ran in the runner's R-07 worktree .k7/wt (git worktree list: detached at 826fd19 = repository HEAD), with npx tsc --noEmit -p .k7/wt and npx vitest run --root .k7/wt -t <name>; the repository was never written (git status --porcelain = ' M STATE.json' before and after; git diff --no-index --stat on src, tools, tests after restoration shows only my k7-* probe files). HOOK-04 is FALSIFIABLE for omission and mismatch: (a) divergence E1 (signature-gate.ts:101, check forced VERIFIED) on the real orchestrated path -> test_the_candidate_append_asks_the_signature_gate_hook_04 and test_signature_without_lineage_digest_is_refused red (a candidate appended at height 14 where malformed-signature was due); (b) mutation E2 (candidate-ledger.ts:177-178, the guarded call deleted) -> the hook test and test_a_mismatched_signature_is_refused_on_the_append_path red; E3 (signature asked before admission) -> BC-12-3's asked-order pin, test_refusals_answer_in_order_and_later_deciders_are_not_asked AND test_an_unreachable_draw_is_refused_on_the_orchestrated_path red ('no cost incurred: expected [signature] to equal []'). REF-07: E4 (:83 removed) -> test_append_before_scope_derivation_is_refused red (an invalidation appended at 12 with scopeAt 11). R-46: E5 (:110 dropped) -> test_what_is_invalidated_as_of_a_height red ([9] vs [9,15]). Binding: E6 (constant lineage digest) -> test_a_signature_binds_the_commitment_it_derives_from red and rederive --root exit 1. Display: E7 (renderer never called) -> test_an_invalidation_is_one_human_append_after_its_display red. Detector pins bite: D1 (reach-checks.mjs:245 numeric-string key arm dropped) -> test_no_code_branches_on_a_particular_currency red on violating-string-key.ts; D3 (readerTyped restricted to identifiers, DR-35 re-created) -> test_reachability_is_decided_in_one_place red on the bound/factory/method-reference fixtures. Every mutant compiled, so each kill is the test's. FAIL on two counts. (1) The hook does NOT catch the divergence k7_p1 on the real orchestrated path: a spread-copied branded `from` with a tampered payload.candidate (tsc clean, no assertion) is appended with a signature that does not verify against the record's commitment - the gate digests the caller's object (signature-gate.ts:109-110) and the from-check agrees by height only (candidate-ledger.ts:243, :252). Inside src/ the forge rule decides the spread (verified: `catalog-kind-spread` on my src/lineage/k7-tamper.ts turned test_only_the_catalog_builds_or_appends_a_catalog_entry red), so this scores as a runtime seam gap for proposers outside src/, not a static-detector defect. (2) Inside reach-checks `branch`'s stated DECIDES ('a member picked by POSITION from the LOADED ORDER ... by array destructuring'; 'a destructuring IS the pick, not a hop'): the destructuring ASSIGNMENT `let least; [least] = order.currencies(); return c === least;` (k7-b1, src/reachability) was NOT flagged - pickedFromOrder (:253-260) accepts only a `const` VariableDeclaration's binding pattern - while the control spelling beside it was; test_no_code_branches_on_a_particular_currency stayed green and, with b1, b2, b4, b9, b12, b14, s1, s21 and j11 all live, the whole declared suite in the worktree ran 220/222 with the two reds attributable to my probes alone (the forge catch above, and src/spend/ existing). Outside DECIDES, reported under CC-3 as known-issue candidates: let-hop, spread-copy, indexOf/find position compares, helper equality; every.call callback; raw-record reachability scan; Proxy re-brand. Trace citations conditional on live register status: R-39..R-49 (RESOLUTION_RECORD.md:866-983), IR-71..IR-85 (drift-ledger.md:136-150), WI-11..WI-14 REMEDIATED awaiting this gate (:56-59), which this round supplies for the named forms and falsifies at b1. Closed gates stay closed: MOD-04's and MOD-05's findings here are new work items against closed slices under R-39/R-49, not retroactive RETURNs."
+    },
+    "CC-7": {
+      "status": "fail",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form (the drift ledger scores per entry). Object-model fidelity 8: three MOD-12 classes to the Object Writing Standard with OS-1 declared slots, OBJ-18/OBJ-28/OBJ-32 one per file, OBJ-28 joined through the kernel's one door, OBJ-32 and OBJ-31 as frozen Gate descriptors, R-41 folded into MOD-05 with one recognizer per kind (IR-76); deductions for PC-05 un-enumerated and the stale MOD-12 status cell (completion-ledger.md:17), for a composition root (OS-11, R-18) that still exists only in tests/support/fact-world.ts and tools/vectors/run.ts, and for unused destructured `commitments` bindings at tests/reachability/reachability.test.ts:119,147,165,194. Axiom coverage 6 (WORST): every carried rule held and every guard mutation died, but HOOK-04's binding is defeated on the orchestrated path by a spread-copied `from` whose fields the gate trusts (k7_p1) - a demonstrated invariant gap on the module's central guarantee for callers outside src/, unregistered. Base-case support 8: BC-12-1..12 written first and watched red (axioms-and-base-cases.md:651-665), every REF-04 spelling pinned (MF-34), VEC-05 computed and independently re-derived by hand, non-empty detector verdicts pinned per fixture; deduction because BC-12-5 (lineage.test.ts:204-231) varies the CALLER's commitment object and so pins exactly the self-certification the gap exploits - no base case asks whether the signature binds the commitment the RECORD holds at from.at. Extensibility 6: an untrue DECIDES clause in the branch rule (destructuring assignment); the sole-site rule's reach is bounded by the Commitment brand so a fold rewritten over the raw record is invisible and unregistered; a Proxy re-brand reaches the Projection family unregistered (DG-F1's door); height arithmetic in two sort comparators where the kernel exports `compare` (invalidation-scope.ts:78, invalidation-ledger.ts:112); IR-80 registers a host global (TextEncoder) as benign though REF-02's detector cannot see globals. Code quality otherwise clean: no unused imports in src/lineage, no dead code, no hidden state; probe files compiled, so none of this is a compiler artefact. MIN = 6: below the floor of 7, so MOD-12 does not pass on this tree."
+    }
+  },
+  "drift_score": {
+    "value": 6,
+    "basis": [
+      {
+        "check_id": "CC-2",
+        "finding": "Worst dimension: axiom coverage. HOOK-04 / OBJ-32 / SEAM-19 bind the signature to the CALLER's `from` object, not to the commitment the record holds at from.at: SignatureGate.#lineageOf (src/lineage/signature-gate.ts:105-114) digests the object handed in, and CandidateLedger.#checkFrom agrees with the fold by height only (src/facts/candidate-ledger.ts:243, :252). Probe k7_p1 in .k7/wt: `{ ...k0, payload: { ...k0.payload, candidate: height(9999) } }` typed Commitment with no assertion, signed over its own material, was APPENDED through the real signed path and its stored signature does not verify against the genuine commitment. Outside src/ (tests, the vector harness, deployment proposers) no static rule or PC-02 reaches it; unregistered.",
+        "deduction": 4
+      },
+      {
+        "check_id": "CC-6",
+        "finding": "Extensibility: inside reach-checks.mjs `branch`'s stated DECIDES (SCOPE :25-43, 'by array destructuring'; 'a destructuring IS the pick'), the destructuring ASSIGNMENT `[least] = order.currencies(); c === least` (k7-b1) is not flagged because pickedFromOrder (:253-260) accepts only a const VariableDeclaration; test_no_code_branches_on_a_particular_currency green with it in src/reachability while the control spelling was flagged.",
+        "deduction": 3
+      },
+      {
+        "check_id": "CC-3",
+        "finding": "Extensibility / base-case support: SCOPE statements omit limits the detectors have - soleSite cannot see a reachability check written over the raw record (k7-s21) or a callback handed through Array.prototype.every.call (k7-s1); projection-joins cannot see a Projection re-made through the library generic Proxy with compute swapped (k7-j11); branch omits the `let` hop, the spread-copied order, indexOf/find position compares and a helper-moved equality (k7-b12, b2, b4, b9, b14). All unflagged with the named tests green; none decided, none registered with a limit- fixture.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-1",
+        "finding": "Object-model fidelity: INSTRUMENTS/completion-ledger.md:17 records MOD-12's PC-enum cell as a bare 'PC-05' with no disposition or mechanism (S3 s8:268 and s11:323 assign it; MOD-04's row at :16 enumerates its own), and the status cell still reads 'Awaiting battery 19 and K7 round 12' after battery 19 is recorded (mutation-battery.md:724-779).",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Code-quality drift: height arithmetic in sort comparators `a.at - b.at` (src/lineage/invalidation-scope.ts:78) and `a - b` (src/lineage/invalidation-ledger.ts:112) - 'height in, number out' by the owner's R-09 - where the kernel exports `compare`; unused destructured `commitments` at tests/reachability/reachability.test.ts:119,147,165,194; IR-80 registers the TextEncoder host global as benign though REF-02's import detector cannot see globals.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "RETURN",
+  "blocking": [
+    {
+      "check_id": "CC-2",
+      "module": "MOD-12",
+      "required_change": "HOOK-04 must bind the signature to the commitment the RECORD holds, not to the caller's copy: the lineage digest (SignatureGate.#lineageOf, src/lineage/signature-gate.ts:105-114) must be a function of the effective commitment at from.at as of the append height - the value CandidateLedger.#checkFrom already obtains (candidate-ledger.ts:241, :250) - or the from-check must require the proposal's `from` to agree with that commitment field for field, not by height alone (:243, :252). The test that must fail first, on the real signed append path: a branded `from` formed by spreading a genuine commitment with a tampered payload.candidate (and, separately, author, unit, currency), signed over its own material, must answer Refuse(malformed-signature) or Refuse(malformed-from) from appendCandidate with nothing appended - today it is appended (probe k7_p1). Register the decision (which seam owns the binding, SEAM-19/R-27) in the Interpretation Register; the forge rule's static coverage of the spread in src/ stays as is."
+    },
+    {
+      "check_id": "CC-6",
+      "module": "MOD-04",
+      "required_change": "tools/checks/reach-checks.mjs `branch` must decide the property its SCOPE already states - a member picked by position from the loaded order by array or numeric-keyed object destructuring - whatever the binding form: a destructuring ASSIGNMENT (`[least] = order.currencies()`; `({ 0: least } = order.currencies())`) as well as a const declaration (pickedFromOrder :253-260 accepts only ts.isVariableDeclaration with the Const flag). Ship a violating- fixture for the assignment spelling under tests/fixtures/reach-branch/src/reachability/ that turns test_no_code_branches_on_a_particular_currency red while the detector is unchanged and green once it is. Decide, or register with limit- fixtures the test asserts unflagged: the `let` one-hop binding, the order copied by spread into an array literal then destructured, a position comparison (`indexOf(c) === 0`), a pick through `.find((_, i) => i === 0)`, and an equality moved into a helper."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-04",
+      "required_change": "Make the `soleSite` SCOPE (reach-checks.mjs:7-24) true to its reach: state as a registered limit, with a limit- fixture, that a reachability check written over the RAW record (RecordPort.readAsOf scanned for commitment-kind entries per predecessor) or over the unbranded LineageReader is outside the rule because the rule defines a read by the Commitment brand - or decide it; and decide or register a callback handed to an iterating method through Function.prototype.call/apply (Array.prototype.every.call(below, fn)), the door this build already decides for spawn-resolve and projection-joins."
+    },
+    {
+      "check_id": "CC-3",
+      "module": "MOD-01",
+      "required_change": "Make the projection-joins SCOPE (tools/checks/projection-joins.mjs:7-32) true to its reach: a Projection re-made through a LIBRARY generic that returns its type parameter - `new Proxy(p, { get })` with compute swapped, typed Projection<T> with no assertion - must be decided (a library generic whose return is a bare type parameter instantiated to a branded type, as the user-generic launder rule is) or registered as a limit with a limit- fixture that test_projection_joins_follow_the_s3_partition asserts unflagged; it is a door to DG-F1 and the statement neither decides nor registers it."
+    },
+    {
+      "check_id": "CC-1",
+      "module": "MOD-12",
+      "required_change": "Enumerate PC-05 for MOD-12 in INSTRUMENTS/completion-ledger.md:17 with its disposition and mechanism (how `malformed-signature` and `scope-before-act` are attributable - e.g. by recomputation of a pure check and by the displayed height recorded as scopeAt - and that the aggregating stream is deployment), register it as MOD-04's IR-68 was, and correct the stale status cell ('Awaiting battery 19 and K7 round 12') to what the record shows."
+    }
+  ],
+  "next_action": "Return MOD-12 for one fix round that binds HOOK-04's lineage digest to the commitment the record holds at from.at (a tampered spread-copied `from` watched red on appendCandidate first), decides the destructuring-assignment branch spelling, and decides or registers with fixtures the raw-record reachability scan and the Proxy re-brand."
+}

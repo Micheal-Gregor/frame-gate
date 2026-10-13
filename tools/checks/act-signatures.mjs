@@ -28,9 +28,13 @@
  *         in LIBRARY types are not recursed, so an act taking `Error` (`cause: unknown`)
  *         or `PromiseSettledResult` (`reason: any`) is not flagged (limit-library-member.ts;
  *         K7 round 8, DR-29, registered by R-31).
+ *         DECIDES too (R-76, once MOD-10 exists): no parameter of any act has a type
+ *         carrying the Diagnostic brand - resolved off MOD-10's own `DiagnosticValue`,
+ *         never by name - bare, or reached the same ways an open type is (union member,
+ *         list, library generic, index signature, public property, a function's return).
  *         BOUNDARY: RecordPort.append is the substrate, generic over its entry, not
- *         an act - a diagnostic written straight to the record is a forge, and the
- *         forge rule gains the Diagnostic brand when MOD-10 builds it. A primitive
+ *         an act - a diagnostic written straight to the record is a forge. A DiagnosticValue
+ *         minted outside MOD-10 is the mint rule's (ledger-checks BRANDS). A primitive
  *         is closed: a diagnostic serialized into a string is a string. Code
  *         outside src/ is not read, except this rule's fixtures.
  *
@@ -153,6 +157,21 @@ function topOf(t) {
   }
   return undefined;
 }
+/** R-76: the Diagnostic brand's key, read off MOD-10's `DiagnosticValue` - so a renamed brand still resolves. */
+const DIAGNOSTIC = (() => {
+  const file = resolve(repo, "src/diagnostic/diagnostic.ts");
+  const sf = program.getSourceFile(file);
+  const module = sf && checker.getSymbolAtLocation(sf);
+  const value = module && checker.getExportsOfModule(module).find((s) => s.name === "DiagnosticValue");
+  if (!value) throw new Error("src/diagnostic/diagnostic.ts exports no DiagnosticValue: REF-06 has no anchor for the Diagnostic brand");
+  const brand = checker
+    .getPropertiesOfType(checker.getDeclaredTypeOfSymbol(value))
+    .find((p) => p.declarations?.some((d) => d.name && ts.isComputedPropertyName(d.name) && !isLib(d.getSourceFile())));
+  if (!brand) throw new Error("DiagnosticValue carries no computed-key brand: REF-06 has no anchor");
+  return brand.escapedName;
+})();
+const carriesDiagnostic = (t) => checker.getPropertiesOfType(t).some((p) => p.escapedName === DIAGNOSTIC);
+
 /** Every place inside `t` a diagnostic could be accepted, as { path, how }. */
 function openIn(t, path, seen, out) {
   if (t.flags & ts.TypeFlags.TypeParameter) {
@@ -163,6 +182,7 @@ function openIn(t, path, seen, out) {
   }
   const top = topOf(t);
   if (top) { out.push({ path, how: top }); return; }
+  if (!t.isUnion() && carriesDiagnostic(t)) { out.push({ path, how: "diagnostic" }); return; }
   if (t.isUnion()) { for (const c of t.types) openIn(c, path, seen, out); return; }
   if (t.isIntersection()) {
     const tops = t.types.map(topOf);

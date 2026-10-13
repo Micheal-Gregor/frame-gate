@@ -247,6 +247,8 @@ const BRANDS = [
   // Not a ledger fact either: HOOK-03 / REF-12 rest on it. A Threshold minted outside MOD-09 is a
   // configured threshold wearing θ's type. Listed by hand, as DisplayedScope is (IR-106).
   { owner: "src/calibration/bar.ts", name: "Threshold", key: brandKey("src/calibration/bar.ts", "Threshold") },
+  // Nor this: a DiagnosticValue minted outside MOD-10 could drop its withheld entries (PC-07, R-76).
+  { owner: "src/diagnostic/diagnostic.ts", name: "DiagnosticValue", key: brandKey("src/diagnostic/diagnostic.ts", "DiagnosticValue") },
 ];
 const HEIGHT = brandKey("src/kernel/index.ts", "RecordHeight");
 const CURRENCY = brandKey("src/catalog/currency-order.ts", "Currency");

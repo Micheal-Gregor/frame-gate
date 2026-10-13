@@ -726,3 +726,4 @@ constructors validating nothing), with the detectors registering `src/lineage`:
 - **BC-10-7** An absence (NoSubject, Undetermined) withholds its own axis only. Any other Unknown from a source is the diagnostic's answer. Diagnostic joins the family once, in MOD-10, and a DiagnosticValue minted outside MOD-10 is flagged.
 - **BC-10-8** VEC-04 is computed from MOD-10 and re-derived. Its (absent, absent) row reproduces MWE step 6: a sample of one and both populations empty, so no axis and two withheld entries, with AE-5 never engaged. The rows needing a present θ are carried deferred (AE-5).
 
+**Watched failing (MOD-10, with R-76's MOD-05 work item):** against typed stubs, 16 / 311 red (BC-10-1..8, every operation case of the isolation test, BC-05-5 REF-06, BC-03-2 REF-01), `tsc` clean. After: 311 / 311.

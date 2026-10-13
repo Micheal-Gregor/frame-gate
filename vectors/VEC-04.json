@@ -1,0 +1,24 @@
+{
+  "id": "VEC-04",
+  "module": "MOD-10 · Diagnostic",
+  "rule": "Axis availability is decided per axis, independently. The dispersion axis is present at three scored members and withheld below that floor, with Undetermined(AE-3) as itself. The location axis is present only where θ exists, and withheld wherever θ = ⊥, with the bar's own answer. Every withheld axis has one entry naming it, its cause and its discharge. The tuple never omits an entry and never fills one axis from the other.",
+  "encoding": "utf8-json",
+  "input": "{\"levels\":[\"L\"],\"components\":[\"q\"],\"currencies\":[\"c0\"],\"unit\":\"u1\",\"currency\":\"c0\",\"component\":\"q\",\"acts\":[{\"act\":\"declare\",\"unit\":\"u1\",\"level\":\"L\"},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"x\",\"name\":\"a\",\"scores\":{\"q\":0.4}},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"x\",\"name\":\"b\",\"scores\":{\"q\":0.5}},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"x\",\"name\":\"c\",\"scores\":{\"q\":0.6}},{\"act\":\"mark\",\"name\":\"three\"},{\"act\":\"draw\",\"unit\":\"u1\",\"currency\":\"c0\",\"condition\":\"y\",\"name\":\"d\",\"scores\":{\"q\":0.5}},{\"act\":\"mark\",\"name\":\"one\"}],\"rows\":[{\"row\":2,\"availability\":\"dispersion present, threshold absent\",\"at\":\"three\"},{\"row\":4,\"availability\":\"dispersion absent, threshold absent (MWE step 6: a sample of one, both populations empty)\",\"at\":\"one\"}]}",
+  "output": "[{\"row\":2,\"availability\":\"dispersion present, threshold absent\",\"dispersion\":{\"kind\":\"dispersion\",\"spread\":0.09999999999999998,\"n\":3},\"location\":{\"kind\":\"withheld\",\"axis\":\"location\",\"cause\":{\"kind\":\"no-bar\",\"cause\":\"both-empty\",\"discharge\":\"a scored commitment and a scored passed-over member of a closed sample, at this level\",\"acceptedCount\":0,\"passedOverCount\":0,\"excludedAccepted\":0,\"excludedPassedOver\":0},\"discharge\":\"a scored commitment and a scored passed-over member of a closed sample, at this level\"},\"withheld\":[\"location\"],\"separation_invoked\":false},{\"row\":4,\"availability\":\"dispersion absent, threshold absent (MWE step 6: a sample of one, both populations empty)\",\"dispersion\":{\"kind\":\"withheld\",\"axis\":\"dispersion\",\"cause\":{\"kind\":\"undetermined\",\"ae\":\"AE-3\"},\"discharge\":\"three members scored for this component, in a sample no revision has closed\"},\"location\":{\"kind\":\"withheld\",\"axis\":\"location\",\"cause\":{\"kind\":\"no-bar\",\"cause\":\"both-empty\",\"discharge\":\"a scored commitment and a scored passed-over member of a closed sample, at this level\",\"acceptedCount\":0,\"passedOverCount\":0,\"excludedAccepted\":0,\"excludedPassedOver\":0},\"discharge\":\"a scored commitment and a scored passed-over member of a closed sample, at this level\"},\"withheld\":[\"dispersion\",\"location\"],\"separation_invoked\":false}]",
+  "state": "COMPUTED",
+  "computed_at": "2026-10-13T17:45:14+00:00",
+  "impl_sha": "a309f5fa2182ab9c1b7082df448a1d601cb00854f6706a7df53b027d75ad5fb4",
+  "computed_by": "node --import tsx tools/vectors/run.ts VEC-04 src/diagnostic/diagnostic.ts <input> (R-36); the fixture runs through the real ledgers, MOD-08 and MOD-09 with the rule the build ships (AE-5 open)",
+  "deferred_rows": [
+    {
+      "row": 1,
+      "availability": "dispersion present, threshold present",
+      "discharge": "AE-5's separation rule closes (R-69): no rule the build ships yields a threshold, so a present location axis cannot be computed"
+    },
+    {
+      "row": 3,
+      "availability": "dispersion absent, threshold present",
+      "discharge": "AE-5's separation rule closes (R-69): no rule the build ships yields a threshold, so a present location axis cannot be computed"
+    }
+  ]
+}

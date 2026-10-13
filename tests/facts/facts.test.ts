@@ -217,6 +217,13 @@ describe("BC-05-5 - REF-06: no act signature accepts a diagnostic", () => {
       "violating-any.ts": ["actOnAny proposal any"],
       "violating-class-field.ts": ["FieldActs.act proposal unknown"],
       "violating-closure.ts": ["ClosureAct.act proposal unknown"],
+      // R-76: once MOD-10 exists, a diagnostic is a closed type; its brand is what an act may not take.
+      "violating-diagnostic.ts": [
+        "commitOnDiagnostic diagnostic diagnostic",
+        "commitOnEither basis diagnostic",
+        "commitOnField p.why diagnostic",
+        "commitOnList history[] diagnostic",
+      ],
       "violating-empty-object.ts": ["actOnEmpty proposal empty-object", "actOnEmptyInterface proposal empty-object"],
       "violating-nested.ts": [
         "actOnArray p[] unknown",

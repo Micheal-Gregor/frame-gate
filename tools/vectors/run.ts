@@ -24,8 +24,9 @@ import { Reachability, ReachabilityGate } from "../../src/reachability/index.js"
 import { InvalidationLedger, InvalidationScope, SignatureGate, type SignatureMaterial } from "../../src/lineage/index.js";
 import { ObservationLedger, dischargeable, score, type ComponentEntry } from "../../src/observation/index.js";
 import { RevisionLog, Samples, type ConditionIdentity } from "../../src/condition/index.js";
-import { spread } from "../../src/statistics/index.js";
+import { Dispersion, Location, spread } from "../../src/statistics/index.js";
 import { AE5_OPEN, Bar, PopulationPartition, type Populations, type SeparationRule } from "../../src/calibration/index.js";
+import { Diagnostic } from "../../src/diagnostic/index.js";
 
 /** A record for a fixture: append-only, read as of a height (IR-31). */
 function fixtureRecord(): RecordPort<unknown, RecordHeight> {
@@ -152,7 +153,19 @@ function calibrationFixture(script: Script) {
       marks.set(act.name, height(facts.length));
     }
   }
-  return { partition, at: (mark: string): RecordHeight => named(marks, mark), candidate: (name: string): Candidate => named(drawn, name) };
+  return { partition, samples, observations, declarations, at: (mark: string): RecordHeight => named(marks, mark), candidate: (name: string): Candidate => named(drawn, name) };
+}
+
+/** The bar over the rule the build ships (AE-5 open, R-69), counting every consultation of it. */
+function shippedBar(fixture: ReturnType<typeof calibrationFixture>) {
+  const consulted = { count: 0 };
+  const rule: SeparationRule = {
+    separate: (accepted, passedOver) => {
+      consulted.count += 1;
+      return AE5_OPEN.separate(accepted, passedOver);
+    },
+  };
+  return { bar: new Bar({ populations: fixture.partition, separation: rule }), consulted };
 }
 
 /** OBJ-23 at a height, or the fixture is broken. */
@@ -273,6 +286,34 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
             excluded_passed_over: v.excludedPassedOver,
             separation_invoked: consulted > 0,
           };
+        }),
+      );
+    },
+  },
+  /**
+   * VEC-04 (MOD-10): the diagnostic tuple across availability combinations, each row at a pinned
+   * height of one fixture, through the rule the build ships. Rows needing a present θ are not
+   * computed: no shipped rule yields one until AE-5 closes (R-69).
+   */
+  "VEC-04": {
+    entry: "src/diagnostic/diagnostic.ts",
+    run: (input) => {
+      const spec = JSON.parse(input) as Script & {
+        readonly unit: string;
+        readonly currency: string;
+        readonly component: string;
+        readonly rows: readonly { readonly row: number; readonly availability: string; readonly at: string }[];
+      };
+      const fixture = calibrationFixture(spec);
+      const { bar, consulted } = shippedBar(fixture);
+      const { samples, observations, declarations } = fixture;
+      const diagnostic = new Diagnostic({ samples, dispersion: new Dispersion({ samples, observations }), location: new Location({ samples, observations }), observations, bar, declarations });
+      return JSON.stringify(
+        spec.rows.map(({ row, availability, at }) => {
+          consulted.count = 0;
+          const d = diagnostic.of(spec.unit as Unit, spec.currency as Currency, spec.component).compute(fixture.at(at));
+          if (isUnknown(d)) throw new Error(`VEC-04: the diagnostic answered ${d.kind}`);
+          return { row, availability, dispersion: d.dispersion, location: d.location, withheld: d.withheld.map((x) => x.axis), separation_invoked: consulted.count > 0 };
         }),
       );
     },

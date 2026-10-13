@@ -244,6 +244,8 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
       "src/catalog/violating-builds-commitment.ts": ["catalog-kind-literal"],
       "src/facts/conforming-builds-commitment.ts": [],
       "src/facts/violating-builds-declaration.ts": ["catalog-kind-literal"],
+      "src/condition/conforming-builds-revision.ts": [],
+      "src/condition/violating-builds-commitment.ts": ["catalog-kind-literal"],
       "src/lineage/conforming-builds-invalidation.ts": [],
       "src/lineage/violating-builds-commitment.ts": ["catalog-kind-literal"],
     });
@@ -286,7 +288,7 @@ describe("BC-03-4 - REF-01+: a HUMAN declaration is appended and read as of a he
       expect(s.fabricated, `${root}: a read uses a made-up height`).toEqual([]);
       expect(s.held, `${root}: a class holds mutable state`).toEqual([]);
     }
-    expect(Object.keys(surface.ledgers)).toEqual(["src/catalog", "src/facts", "src/lineage"]);
+    expect(Object.keys(surface.ledgers)).toEqual(["src/catalog", "src/facts", "src/lineage", "src/condition"]);
     const cases = Object.entries(surface.fixtures);
     expect(cases.length).toBeGreaterThan(1);
     for (const [name, v] of cases) {

@@ -16,7 +16,7 @@
 // the ledgers' own recognizer, never a second one.
 import { height, type RecordHeight } from "../kernel/index.js";
 import type { Currency, Unit } from "../catalog/index.js";
-import { isCandidateEntry } from "./candidate-ledger.js";
+import { isCandidateEntry, type Bottom } from "./candidate-ledger.js";
 import { isCommitmentEntry, type FactRecord } from "./commitment-ledger.js";
 
 /** A candidate derived from a commitment, by its height - unbranded (the mint rule). */
@@ -25,6 +25,14 @@ export interface DerivedCandidate {
   readonly unit: Unit;
   readonly currency: Currency;
   readonly from: RecordHeight;
+}
+
+/** Any candidate, by its height - unbranded (the mint rule); `from` is a commitment's height or BOTTOM (IR-90). */
+export interface LineageCandidate {
+  readonly at: RecordHeight;
+  readonly unit: Unit;
+  readonly currency: Currency;
+  readonly from: RecordHeight | Bottom;
 }
 
 /** A commitment that accepted a candidate, by its height - unbranded (the mint rule). */
@@ -53,6 +61,28 @@ export class LineageReader {
       if (!isCandidateEntry(fact) || fact.payload.from !== commitment) return;
       // A fact's height is its 1-based position (OBJ-10; IR-31).
       out.push(Object.freeze({ at: height(position + 1), unit: fact.payload.unit, currency: fact.payload.currency, from: commitment }));
+    });
+    return Object.freeze(out);
+  }
+
+  /** Every candidate at or below `at`, in append order (IR-90). */
+  candidatesAsOf(at: RecordHeight): readonly LineageCandidate[] {
+    const out: LineageCandidate[] = [];
+    this.#record.readAsOf(at).forEach((fact, position) => {
+      if (!isCandidateEntry(fact)) return;
+      const { unit, currency, from } = fact.payload;
+      // BOTTOM as a fresh frozen member, never the record's object.
+      out.push(Object.freeze({ at: height(position + 1), unit, currency, from: typeof from === "number" ? from : Object.freeze({ kind: "no-subject" } as const) }));
+    });
+    return Object.freeze(out);
+  }
+
+  /** Every commitment at or below `at`, in append order (IR-90). */
+  commitmentsAsOf(at: RecordHeight): readonly AcceptingCommitment[] {
+    const out: AcceptingCommitment[] = [];
+    this.#record.readAsOf(at).forEach((fact, position) => {
+      if (!isCommitmentEntry(fact)) return;
+      out.push(Object.freeze({ at: height(position + 1), unit: fact.payload.unit, currency: fact.payload.currency, candidate: fact.payload.candidate }));
     });
     return Object.freeze(out);
   }

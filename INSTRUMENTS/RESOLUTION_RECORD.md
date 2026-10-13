@@ -63,6 +63,7 @@ Each entry below carries its owner disposition and date, and is in force from th
 | R-53 when a sample is closed (F3 S-F3-2 vs F4, SEAM-23) | **ACCEPTED 2026-10-13** (owner, live gate) | `Open`, `ClosedBy(revision)` or `ClosedBy(commitment)`: the EARLIEST of a revision to another condition after the sample's first member, or a commitment accepting one of its members, at or below the height. A later invalidation does not reopen it. MOD-08 voids only on a revision (J3) |
 | R-54 OBJ-27 Chain's edges and shape | **ACCEPTED 2026-10-13** (owner, live gate) | u to v when v's least-currency commitment IN FORCE accepted a candidate derived from u's commitment: one predecessor at most. A chain is each maximal path from an independent head to an end; paths may share a prefix. A unit with no edge is in no chain |
 | R-55 a draw under a condition not in force | **ACCEPTED 2026-10-13** (owner, live gate) | ALLOWED; MOD-05 unchanged. The draw joins its own condition's sample, whose closure already shows the revision |
+| R-56 the sole-site rule vs MOD-06's Chains (an in-force read per commitment, in a loop) | **ACCEPTED 2026-10-13** (owner, live gate) | ONE exception, by declaration: `soleSite` skips `Chains.#edges` in `src/condition/chains.ts`, resolved by file, class and member (not a name or a comment), with a fixture proving the same pattern anywhere else is still flagged. The rule's scope otherwise stays frozen (R-50) |
 
 ---
 

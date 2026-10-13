@@ -21,7 +21,8 @@
  *             LIMITS: a fold written as recursion over the predecessor list
  *             (limit-recursive-fold.ts); a read-wrapping helper whose result is neither boolean
  *             nor a commitment (limit-helper-verdict.ts); a reader called from a USER-written
- *             iteration helper (limit-user-iteration-helper.ts; R-39). KNOWN, unpinned (R-51,
+ *             iteration helper (limit-user-iteration-helper.ts; R-39). EXCEPTION (R-56): MOD-06's
+ *             Chains.#edges, by declaration (file, class, member). KNOWN, unpinned (R-51,
  *             DR-39): a scan of the raw record or of the unbranded LineageReader; a reader handed
  *             through `Array.prototype.every.call`.
  *   branch    "No per-currency branch" (S-13: no branch on currency identity). The MEANING:
@@ -202,11 +203,27 @@ function readerTyped(a) {
       isLib(declOf(checker.getResolvedSignature(e))?.getSourceFile() ?? e.getSourceFile())) return readerTyped(e.expression.expression);
   return false;
 }
+/**
+ * R-56: the ONE exception, by declaration. MOD-06's Chains.#edges reads the fold once per
+ * commitment, at that commitment's own currency - an in-force test, not a fold over the order.
+ * Resolved by the judged file, the enclosing class and the member; the same read in any other
+ * file, class or member is still a second check (fixtures under reach-sole-site/src/condition/).
+ */
+const SOLE_EXCEPTION = { file: "src/condition/chains.ts", cls: "Chains", member: "#edges" };
+function exceptedBy(here, n) {
+  if (here !== SOLE_EXCEPTION.file) return false;
+  for (let p = n.parent; p; p = p.parent) {
+    if (ts.isMethodDeclaration(p)) {
+      return p.name.getText() === SOLE_EXCEPTION.member && ts.isClassDeclaration(p.parent) && p.parent.name?.text === SOLE_EXCEPTION.cls;
+    }
+  }
+  return false;
+}
 function soleSiteFindings(file, here) {
   if (here === REACH || here.startsWith(REACH + "/")) return [];
   const sf = program.getSourceFile(file);
   const found = [];
-  const add = (n) => found.push({ file: here, line: lineOf(sf, n), how: "second-reachability-check" });
+  const add = (n) => { if (!exceptedBy(here, n)) found.push({ file: here, line: lineOf(sf, n), how: "second-reachability-check" }); };
   const visit = (n) => {
     if (ts.isCallExpression(n)) {
       const target = declOf(checker.getResolvedSignature(n));

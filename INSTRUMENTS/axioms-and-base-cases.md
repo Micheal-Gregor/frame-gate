@@ -664,3 +664,15 @@ constructors validating nothing), with the detectors registering `src/lineage`:
   was an instance list. It now asserts each member's own join (BC-12-8 asserts InvalidationScope's).
 - **After:** `tsc` clean, **218 / 218**; VEC-01 and VEC-05 re-derive.
 
+
+## MOD-06 `condition/` (R-52..R-55; written before the classes, watched failing; one line each, R-50)
+
+- **BC-06-1** OBJ-07: an identity is the port's digest of the WHOLE input set; key order is irrelevant; every component (a cited reference, its order, a nested value, an addition, a removal) changes it; equality is exact (R-52).
+- **BC-06-2** OBJ-17: a revision is one HUMAN append (ENGINE does not compile); the condition in force is the last revision's, per (unit, currency), as of a height; NoSubject before any (IR-88).
+- **BC-06-3** REF-10: a sample is asked for ONE identity (two do not compile); samples of one (unit, currency) are disjoint and exhaustive; Sample joins the family once, in MOD-06 (IR-87).
+- **BC-06-4** closure: the first revision to ANOTHER condition after the first member, or the first acceptance of a member; not reopened by an invalidation; an off-condition draw joins its own closed sample (R-53, R-55).
+- **BC-06-5** HOOK-06: an assembly with a member of another condition answers `refuse("mixed-conditions")`, through `samplesFor` too (IR-89).
+- **BC-06-6** OBJ-27: chains are maximal head-to-end paths over edges made by least-currency commitments IN FORCE; as of a height; Chain joins the family once, in MOD-06 (R-54).
+- **BC-06-7** MOD-05 work item: the lineage reader reads every candidate and every HUMAN commitment, as of a height (IR-90).
+
+**Watched failing (MOD-06):** against typed stubs, 19 tests red plus `condition.test.ts` red at collection (7 cases; a module-level `identityOf` hit the stub), `tsc` clean. After: 245 / 245.

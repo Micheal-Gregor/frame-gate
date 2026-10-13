@@ -29,6 +29,16 @@ describe("LineageReader in isolation", () => {
     expect(a).not.toEqual(b);
   });
 
+  it("candidatesAsOf and commitmentsAsOf answer differently when record differs", () => {
+    const w = world();
+    w.commitAt(u, c0);
+    const h = w.record.noise();
+    const real = new LineageReader({ record: w.record });
+    const empty = new LineageReader({ record: inMemoryRecord() });
+    expect(real.candidatesAsOf(h)).not.toEqual(empty.candidatesAsOf(h));
+    expect(real.commitmentsAsOf(h)).not.toEqual(empty.commitmentsAsOf(h));
+  });
+
   it("acceptedBy answers differently when record differs", () => {
     const w = world();
     const k0 = w.commitAt(u, c0);

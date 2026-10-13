@@ -149,6 +149,7 @@ const LEDGERS = [
     ["src/facts/candidate-ledger.ts", "CandidatePayload"],
   ] },
   { root: "src/lineage", payloads: [["src/lineage/invalidation-ledger.ts", "InvalidationPayload"]] },
+  { root: "src/condition", payloads: [["src/condition/revision-log.ts", "RevisionPayload"]] },
 ];
 /** Each ledger root's parse-level fixtures, tests/fixtures/<root's name>/ - discovered from LEDGERS (RD-12). */
 const FIXTURES = LEDGERS.flatMap((l) => walk(fx(l.root.slice(l.root.lastIndexOf("/") + 1)), /\.ts$/));
@@ -235,6 +236,7 @@ const BRANDS = [
   { owner: "src/facts/draw-context-log.ts", name: "ResolutionLabel", key: brandKey("src/facts/draw-context-log.ts", "ResolutionLabel") },
   { owner: "src/facts/candidate-ledger.ts", name: "Candidate", key: brandKey("src/facts/candidate-ledger.ts", "Candidate") },
   { owner: "src/lineage/invalidation-ledger.ts", name: "Invalidation", key: brandKey("src/lineage/invalidation-ledger.ts", "Invalidation") },
+  { owner: "src/condition/revision-log.ts", name: "PromptRevision", key: brandKey("src/condition/revision-log.ts", "PromptRevision") },
   // Not a ledger fact, but REF-07's parse half rests on it (R-48): a DisplayedScope minted outside
   // MOD-12 would let an invalidation skip its display. Listed by hand - see IR-79.
   { owner: "src/lineage/invalidation-ledger.ts", name: "DisplayedScope", key: brandKey("src/lineage/invalidation-ledger.ts", "DisplayedScope") },

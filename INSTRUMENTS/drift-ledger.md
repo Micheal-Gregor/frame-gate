@@ -593,3 +593,4 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   HOOK-04). Two are checker reach on MOD-04/MOD-01 (DR-38, DR-39). One is bookkeeping (DR-40), and
   one is code style (DR-41). Under RD-9 this is round 1 of 2 for MOD-12's gate.
 
+- **2026-10-13 — MOD-06 `condition/` built (R-52..R-56).** Tests first, red against stubs; the sole-site rule flagged Chains' in-force read per commitment, and the owner ruled one exception by declaration (R-56) over narrowing the rule. `conditionOf` became a free function: it needs nothing handed in (OS-12). 245 / 245.

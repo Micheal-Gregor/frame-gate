@@ -19,7 +19,7 @@ export {
   type FactRecord,
   type InvalidationReader,
 } from "./commitment-ledger.js";
-export { LineageReader, type AcceptingCommitment, type DerivedCandidate } from "./lineage-reader.js";
+export { LineageReader, type AcceptingCommitment, type DerivedCandidate, type LineageCandidate } from "./lineage-reader.js";
 export {
   DrawContextLog,
   type DeclarationReader,

@@ -259,6 +259,8 @@ describe("BC-04-7 - one reachability site, and no per-currency branch", () => {
       "src/facts/violating-every-callback.ts": ["second-reachability-check"],
       "src/facts/violating-helper-by-reference.ts": ["second-reachability-check"],
       "src/facts/violating-helper-fold.ts": ["second-reachability-check"],
+      "src/condition/chains.ts": ["second-reachability-check", "second-reachability-check"],
+      "src/condition/violating-chains-elsewhere.ts": ["second-reachability-check"],
       "src/reachability/conforming-the-one-check.ts": [],
       "src/spend/violating-array-from.ts": ["second-reachability-check"],
       "src/spend/violating-classic-for.ts": ["second-reachability-check"],

@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0",
+  "concept": "The Frame Gate",
+  "round": 15,
+  "reviewed": {
+    "tree_sha": "253f755386436422231d70bcbe92d83a2a5e6430",
+    "commit_sha": "4b559948d7f9bdf36a8d7d2983898ae637c6b786",
+    "s3_anchor_tag": "s3-anchor-v1.0",
+    "modules": [
+      "MOD-08"
+    ],
+    "scope": [
+      {
+        "module": "MOD-08",
+        "mode": "full",
+        "manifest": "96d0c9d8cc3c486696d0ec82d39f6ecfc1011173ae89b5e2bad8fd7cd732a16d",
+        "base": null,
+        "base_round": null,
+        "credit_round": null,
+        "unresolved": [],
+        "deps": [
+          "MOD-01",
+          "MOD-03",
+          "MOD-05",
+          "MOD-06",
+          "MOD-07"
+        ],
+        "importers": []
+      }
+    ]
+  },
+  "reviewer": {
+    "agent": "k7-reviewer",
+    "invocation": "subprocess",
+    "builder_transcript_seen": false,
+    "started_at": "2026-10-13T08:53:33+00:00",
+    "completed_at": "2026-10-13T09:06:50+00:00"
+  },
+  "preflight": {
+    "structure_check": {
+      "status": "pass",
+      "violations": []
+    },
+    "worktree_clean_before": true,
+    "worktree_clean_after": true
+  },
+  "progress": {
+    "prior_round": 14,
+    "prior_tree_sha": "d531a6f3aab0ce2b86576165b617594e7b3ac332",
+    "prior_failing_checks": [
+      "CC-2",
+      "CC-3",
+      "CC-7"
+    ],
+    "changed": true
+  },
+  "checks": {
+    "CC-1": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Trace holds both ways. src/statistics/dispersion.ts -> OBJ-20 (S3 s3:117; joined as \"Dispersion\" through the kernel, dispersion.ts:41); src/statistics/location.ts -> OBJ-21 (s3:118 'centre statistic only; does not take \u00ce\u00b8 (S5 \u00c2\u00a73)'; location.ts:39 takes no threshold, pinned at parse by statistics.test.ts:152); src/statistics/scores.ts -> the one membership rule, the floor as data and the two statistics (R-63, R-64; VEC-03); index.ts is the surface only. F3 s2's four plain-language signatures resolve: dispersion -> Dispersion.of().compute(at); dispersion_available -> Dispersion.available (dispersion.ts:56); floor() -> DISPERSION_FLOOR (scores.ts:17, the integer three in one place: grep of src/statistics finds no other 3); location(sample, threshold, as_of) -> Location.of() with the \u00ce\u00b8 parameter dropped per the S5 synthesis correction (S5-K6:62-72), which the S3 row carries. Object-model rows exist for the module, scores, Dispersion and Location (object-model-and-parameters.md:19,43-45) with declared slots samples, observations matching both constructors; OS-12 isolation tests present (tests/dispersion.isolation.test.ts, tests/location.isolation.test.ts). S3 s11:319's destinations exist: REF-08 (statistics.test.ts:71), VEC-03 (vectors/VEC-03.json, COMPUTED), CT-6 N/A-by-absence (s7 registers no MOD-08 hook; completion-ledger.md:20 says so), PC-04 enumerated (completion-ledger.md:20: both axes refold per read, no cache kept - true: both classes freeze themselves holding only their two slots). The join detector confirms Dispersion and Location are each joined once, in src/statistics (projection-joins.mjs via statistics.test.ts:190-191). Trace citations R-63..R-65 resolve to ACCEPTED live rows (RESOLUTION_RECORD.md:73-75); IR-100 present (drift-ledger.md:178). No orphan file. Trace-hygiene gaps, deducted under CC-7 not failed here: (1) ODG-FG-03 (S3 s9:284: 'an owner or implementer ruling at MOD-08') is resolved in substance by R-64 and VEC-03 rule iv (an all-ABSENT member is no member for the floor) but neither R-64 nor any IR cites the gate, and C4-anchor-record.md:35 still reads it as open; (2) SampleSource is declared twice, identically (dispersion.ts:20-22, location.ts:20-22), index.ts:10 re-exporting only one."
+    },
+    "CC-2": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Read as code paths and demonstrated live in the R-07 worktree .k7/wt (HEAD 4b55994 = repository HEAD) by tests/k7/k7-probes.test.ts under npx vitest run --root .k7/wt -t \"k7_p\" (7/7 as predicted). HELD: the floor (scores.ts:38, strictly below three scored members -> undetermined(\"AE-3\"), never a number; k7_p6 shows it is per component: 3 draws, 2 scored on a -> Undetermined, 3 scored on b -> a number, and available agrees); ABSENT contributes nothing and never enters arithmetic (scores.ts:30 narrows by isAbsent before push; k7_p3: three scores plus an undischargeable ABSENT give the SD of three); no threshold anywhere (no literal, default, fallback or coalescing in src/statistics; Location's signature has no \u00ce\u00b8 slot, M6 refused at parse); nothing stored (readonly slots, Object.freeze(this), computed per read: k7_p1 reads the same Projection at two heights and gets Undetermined then a number, and a score appended after `at` is not counted at `at`); the unknown propagates as itself (scores.ts:26-27 returns any observation-source Unknown other than NoSubject; dispersion.ts:43,50 and location.ts:43,50 return the sample's Unknown unchanged; SEAM-12's shape is number | UnknownValue); R-65/J3 (dispersion.ts:51, location.ts:51: closed-by-revision -> NoSubject on both axes; k7_p4: commitment-then-revision is still measured and revision-then-commitment is void, R-53's earliest-event closure; k7_p5: a revision is void only at or after its height); R-63 (sample SD with n-1, scores.ts:43; mean, :50; M3 to population SD killed); R-64 per component via the observation in force (scores.ts:23, MOD-07's R-60 read). SEAM-07: cardinality < 3 implies scored-count < 3 so Undetermined follows; the transferred `cardinality` field is not read by MOD-08 - by R-64 the floor is on scored members, so this is by ruling, noted. SEAM-08: ABSENT crosses as ABSENT and the type refuses arithmetic at the seam (divergence file in .k7/wt/src/statistics: TS2365, exit 2). N/A-by-absence, stated: thresholds, populations and exclusion counts (MOD-09), ratio and scope (MOD-11), lineage and signatures (MOD-12), difficulty (MOD-13), declaration reads, diagnostic - none reachable from src/statistics (its imports are kernel, catalog types, condition types, facts types, observation reads). One registered residue, probed and deducted under CC-7 not failed: IR-100's absent subject - a component name no observation states, or an empty sample - answers Undetermined(AE-3) on dispersion but NoSubject on location (k7_p2), so one axis attributes 'no subject at all' to AE-3. Not halt-class: no owner text names it a HALT and it is registered."
+    },
+    "CC-3": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Registered and honoured: R-63 (DG-F5 closed: sample-sd / mean, linked to the gate by name), R-64 (per component; VEC-03 rule iv), R-65 (NoSubject for a revised sample, distinct from the floor's Undetermined), IR-100 (void on both axes; available = floor met on a non-void sample; an unstated component contributes nothing). No unregistered mechanism the tests depend on to pass: every behaviour the seven base cases assert traces to one of those or to the S3 (floor, no \u00ce\u00b8, unknown propagation, the join). Independence: no closure here was prescribed by an earlier K7 round (MOD-08 is a first review, R-68/IR-103); nothing re-scores a closed module. Two unregistered items, latent, deducted under CC-7 and not failed: (1) index.ts:9 exports scoresOf, spread and centre as free functions over ANY candidate list or score list - F3 s2's domain for OBJ-20/21 is 'a sample', and a caller can hand scoresOf a hand-built member list, bypassing Samples' HOOK-06 assembly and R-65's void, then spread it; the reason is the vector harness (tools/vectors/run.ts:26 imports spread from src, R-36) but no IR says so (one line owed, R-50); (2) ODG-FG-03's closure by R-64 is unlinked (see CC-1). No SCOPE statement is at issue: MOD-08 ships no detector; the only detector its tests lean on (projection-joins.mjs) belongs to closed gates and is not re-scored."
+    },
+    "CC-4": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "npx tsc --noEmit && npx vitest run   (run as its two declared parts in sequence on the repository at 4b55994: tsc silent, exit 0; vitest 33 files, 274/274 passed, exit 0). Then the s5 join under the declared single-test command: npx vitest run -t \"test_dispersion_below_floor_returns_undetermined\" -> 1 passed | 273 skipped (REF-08, statistics.test.ts:71; tests/spec/s5-names.test.ts green, so every built module's s5 name selects exactly one case). Genuine forbidden input: exactly two scored members drawn through the real MOD-05/06/07 path (factWorld, recordDraw, appendCandidate, observe), asserting the Undetermined(AE-3) object, available false, then the positive case at three (:79-81). N/A-by-absence, stated: MOD-08 pins no further s5 row (S3 s11:319). Deducted under CC-7: F3's positive companion name dispersion_of_three_yields_a_value (F3-evidence.md:164) selects no case, where MOD-06 and MOD-07's companions do (test_same_condition_draws_form_one_sample, test_all_absent_vector_is_accepted_and_stored).",
+        "exit_code": 0
+      }
+    },
+    "CC-5": {
+      "status": "pass",
+      "mechanical": true,
+      "evidence": {
+        "command": "python3 tools/rederive.py --all   (exit 0: 'ok VEC-01 MOD-04 \u00c2\u00b7 Reachability re-derived'; 'ok VEC-03 MOD-08 \u00c2\u00b7 scores re-derived'; 'ok VEC-05 MOD-12 \u00c2\u00b7 SignatureGate re-derived'; '3 vector(s), all re-derived'). VEC-03 is computed from the implementation: vectors/VEC-03.json state COMPUTED, module 'MOD-08 \u00c2\u00b7 scores' whose object-model File is src/statistics/scores.ts, computed_by names the harness command, and its handler (tools/vectors/run.ts:100-117) calls the real spread() and refuses any other entry. impl_sha 076c7a02\u00e2\u20ac\u00a6edd8 equals Get-FileHash SHA256 of src/statistics/scores.ts on this tree - present and current. Independently re-derived by hand by the reviewer: n=3 {0.42,0.57,0.61}: mean 0.5333\u00e2\u20ac\u00a6, squared deviations sum 0.0200667, /2, sqrt = 0.1001665\u00e2\u20ac\u00a6 = pinned 0.10016652800877812; n=4 {+0.38}: mean 0.495, sum 0.0377, /3, sqrt = 0.1121011\u00e2\u20ac\u00a6 = pinned 0.1121011448053349; the n=2 row carries the token UNDETERMINED(AE-3) and no number, checked structurally (statistics.test.ts:174). The suite's own second method (pairwise differences, :29-34) agrees to 1e-14. Remaining DEFERRED vectors (VEC-02/04/06/07) belong to unbuilt modules and carry discharge conditions (completion-ledger.md:31-36); VEC-03's completion row records computed + re-derived (completion-ledger.md:20).",
+        "exit_code": 0
+      }
+    },
+    "CC-6": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "N/A-by-absence for hooks, stated: S3 s7 registers no hook at MOD-08 and s11:319 says CT-6 N/A; the module decides nothing. The two mandatory experiments were still run in the runner's R-07 worktree .k7/wt (detached at 4b55994 = repository HEAD), each mutant run under the declared single-test command npx vitest run --root .k7/wt -t <name>, the parse-level ones under npx tsc --noEmit -p .k7/wt; the repository was never written. (a) Divergence-injection at MOD-08's seam: a src-level consumer .k7/wt/src/statistics/k7-divergence.ts doing component(o,'a') + 1 -> tsc exit 2, TS2365 at k7-divergence.ts(5,10): ABSENT cannot enter arithmetic on the real compiled path (SEAM-08). (b) Mutation, nine killed of nine: M1 floor lowered to two (scores.ts:38) -> test_dispersion_below_floor_returns_undetermined red (0.106 at n=2); M2 ABSENT pushed as 0 (scores.ts:30-31) -> test_only_scored_members_count_toward_the_floor red (0.2646 where Undetermined was due); M3 population SD (/n) -> REF-08's case red at the n=3 value; M4 closure reading inverted (void on commitment) -> test_a_revised_sample_is_void_for_statistics red; M5' canonical order removed at inOrder (scores.ts:55) -> test_dispersion_depends_on_the_multiset_alone red; M6 Location.of given a threshold parameter -> tsc exit 2, TS2578 unused @ts-expect-error at statistics.test.ts:152 (the no-\u00ce\u00b8 pin fires at parse); M7 available ignores the floor (dispersion.ts:58) -> REF-08's case red (available true at n=2); M8 centre of nothing returns 0 (scores.ts:48) -> test_only_scored_members_count_toward_the_floor red; M9 any observation-source Unknown collapsed to 'unobserved' (scores.ts:26-27) -> test_the_samples_unknown_propagates_as_itself red. One EQUIVALENT mutant, reported not scored: M5 dropping only spread's own sort (scores.ts:40) survived, because scoresOf already sorts at :33 - the canonical order is enforced twice on the orchestrated path (cosmetic, CC-7). Trace citations conditional on live status: R-63..R-65 ACCEPTED (RESOLUTION_RECORD.md:73-75); IR-100 (drift-ledger.md:178); battery 25's record INSTRUMENTS/battery-records/MOD-08-round-25.json (13/13, manifest sha256:96d0c9d8\u00e2\u20ac\u00a6) matches the mutation-battery table (mutation-battery.md:900-916) and the pipelinegate ACCEPT line for battery_complete@1 on that manifest. Tree integrity: git status --porcelain before and after the battery is identical - ' M .pipelinegate/lines/7368\u00e2\u20ac\u00a61664.jsonl' (one appended line, the runner's own ReviewerAgent LATENT record at 08:53:33 for this round) and ' M STATE.json' - neither reviewed content, nothing else touched; all experiments ran under .k7/wt only."
+    },
+    "CC-7": {
+      "status": "pass",
+      "mechanical": false,
+      "rationale": "Scored in CC-7's four-dimension form, as a hard grader. Object-model fidelity 7 (WORST): two Projections joined once each through the kernel, pure statistics with the floor as data in one place, both classes to the Object Writing Standard with OS-1 slots checked by operation, no hidden state; deductions for the unregistered un-sampled public surface (index.ts:9 exports scoresOf/spread/centre over any list, bypassing HOOK-06 and R-65 for a caller who wants to; needed by the harness, unstated) and for duplication (SampleSource declared twice; the canonical order enforced at scores.ts:33 and again at :40/:49, so M5 was an equivalent mutant). Axiom coverage 8: every carried rule demonstrated live (k7_p1..p7) and by nine killed mutants; deductions for IR-100's axis disagreement on an absent subject (dispersion Undetermined(AE-3), location NoSubject, k7_p2) and for ODG-FG-03 resolved by R-64 without a linking line. Base-case support 8: BC-08-1..7 written first and watched red (axioms-and-base-cases.md:692-702), real worlds through MOD-05/06/07, a genuine second-method re-derivation; deductions because F3's positive companion name selects no case and no base case pins the as-of behaviour across heights, an undischargeable ABSENT member, or the commitment-then-revision closure order (all held under probe). Extensibility 9: no detector of its own to drift, the statistic swap (DG-F5) is one function each; deduction because SEAM-07's transferred cardinality is unread (by R-64) and the surface's promise for the free functions is unstated. No unused import, no vacuous assertion, no tautology found in src/statistics or its tests. MIN = 7: at the floor, so MOD-08 passes on this tree."
+    }
+  },
+  "drift_score": {
+    "value": 7,
+    "basis": [
+      {
+        "check_id": "CC-3",
+        "finding": "Worst dimension: object-model fidelity. src/statistics/index.ts:9 exports scoresOf, spread and centre as free functions over ANY candidate or score list, where F3 s2's domain for OBJ-20/21 is a sample; a caller can bypass Samples' HOOK-06 assembly and R-65's void by handing scoresOf a hand-built member list. The reason (tools/vectors/run.ts:26 needs spread, R-36) is unregistered - one IR line owed under R-50.",
+        "deduction": 2
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Object-model fidelity: SampleSource is declared twice, identically (dispersion.ts:20-22, location.ts:20-22; index.ts:10 re-exports one), and the canonical order is enforced at two sites (scores.ts:33 and :40/:49), so mutant M5 (spread's own sort dropped) was equivalent on the orchestrated path.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-2",
+        "finding": "Axiom coverage: IR-100's absent subject - a component no observation states, or an empty sample - answers Undetermined(AE-3) on dispersion and NoSubject on location (probe k7_p2, .k7/wt). Registered benign, but one axis attributes 'no subject at all' to the independence assumption AE-3, which MOD-10 will surface as that withheld reason.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-1",
+        "finding": "Axiom coverage / trace hygiene: ODG-FG-03 (S3 s9:284, resolved by 'an owner or implementer ruling at MOD-08') is closed in substance by R-64 and VEC-03 rule iv, but neither RESOLUTION_RECORD.md:74 nor any IR cites the gate, and C4-anchor-record.md:35 still reads it as open.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-4",
+        "finding": "Base-case support: F3's positive companion dispersion_of_three_yields_a_value (F3-evidence.md:164) selects no case under the single-test command, unlike MOD-06's and MOD-07's companions (test_same_condition_draws_form_one_sample, test_all_absent_vector_is_accepted_and_stored); the positive assertion lives inside the REF-08 case (statistics.test.ts:79-81).",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Base-case support: no base case pins the as-of behaviour across heights (a score appended after `at` not counted at `at`), an undischargeable ABSENT member, or the commitment-then-revision closure order - all held under probes k7_p1, k7_p3, k7_p4 but are unpinned by the suite.",
+        "deduction": 1
+      },
+      {
+        "check_id": "CC-7",
+        "finding": "Extensibility: SEAM-07's transferred `cardinality` (samples.ts:34) is never read by MOD-08 - correct under R-64 (the floor is on scored members) but a seam value with no consumer, unstated.",
+        "deduction": 1
+      }
+    ]
+  },
+  "verdict": "PASS",
+  "blocking": [],
+  "next_action": "Tag k7-pass-15 on 4b55994, then before MOD-09 starts register in one line each the un-sampled public surface of src/statistics/index.ts and R-64's closure of ODG-FG-03."
+}

@@ -519,3 +519,9 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
     before the battery.
   - **Green:** 180/180. IR-71..IR-74.
 
+- **2026-10-13 — Builder battery round 17 (MOD-04 work items, R-39): 17/17 killed on the first
+  pass.** With the work and its battery recorded, **R-39's lift takes effect: the next module
+  (S3 §10, MOD-12 `lineage/` · MOD-06 `condition/` · MOD-07 `observation/`) may open.**
+  WI-11..WI-14 are reviewed at that module's gate. The owner places `closed-by-owner-11` on
+  `a46492a`, the commit recording R-39.
+

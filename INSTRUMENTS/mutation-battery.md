@@ -659,3 +659,34 @@ that no fixture pinned were pinned:
 without the pre-battery pins. I3 shows the narrowing to the LOADED order is load-bearing: widened
 back to any Currency collection, the conforming data pair is flagged.
 
+## Round 17 — MOD-04 work items WI-11..WI-14 (R-39), after its gate closed
+
+Run on committed tree `b8cef86` with the round-5 discipline. Before the run, the sweep on this
+fix's own claims (MF-30, MF-34) pinned five claimed spellings, and corrected one fixture of mine
+that was not a limit: a GENERIC user higher-order function is decided by the launder rule.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| J1 | branch: a numeric-STRING key no longer a position | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| J2 | branch: computed keys no longer resolved | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| J3 | branch: the destructuring consumes the hop again (DR-33's k7-p3) | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| J4 | branch: widening on the currency side no longer stripped | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| J5 | branch: the template spelling dropped | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| J6 | branch: any string treated as particular (data compared to data flagged) | KILLED (test) | `test_no_code_branches_on_a_particular_currency` |
+| J7 | joins: the receiver judged by symbol only (DR-34 reopened) | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| J8 | joins: asProjection as a LIBRARY argument no longer seen | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| J9 | joins: any-flow no longer seen | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| J10 | joins: user type guards no longer seen | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| J11 | a REGISTERED LIMIT closed silently (asProjection as ANY function's argument) | KILLED (test) | `test_projection_joins_follow_the_s3_partition` |
+| J12 | sole site: readers handed by reference no longer judged by TYPE | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| J13 | sole site: a .bind's receiver no longer consulted | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| J14 | sole site: a boolean-or-nullish helper no longer a reader | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| J15 | a REGISTERED LIMIT closed silently (any callback treated as an iteration) | KILLED (test) | `test_reachability_is_decided_in_one_place` |
+| J16 | DR-36's shape re-created for REF-05: a second title containing its §5 name | KILLED (test) | `test_every_s5_name_of_a_built_module_selects_exactly_one_case` |
+| J17 | a §5 name selecting NO case (the named test renamed away) | KILLED (test) | `test_every_s5_name_of_a_built_module_selects_exactly_one_case` |
+
+**Seventeen of seventeen killed on the first pass.** J11 and J15 close a registered limit
+silently, and each dies on its pin. J16 re-creates DR-36's collision for a DIFFERENT §5 name, and
+J17 renames a §5 test away to nothing; the new rule-based test catches both, which a test fixing
+only REF-03's title would not.
+

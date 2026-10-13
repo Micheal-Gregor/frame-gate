@@ -10,8 +10,8 @@
   "k7_round": 11,
   "last_gate_tag": "k7-pass-9",
   "seal_tag": "",
-  "next_action": "MOD-04 fix round (R-38) done; battery 16 12/12; 179/179. K7 round 11 - the one re-check (RD-9) - running on MOD-04, MOD-05, MOD-01 (Fable 5.1). PASS -> owner tags k7-pass-11; otherwise owner triage closes the gate.",
+  "next_action": "MOD-04 gate closed by owner triage (R-39, cap reached); work items WI-11..14 done, battery 17 17/17; lift effective. Owner: tag closed-by-owner-11 on a46492a, push. Next module per S3 s10: MOD-12 lineage / MOD-06 condition / MOD-07 observation - owner picks.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T04:21:18+00:00",
-  "updated_by": "refresh"
+  "updated_at": "2026-10-13T04:43:45+00:00",
+  "updated_by": "manual"
 }

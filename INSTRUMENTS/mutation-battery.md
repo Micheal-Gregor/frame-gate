@@ -852,3 +852,18 @@ On `677b0e8`; restores verified.
 
 Those tables were transcribed by a parser that split `KILLED (test) (test_name)` at the FIRST parenthesis, so each "Result" cell reads `KILLED` and each "Killed by" cell reads `` `test) (test_name` ``. Read the result as `KILLED (test)` (`+tsc` where the cell shows it), and the killing test as the name after `(`. The rows are left as written; the verdicts they record are unchanged. Later tables are parsed by the full line pattern.
 
+## Round 24 — R-67's fix-now item (DR-46), sized to the change (R-50)
+
+On `3b02b49`; restores verified.
+
+| ID | Mutation | Result | Killed by |
+|---|---|---|---|
+| D1 | read seam: the component count not checked | KILLED (test) | `test_only_complete_well_formed_vectors_are_read` |
+| D2 | read seam: names and order not checked | KILLED (test) | `test_only_complete_well_formed_vectors_are_read` |
+| D3 | read seam: a component's author not required | KILLED (test) | `test_only_complete_well_formed_vectors_are_read` |
+| D4 | read seam: a non-finite number read as a score | KILLED (test) | `test_only_complete_well_formed_vectors_are_read` |
+| D5 | read seam: any object read as ABSENT | KILLED (test) | `test_only_complete_well_formed_vectors_are_read` |
+| D6 | read seam: any discharge accepted | KILLED (test) | `test_only_complete_well_formed_vectors_are_read` |
+
+**6 / 6.** MOD-07's gate is closed by owner triage (R-67).
+

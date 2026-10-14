@@ -38,8 +38,8 @@ const getJson = async <T>(url: string): Promise<T> => {
 };
 
 export async function connect() {
-  const [{ facts }, inputs, files] = await Promise.all([
-    getJson<{ facts: unknown[] }>("/api/record"),
+  const [{ facts, times }, inputs, files] = await Promise.all([
+    getJson<{ facts: unknown[]; times: (number | null)[] }>("/api/record"),
     getJson<Record<string, DrawInputs>>("/api/prompts"),
     getJson<readonly { readonly height: number; readonly type: string; readonly name?: string }[]>("/api/media"),
   ]);
@@ -48,12 +48,15 @@ export async function connect() {
     readonly top: () => RecordHeight;
     readonly empty: () => boolean;
     readonly refresh: () => Promise<number>;
+    /** When the fact at a height reached the record (the service's clock), if it was noted. */
+    readonly when: (at: RecordHeight) => Date | undefined;
   } = {
     append: (fact: unknown): RecordHeight => {
       const xhr = syncRequest("POST", "/api/record", JSON.stringify({ expected: facts.length, fact }));
       if (xhr.status === 409) throw new StaleRecord();
       if (xhr.status !== 200) throw new Error(`the record service answered ${xhr.status}`);
       facts.push(fact);
+      times.push(Date.now());
       return height(facts.length);
     },
     readAsOf: (at: RecordHeight): readonly unknown[] => facts.slice(0, at),
@@ -61,9 +64,14 @@ export async function connect() {
     empty: (): boolean => facts.length === 0,
     /** Bring this device up to date: the facts other devices appended since. Returns how many arrived. */
     refresh: async (): Promise<number> => {
-      const r = await getJson<{ facts: unknown[] }>(`/api/record?from=${facts.length}`);
+      const r = await getJson<{ facts: unknown[]; times: (number | null)[] }>(`/api/record?from=${facts.length}`);
       facts.push(...r.facts);
+      times.push(...r.times);
       return r.facts.length;
+    },
+    when: (at: RecordHeight): Date | undefined => {
+      const t = times[at - 1];
+      return t === null || t === undefined ? undefined : new Date(t);
     },
   };
 
@@ -94,10 +102,18 @@ export async function connect() {
     },
   };
 
-  const status = (): Promise<{ readonly height: number; readonly devices: readonly string[] }> => getJson("/api/status");
+  const status = (): Promise<Standing> => getJson("/api/status");
   return { record, prompts, media, status };
 }
 export type Connection = Awaited<ReturnType<typeof connect>>;
+/** What the service says about itself: the record's height, who has looked lately, where to reach it, the backups. */
+export interface Standing {
+  readonly height: number;
+  readonly devices: readonly string[];
+  readonly addresses: readonly string[];
+  readonly codeAt: string;
+  readonly backups: { readonly folder: string | null; readonly last: string | null; readonly kept: number; readonly keep: number };
+}
 export type MediaStore = Connection["media"];
 export type PromptStore = Connection["prompts"];
 

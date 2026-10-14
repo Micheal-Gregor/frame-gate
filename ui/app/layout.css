@@ -86,6 +86,28 @@ form.prompt .act { justify-self: start; }
 .recstat .link { align-self: flex-start; background: none; border: 0; padding: 0; color: #9cb4ff; font: inherit; cursor: pointer; text-decoration: underline; }
 .recstat .refused { color: #ffb4a8; }
 .topstat { display: none; }
+.viewpick { display: block; margin: 12px 18px 0; font-size: 12px; color: #9aa1b1; }
+.viewpick select { margin-left: 6px; font: inherit; border-radius: 6px; }
+/* A: made / reserved / free, and every reservation with who and when */
+.tally { display: inline-block; margin-left: 8px; }
+.tally:first-child { margin-left: 0; }
+.reservations { list-style: none; margin: 2px 0 0; padding: 0; font-size: 12px; color: var(--accent); }
+.take.slot .note { margin: 0; }
+/* B: switching a clip, undoing an approval, the confirm sheet */
+.switch, .consequence { margin-top: 10px; padding: 10px; border-radius: 8px; background: #f4f7fe; border: 1px solid #d6e0f7; display: grid; gap: 6px; }
+.consequence { background: #fff7f5; border-color: #f2d0c9; }
+.consequence p { margin: 0; font-size: 13px; }
+.undo { margin-top: 8px; }
+.act.danger { background: var(--refuse); border-color: var(--refuse); }
+.link { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; cursor: pointer; text-decoration: underline; }
+.dialog { position: fixed; inset: 0; background: #0006; display: grid; place-items: center; padding: 16px; z-index: 10; }
+.dialog .sheet { background: #fff; border-radius: 12px; padding: 18px; width: min(380px, 100%); display: grid; gap: 10px; max-height: 90vh; overflow: auto; }
+.dialog .sheet p { margin: 0; color: var(--muted); font-size: 13px; }
+.dialog .buttons { justify-content: flex-end; }
+/* H: the devices page */
+.steps ol { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.card code { font: 12px ui-monospace, Consolas, monospace; background: #f1efe9; padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.board .card + .card { margin-top: 16px; }
 .sub { margin: 12px 0 2px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 .budget h2 + .sub { margin-top: 0; }
 .act { font: inherit; padding: 8px 14px; border-radius: 7px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
@@ -116,7 +138,7 @@ form.score input, form.authorize input { font: inherit; padding: 6px 8px; min-wi
 .board td a:hover b { text-decoration: underline; }
 .board tr[data-href] { cursor: pointer; }
 .board tr[data-href]:hover td { background: #faf9f6; }
-.board .est { color: var(--muted); font-size: 12px; }
+.board .est { color: var(--ink); font-size: 12px; }
 
 /* ---- a tablet: the rail becomes the top bar; takes across the full width; approve and budget side by side */
 @media (max-width: 1024px) {
@@ -150,4 +172,10 @@ form.score input, form.authorize input { font: inherit; padding: 6px 8px; min-wi
   .act { width: 100%; padding: 11px 14px; }
   .notice { margin: 10px 12px 0; }
   .board { padding: 12px; }
+  /* the confirm sheet rises from the bottom; "Not now" sits where the thumb just was */
+  .dialog { place-items: end stretch; padding: 0; }
+  .dialog .sheet { width: 100%; border-radius: 12px 12px 0 0; }
+  .dialog .buttons { flex-direction: column-reverse; }
+  /* the engine's codes are for programs and desktops; a phone shows the words */
+  .code { display: none; }
 }

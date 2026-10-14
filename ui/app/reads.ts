@@ -37,13 +37,14 @@ export function takesOf(e: Engine, unit: Unit, currency: Currency, at: RecordHei
   return { sample, takes, approved, approvedAt, approvedTake: n === 0 ? undefined : n };
 }
 
-/** One authorization in a cell's money history: the scope, the draws charged to it, and whether it is in force. */
-export interface Authorization { readonly scope: ScopeRecord; readonly drawn: number; readonly inForce: boolean }
+/** One authorization in a cell's money history: the scope, the draws charged to it, those still waiting for a file, and whether it is in force. */
+export interface Authorization { readonly scope: ScopeRecord; readonly drawn: number; readonly waiting: number; readonly inForce: boolean }
 
 /**
- * B: a cell's money in one currency - the scope in force, what remains and its answer to the next
- * draw; every authorization ever drawn under (from each draw's own scope) and the one in force;
- * and the draws charged but not yet bound to a take (reserved before the file was made).
+ * A + B: a cell's money in one currency, for the authorization in force - made (draws with their
+ * take), reserved (draws recorded before their file, each with who made it), free (what remains) -
+ * and its answer to the next draw; every authorization ever drawn under, from each draw's own scope;
+ * and every reservation still waiting, including any under a replaced authorization (they survive it).
  */
 export function moneyOf(e: Engine, unit: Unit, currency: Currency, at: RecordHeight) {
   const governing = e.scopeReader.governing(unit, currency, at);
@@ -51,15 +52,25 @@ export function moneyOf(e: Engine, unit: Unit, currency: Currency, at: RecordHei
     const c = e.scopeGate.currencyOf(d.payload.scope, at);
     return !isUnknown(c) && c === currency;
   });
-  const heights = [...new Set([...mine.map((d) => d.payload.scope), ...(isUnknown(governing) ? [] : [governing.at])])].sort((a, b) => a - b);
-  const history: readonly Authorization[] = heights.flatMap((h) => {
-    const s = e.scopeReader.scopeAt(h, at);
-    return isUnknown(s) ? [] : [{ scope: s, drawn: e.lineage.drawsUnder(h, at).length, inForce: !isUnknown(governing) && governing.at === h }];
-  });
   const samples = e.samples.samplesFor(unit, currency, at);
   const bound = new Set((isUnknown(samples) ? [] : samples.flatMap((s) => s.members)).map((k) => k.payload.context));
   const held: readonly DrawContext[] = mine.filter((d) => !bound.has(d.at));
+  const inForce = (d: DrawContext): boolean => !isUnknown(governing) && d.payload.scope === governing.at;
+  const heights = [...new Set([...mine.map((d) => d.payload.scope), ...(isUnknown(governing) ? [] : [governing.at])])].sort((a, b) => a - b);
+  const history: readonly Authorization[] = heights.flatMap((h) => {
+    const s = e.scopeReader.scopeAt(h, at);
+    return isUnknown(s) ? [] : [{ scope: s, drawn: e.lineage.drawsUnder(h, at).length, waiting: held.filter((d) => d.payload.scope === h).length, inForce: !isUnknown(governing) && governing.at === h }];
+  });
   const next: "WITHIN" | UnknownValue | undefined = isUnknown(governing) ? undefined : e.scopeGate.admitsDraw(unit, governing.at, at);
-  return { governing, remaining: e.scopeGate.remaining(unit, currency, at), next, history, held, used: history.find((a) => a.inForce)?.drawn };
+  return {
+    governing,
+    made: mine.filter((d) => inForce(d) && bound.has(d.at)).length,
+    reserved: held.filter(inForce),
+    /** Every reservation still waiting, oldest first - under the authorization in force or a replaced one. */
+    held,
+    free: e.scopeGate.remaining(unit, currency, at),
+    next,
+    history,
+  };
 }
 export type Money = ReturnType<typeof moneyOf>;

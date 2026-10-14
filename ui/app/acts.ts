@@ -4,7 +4,8 @@
  */
 import { isUnknown, type UnknownValue } from "../../src/kernel/index.js";
 import type { Currency, Unit } from "../../src/catalog/index.js";
-import { BOTTOM, type Candidate, type CandidateProposal, type DrawContext } from "../../src/facts/index.js";
+import { BOTTOM, type Candidate, type CandidateProposal, type Commitment, type DrawContext } from "../../src/facts/index.js";
+import type { Invalidation } from "../../src/lineage/index.js";
 import type { DrawInputs, PromptRevision } from "../../src/condition/index.js";
 import type { Engine } from "./engine.js";
 import { PROJECT } from "./project.js";
@@ -66,15 +67,32 @@ export function fill(
 }
 
 /**
- * C5 + B: bring a file in as the next take - into the oldest reserved draw if there is one, or into
- * a new draw under the scope and prompt in force. A refused take after a recorded draw leaves that
- * draw reserved, to be filled next time.
+ * C5 + A: bring a file in as the next take - into the oldest reservation made by the same kind of
+ * author (a person's files into a person's reservations, a program's into its own), or into a new
+ * draw under the scope and prompt in force. A refused take after a recorded draw leaves that draw
+ * reserved, to be filled next time. A specific reservation is filled with `fill` (a drop on its slot).
  */
 export function bringIn(
   e: Engine, prompts: PromptStore, media: MediaStore, unit: Unit, currency: Currency,
   file: { readonly name: string; readonly sha256: string; readonly blob: Blob }, author: "HUMAN" | "ENGINE",
 ): Candidate | UnknownValue {
-  const held = moneyOf(e, unit, currency, e.record.top()).held[0];
+  const held = moneyOf(e, unit, currency, e.record.top()).held.find((d) => d.author === author);
   const draw = held ?? reserve(e, unit, currency, { source: "brought in", file: file.name }, author);
   return isUnknown(draw) ? draw : fill(e, prompts, media, draw, currency, file, author);
+}
+
+/**
+ * B: undo an approval. The library derives what it would undo and records that it was shown (R-48),
+ * then the invalidation is appended at that same height (R-47) - the view shows the same derivation
+ * first, from InvalidationScope.of, so what the person confirmed is what is undone.
+ */
+export function undoApproval(e: Engine, approval: Commitment): Invalidation | UnknownValue {
+  const at = e.record.top();
+  return e.invalidations.invalidate(e.invalidations.display(approval, at), "HUMAN", at);
+}
+
+/** B: switch the approved clip (or still) to another take, in one step: undo the approval in force, then approve the new one. */
+export function switchApproval(e: Engine, approval: Commitment, to: Candidate): Commitment | UnknownValue {
+  const undone = undoApproval(e, approval);
+  return isUnknown(undone) ? undone : e.commitments.commit(to, "HUMAN");
 }

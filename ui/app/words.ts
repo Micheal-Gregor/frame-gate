@@ -4,12 +4,11 @@
  * as the engine says it. Nothing here decides: no status is worked out, no take is ranked, and the
  * one number the copy needs - the dispersion floor - is read from the library, never typed in.
  */
-import { isUnknown, type UnknownValue } from "../../src/kernel/index.js";
+import { isUnknown, type RecordHeight, type UnknownValue } from "../../src/kernel/index.js";
 import { isAbsent, type ComponentValue } from "../../src/observation/index.js";
 import { DISPERSION_FLOOR } from "../../src/statistics/index.js";
 import type { WithheldReason } from "../../src/diagnostic/index.js";
 import type { ReachabilityEvaluation } from "../../src/reachability/index.js";
-import type { ScopeRecord } from "../../src/spend/index.js";
 import type { Money } from "./reads.js";
 
 export const esc = (x: unknown): string => String(x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
@@ -69,21 +68,18 @@ export function scoreWords(v: ComponentValue | UnknownValue): string {
   return num(v);
 }
 
-/** C8: one currency's budget in words - used of the ceiling, and what is left - from the scope, its charged draws, and remaining. */
-export function budgetWords(scope: ScopeRecord | UnknownValue, used: number | undefined, remaining: number | UnknownValue, word: string): string {
-  if (isUnknown(scope)) return "none authorized";
-  const left = isUnknown(remaining) ? said(remaining, "") : remaining === 0 ? `<b class="spent">used up</b>` : `<b>${remaining} left</b>`;
-  return `${used ?? "?"} of ${plural(scope.payload.ceiling, word)} used · ${left}`;
-}
+/** The kind of author, in words (OBJ-38: ENGINE and DIRECTOR propose; HUMAN decides). */
+export const byWords = (author: string): string => (author === "ENGINE" ? "a program" : author === "DIRECTOR" ? "the director" : "a person");
 
-/** B: the authorization in force in words - drawn of the ceiling, what is left - and the reserved draws waiting for files. */
-export function moneyWords(m: Money, word: string): string {
+/** A: the authorization in force - made, reserved, free - each counted on its own. */
+export function countWords(m: Money, word: string): string {
   if (isUnknown(m.governing)) return "none authorized";
-  const left = isUnknown(m.remaining) ? said(m.remaining, "") : m.remaining === 0 ? `<span class="spent">none left</span>` : `<b>${m.remaining} left</b>`;
-  return `${m.used ?? 0} of ${plural(m.governing.payload.ceiling, word)} drawn · ${left}`;
+  const free = isUnknown(m.free) ? said(m.free, "") : String(m.free);
+  return `<span class="tally"><b>${m.made}</b> made</span><span class="tally"><b>${m.reserved.length}</b> reserved</span><span class="tally"><b>${free}</b> free</span> <span class="none">of ${plural(m.governing.payload.ceiling, word)}</span>`;
 }
-export const heldWords = (m: Money, word: string): string =>
-  m.held.length === 0 ? "" : `<div class="held">${plural(m.held.length, word)} reserved, waiting for ${m.held.length === 1 ? "its file" : "their files"}</div>`;
-/** B: every authorization ever drawn under, as typed, with what was drawn and whether it still governs. */
+/** A: every reservation still waiting, with who made it and when it reached the record. */
+export const reservedWords = (m: Money, word: string, when: (at: RecordHeight) => string): string =>
+  m.held.length === 0 ? "" : `<ul class="reservations">${m.held.map((d) => `<li>reserved ${esc(word)} · by ${byWords(d.author)}${when(d.at) ? ` · ${esc(when(d.at))}` : ""}${m.reserved.includes(d) ? "" : " · under an earlier authorization"}</li>`).join("")}</ul>`;
+/** B: every authorization ever drawn under, as typed, with what was drawn, what still waits, and whether it governs. */
 export const historyWords = (m: Money): string =>
-  m.history.length === 0 ? "" : `<ul class="history">${m.history.map((a) => `<li><span>${esc(a.scope.payload.estimate)}</span><span>${a.drawn} drawn · ${a.inForce ? "in force" : `replaced${a.scope.payload.ceiling > a.drawn ? ` (${a.scope.payload.ceiling - a.drawn} dropped)` : ""}`}</span></li>`).join("")}</ul>`;
+  m.history.length === 0 ? "" : `<ul class="history">${m.history.map((a) => `<li><span>${esc(a.scope.payload.estimate)}</span><span>${a.drawn} drawn${a.waiting ? ` (${a.waiting} waiting)` : ""} · ${a.inForce ? "in force" : `replaced${a.scope.payload.ceiling > a.drawn ? ` (${a.scope.payload.ceiling - a.drawn} dropped)` : ""}`}</span></li>`).join("")}</ul>`;

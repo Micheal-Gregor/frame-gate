@@ -7,20 +7,28 @@
  * record has moved on (another device acted first), so no two devices ever disagree about a height.
  * It decides nothing about the scene - the library does that, in each browser.
  *
+ * Beside the record it notes when each fact arrived (a clock time per height - the engine orders by
+ * height only), and once a day copies the record, prompts, times and files into a dated folder of
+ * backups (FRAME_GATE_BACKUP, else "Review Theater backups" in the personal OneDrive), keeping 14.
+ *
  * Access: requests from this computer are let in. Any other device must sign in with the access
  * code first - for every page and file, not just the record. The code is FRAME_GATE_CODE when set;
  * otherwise one is generated once and kept in the data folder, never in the project.
  */
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync, createReadStream } from "node:fs";
+import { cpSync, createReadStream, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { homedir } from "node:os";
+import { homedir, networkInterfaces } from "node:os";
 import { join } from "node:path";
 import type { Plugin } from "vite";
 
 const DIR = join(process.env["LOCALAPPDATA"] ?? join(homedir(), ".local", "share"), "frame-gate", "review-theater");
 const MEDIA = join(DIR, "media");
 const SESSION = "fg_session";
+const ONEDRIVE = process.env["OneDriveConsumer"];
+const BACKUPS = process.env["FRAME_GATE_BACKUP"] ?? (ONEDRIVE === undefined ? undefined : join(ONEDRIVE, "Review Theater backups"));
+const KEEP = 14;
+const DATED = /^\d{4}-\d{2}-\d{2}$/;
 
 const readJson = <T>(file: string, fallback: T): T => {
   try {
@@ -64,7 +72,11 @@ export function recordService(): Plugin {
   const promptsFile = join(DIR, "prompts.json");
   const sessionsFile = join(DIR, "sessions.json");
   const codeFile = join(DIR, "access-code.txt");
+  const timesFile = join(DIR, "times.json");
   const facts = readJson<unknown[]>(recordFile, []);
+  /** When each fact arrived, by height (index + 1); facts from before times were kept have none. */
+  const times = readJson<(number | null)[]>(timesFile, []);
+  while (times.length < facts.length) times.unshift(null);
   const prompts = readJson<Record<string, unknown>>(promptsFile, {});
   /** Session tokens are kept as digests, so the file never holds a usable token. */
   const sessions = new Set(readJson<string[]>(sessionsFile, []));
@@ -73,6 +85,34 @@ export function recordService(): Plugin {
   const code = (process.env["FRAME_GATE_CODE"] ?? readFileSync(codeFile, "utf8")).trim();
   const digest = (token: string): string => createHash("sha256").update(token).digest("hex");
   const signedIn = (req: IncomingMessage): boolean => isLocal(req) || sessions.has(digest(cookie(req, SESSION) ?? ""));
+
+  /** One dated copy a day, after 2 a.m.; the oldest beyond KEEP removed - only dated folders inside the backups folder. */
+  const copies = (): string[] => (BACKUPS === undefined || !existsSync(BACKUPS) ? [] : readdirSync(BACKUPS).filter((d) => DATED.test(d)).sort());
+  const backUp = (): void => {
+    if (BACKUPS === undefined) return;
+    const now = new Date();
+    const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    if (now.getHours() < 2 || copies().includes(day)) return;
+    const target = join(BACKUPS, day);
+    mkdirSync(target, { recursive: true });
+    for (const f of ["record.json", "prompts.json", "times.json"]) if (existsSync(join(DIR, f))) cpSync(join(DIR, f), join(target, f));
+    cpSync(MEDIA, join(target, "media"), { recursive: true });
+    for (const old of copies().slice(0, Math.max(0, copies().length - KEEP))) rmSync(join(BACKUPS, old), { recursive: true, force: true });
+  };
+  try {
+    backUp();
+  } catch {
+    /* a failed copy is reported by status (no new dated folder), never fatal */
+  }
+  setInterval(() => {
+    try {
+      backUp();
+    } catch {
+      /* as above */
+    }
+  }, 30 * 60_000).unref();
+  const addresses = (port: number): string[] =>
+    Object.values(networkInterfaces()).flat().filter((a) => a !== undefined && a.family === "IPv4" && !a.internal).map((a) => `http://${a?.address}:${port}`);
 
   return {
     name: "review-theater-record",
@@ -111,23 +151,32 @@ export function recordService(): Plugin {
         if (req.method !== "GET" && (req.headers["x-review-theater"] !== "1" || (req.headers.origin !== undefined && new URL(req.headers.origin).host !== req.headers.host))) {
           return send(res, 403, { error: "not from the Review Theater" });
         }
-        seen.set(isLocal(req) ? "this computer" : device(req), Date.now());
+        seen.set(isLocal(req) ? "the host computer" : device(req), Date.now());
 
         // ---- the record: read whole, or from a height; append at the height expected
         if (url.pathname === "/api/record" && req.method === "GET") {
           const from = Number(url.searchParams.get("from") ?? 0);
-          return send(res, 200, { height: facts.length, facts: facts.slice(from) });
+          return send(res, 200, { height: facts.length, facts: facts.slice(from), times: times.slice(from) });
         }
         if (url.pathname === "/api/record" && req.method === "POST") {
           const { expected, fact } = JSON.parse((await body(req)).toString()) as { expected: number; fact: unknown };
           if (expected !== facts.length) return send(res, 409, { height: facts.length });
           facts.push(fact);
+          times.push(Date.now());
           writeJson(recordFile, facts);
+          writeJson(timesFile, times);
           return send(res, 200, { height: facts.length });
         }
         if (url.pathname === "/api/status") {
           const devices = [...seen].filter(([, t]) => Date.now() - t < 10 * 60_000).map(([d]) => d);
-          return send(res, 200, { height: facts.length, devices });
+          const kept = copies();
+          return send(res, 200, {
+            height: facts.length,
+            devices,
+            addresses: addresses(server.config.server.port ?? 5173),
+            codeAt: process.env["FRAME_GATE_CODE"] ? "the FRAME_GATE_CODE setting on the host computer" : codeFile,
+            backups: { folder: BACKUPS ?? null, last: kept.at(-1) ?? null, kept: kept.length, keep: KEEP },
+          });
         }
         // ---- prompt inputs by identity
         if (url.pathname === "/api/prompts" && req.method === "GET") return send(res, 200, prompts);

@@ -22,13 +22,14 @@ import { PROJECT } from "./project.js";
 import { SHA256_HEX } from "./sha256.js";
 
 /** The record as the app binds it: MOD-02's port, plus where it stands and how to catch up (stores.ts). */
-export type AppRecord = RecordPort<unknown, RecordHeight> & { readonly top: () => RecordHeight; readonly empty: () => boolean; readonly refresh: () => Promise<number> };
+export type AppRecord = RecordPort<unknown, RecordHeight> & { readonly top: () => RecordHeight; readonly empty: () => boolean; readonly refresh: () => Promise<number>; readonly when: (at: RecordHeight) => Date | undefined };
 
 export function engine(record: AppRecord) {
   const order = new CurrencyOrder({ currencies: [...PROJECT.currencies] });
   const registry = new UnitRegistry({ units: PROJECT.units });
   const lineage = new LineageReader({ record });
-  const invalidations = new InvalidationLedger({ record, scopes: new InvalidationScope({ lineage }), renderer: { present: () => undefined } });
+  const invalidationScope = new InvalidationScope({ lineage });
+  const invalidations = new InvalidationLedger({ record, scopes: invalidationScope, renderer: { present: () => undefined } });
   const commitments = new CommitmentLedger({ record, invalidations });
   const reach = new ReachabilityGate({ reachability: new Reachability({ currencies: order, commitments }) });
   const scopeReader = new ScopeReader({ record });
@@ -48,7 +49,7 @@ export function engine(record: AppRecord) {
   const ratio = new Ratio({ candidates });
   const forms = new AuthorizationForms({ ratio });
   const scopes = new ScopeLedger({ record, bar, declarations });
-  return { record, order, registry, lineage, invalidations, commitments, reach, scopeReader, scopeGate, declarations, draws, independence, signatures, candidates, identities, revisions, samples, observations, partition, bar, diagnostic, ratio, forms, scopes };
+  return { record, order, registry, lineage, invalidationScope, invalidations, commitments, reach, scopeReader, scopeGate, declarations, draws, independence, signatures, candidates, identities, revisions, samples, observations, partition, bar, diagnostic, ratio, forms, scopes };
 }
 
 export type Engine = ReturnType<typeof engine>;

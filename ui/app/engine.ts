@@ -1,11 +1,12 @@
 /**
- * The app's composition root: the sealed library, wired once, over this browser's record.
+ * The app's composition root: the sealed library, wired once, over the scene's record.
  *
  * Bindings (MOD-02's ports, bound here and nowhere in the library): the record is append-only and
- * kept in this browser's storage; the digest is SHA-256. Every decision, refusal and reading the
- * views show comes from these objects. The views hold no rule of their own.
+ * kept by the record service, shared by every device (stores.ts); the digest is SHA-256. Every
+ * decision, refusal and reading the views show comes from these objects. The views hold no rule of
+ * their own.
  */
-import { height, type RecordHeight } from "../../src/kernel/index.js";
+import type { RecordHeight } from "../../src/kernel/index.js";
 import type { RecordPort } from "../../src/ports/index.js";
 import { CurrencyOrder, DeclarationLedger, IndependenceLedger, UnitRegistry } from "../../src/catalog/index.js";
 import { CandidateLedger, CommitmentLedger, DrawContextLog, LineageReader } from "../../src/facts/index.js";
@@ -20,36 +21,10 @@ import { AuthorizationForms, Ratio, ScopeGate, ScopeLedger, ScopeReader } from "
 import { PROJECT } from "./project.js";
 import { SHA256_HEX } from "./sha256.js";
 
-/** v2 from Build batch 3: the example scene now writes prompts and brings takes in. A v1 record is left as it was. */
-const KEY = "frame-gate:record:v2";
+/** The record as the app binds it: MOD-02's port, plus where it stands and how to catch up (stores.ts). */
+export type AppRecord = RecordPort<unknown, RecordHeight> & { readonly top: () => RecordHeight; readonly empty: () => boolean; readonly refresh: () => Promise<number> };
 
-/** An append-only record in this browser's storage. Nothing is ever removed or rewritten. */
-function browserRecord(): RecordPort<unknown, RecordHeight> & { readonly top: () => RecordHeight; readonly empty: () => boolean } {
-  let facts: unknown[] = [];
-  try {
-    const saved = localStorage.getItem(KEY);
-    if (saved !== null) facts = JSON.parse(saved) as unknown[];
-  } catch {
-    facts = [];
-  }
-  return {
-    append: (fact: unknown): RecordHeight => {
-      facts.push(fact);
-      try {
-        localStorage.setItem(KEY, JSON.stringify(facts));
-      } catch {
-        /* storage unavailable: the record lives for this page only */
-      }
-      return height(facts.length);
-    },
-    readAsOf: (at: RecordHeight): readonly unknown[] => facts.slice(0, at),
-    top: (): RecordHeight => height(facts.length),
-    empty: (): boolean => facts.length === 0,
-  };
-}
-
-export function engine() {
-  const record = browserRecord();
+export function engine(record: AppRecord) {
   const order = new CurrencyOrder({ currencies: [...PROJECT.currencies] });
   const registry = new UnitRegistry({ units: PROJECT.units });
   const lineage = new LineageReader({ record });

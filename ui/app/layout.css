@@ -20,12 +20,10 @@ header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; p
 header h1 { font-size: 17px; margin: 0; }
 header .meta { color: var(--muted); }
 
-/* ---- the cell: takes on the left; approve, budget, then the folded diagnostic on the right */
-.cell { display: grid; gap: 18px; padding: 18px 22px; grid-template-columns: minmax(0, 1fr) 380px; grid-template-areas: "takes approve" "takes budget" "takes diag" "takes ."; align-items: start; }
-.cell > .takes-card { grid-area: takes; }
-.cell > .diag { grid-area: diag; }
-.cell > .approve { grid-area: approve; }
-.cell > .budget { grid-area: budget; }
+/* ---- the cell: takes and clips on the left; approve, budget, then the folded diagnostic on the right.
+   Each column stacks on its own, so a tall card on one side never opens a gap on the other. */
+.cell { display: grid; gap: 18px; padding: 18px 22px; grid-template-columns: minmax(0, 1fr) 380px; align-items: start; }
+.col-main, .col-side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 section.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
 h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
 .spec { color: var(--muted); font-size: 12px; margin: -4px 0 10px; overflow-wrap: anywhere; }
@@ -36,6 +34,13 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .take.selected { border-color: var(--accent); box-shadow: 0 0 0 2px #2f5bd333; }
 .take.approved { border-color: var(--ok); }
 .img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 5px; display: block; background: #e4e2dc; }
+.take.slot { border: 2px dashed #9db3e8; background: #f4f7fe; justify-content: center; align-items: flex-start; gap: 4px; min-height: 120px; font-size: 13px; cursor: pointer; }
+.take.slot.over { background: #e3ebfd; border-color: var(--accent); }
+.via { color: var(--muted); font-size: 11px; border: 1px solid var(--line); border-radius: 9px; padding: 0 6px; }
+.tick { color: var(--muted); font-size: 11px; }
+form.prompt { display: grid; gap: 6px; margin: 4px 0 10px; }
+form.prompt input { font: inherit; padding: 6px 8px; }
+form.prompt .act { justify-self: start; }
 .img.blank { display: grid; place-items: center; color: var(--muted); font-size: 12px; background: repeating-linear-gradient(45deg, #ecebe6, #ecebe6 8px, #e4e2dc 8px, #e4e2dc 16px); }
 .cap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; }
 .cap .file { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
@@ -58,7 +63,7 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .absent, .withheld { color: var(--warn); }
 .none { color: var(--muted); font-style: italic; }
 .ok { color: var(--ok); font-weight: 700; }
-.code { font: 11px ui-monospace, Consolas, monospace; color: var(--muted); background: #f1efe9; border-radius: 4px; padding: 0 4px; white-space: nowrap; font-style: normal; }
+.code { font: 11px ui-monospace, Consolas, monospace; color: var(--muted); background: #f1efe9; border-radius: 4px; padding: 0 4px; white-space: nowrap; font-style: normal; opacity: .75; }
 .axis { border-top: 1px solid var(--line); padding: 8px 0; }
 .axis:first-of-type { border-top: 0; }
 .counts { color: var(--muted); font-size: 12px; }
@@ -66,7 +71,21 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .row > span:last-child { text-align: right; }
 .refused { color: var(--refuse); font-weight: 600; }
 .done { color: var(--ok); font-weight: 600; }
-.spent { color: var(--refuse); }
+/* "none left" is a fact, not an alarm */
+.spent { font-weight: 600; }
+.held { color: var(--accent); font-size: 12px; font-weight: 600; }
+.history { list-style: none; margin: 4px 0 0; padding: 0; font-size: 12px; }
+.history li { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-top: 1px dashed var(--line); color: var(--muted); }
+.history li span:first-child { color: var(--ink); }
+.reserve { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 8px; }
+.reserve .note { margin: 0; }
+.row.total { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); font-weight: 600; }
+/* A: the record's standing - in the rail on a desktop, under the top bar on a tablet or phone */
+.recstat { margin: 18px 18px 0; padding-top: 12px; border-top: 1px solid #333a4a; font-size: 12px; color: #9aa1b1; display: flex; flex-direction: column; gap: 2px; }
+.recstat b { color: #d9dce3; font-weight: 600; }
+.recstat .link { align-self: flex-start; background: none; border: 0; padding: 0; color: #9cb4ff; font: inherit; cursor: pointer; text-decoration: underline; }
+.recstat .refused { color: #ffb4a8; }
+.topstat { display: none; }
 .sub { margin: 12px 0 2px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 .budget h2 + .sub { margin-top: 0; }
 .act { font: inherit; padding: 8px 14px; border-radius: 7px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
@@ -95,6 +114,8 @@ form.score input, form.authorize input { font: inherit; padding: 6px 8px; min-wi
 .board td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .board td a { color: inherit; text-decoration: none; }
 .board td a:hover b { text-decoration: underline; }
+.board tr[data-href] { cursor: pointer; }
+.board tr[data-href]:hover td { background: #faf9f6; }
 .board .est { color: var(--muted); font-size: 12px; }
 
 /* ---- a tablet: the rail becomes the top bar; takes across the full width; approve and budget side by side */
@@ -102,28 +123,31 @@ form.score input, form.authorize input { font: inherit; padding: 6px 8px; min-wi
   .shell { grid-template-columns: minmax(0, 1fr); }
   .rail { display: none; }
   .topbar { display: flex; }
-  .cell { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "takes takes" "approve budget" "diag diag"; }
+  .topstat { display: block; background: #2b3242; }
+  .topstat .recstat { margin: 0; padding: 6px 16px; border: 0; flex-direction: row; flex-wrap: wrap; gap: 4px 12px; }
+  .cell { grid-template-columns: minmax(0, 1fr); }
+  .col-side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .col-side > .diag { grid-column: 1 / -1; }
+  /* the board's rows become cards from a tablet down, so nothing is squeezed */
+  .board thead { display: none; }
+  .board table, .board tbody, .board tr, .board td { display: block; }
+  .board tr { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; background: #fff; }
+  .board td { border: 0; padding: 4px 0; display: flex; justify-content: space-between; gap: 12px; text-align: right; }
+  .board td::before { content: attr(data-h); color: var(--muted); font-size: 12px; text-align: left; flex: none; }
+  .board td:first-child { display: block; text-align: left; font-size: 15px; }
+  .board td:first-child::before { content: none; }
 }
 
 /* ---- a phone: one column - takes, approve, budget, the diagnostic; the board's rows become cards */
 @media (max-width: 640px) {
   header { padding: 10px 14px; }
   header h1 { font-size: 16px; width: 100%; }
-  .cell { display: flex; flex-direction: column; gap: 12px; padding: 12px; }
-  .cell > .takes-card { order: 1; }
-  .cell > .approve { order: 2; }
-  .cell > .budget { order: 3; }
-  .cell > .diag { order: 4; }
+  .cell { gap: 12px; padding: 12px; }
+  .col-main, .col-side { gap: 12px; }
+  .col-side { display: flex; align-items: stretch; }
   .takes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   form.score, form.authorize { grid-template-columns: 8.5em minmax(0, 1fr); }
   .act { width: 100%; padding: 11px 14px; }
   .notice { margin: 10px 12px 0; }
   .board { padding: 12px; }
-  .board thead { display: none; }
-  .board table, .board tbody, .board tr, .board td { display: block; }
-  .board tr { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; background: #fff; }
-  .board td { border: 0; padding: 4px 0; display: flex; justify-content: space-between; gap: 12px; text-align: right; }
-  .board td::before { content: attr(data-h); color: var(--muted); font-size: 12px; text-align: left; }
-  .board td:first-child { font-size: 15px; }
-  .board td:first-child::before { content: none; }
 }

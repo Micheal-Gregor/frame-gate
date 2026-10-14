@@ -10,6 +10,7 @@ import { DISPERSION_FLOOR } from "../../src/statistics/index.js";
 import type { WithheldReason } from "../../src/diagnostic/index.js";
 import type { ReachabilityEvaluation } from "../../src/reachability/index.js";
 import type { ScopeRecord } from "../../src/spend/index.js";
+import type { Money } from "./reads.js";
 
 export const esc = (x: unknown): string => String(x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
 export const num = (x: number): string => x.toFixed(2);
@@ -25,6 +26,8 @@ const REFUSED: Readonly<Record<string, string>> = {
   "no-declaration": "this cell has no shot level set",
   "form-before-act": "the form went stale - try again",
   "context-spent": "that draw already has its take",
+  "context-mismatch": "that draw belongs to another cell or prompt",
+  "scope-mismatch": "that draw belongs to another authorization",
 };
 
 /** An Unknown in words; `none` is what NoSubject means where it is asked. */
@@ -72,3 +75,15 @@ export function budgetWords(scope: ScopeRecord | UnknownValue, used: number | un
   const left = isUnknown(remaining) ? said(remaining, "") : remaining === 0 ? `<b class="spent">used up</b>` : `<b>${remaining} left</b>`;
   return `${used ?? "?"} of ${plural(scope.payload.ceiling, word)} used · ${left}`;
 }
+
+/** B: the authorization in force in words - drawn of the ceiling, what is left - and the reserved draws waiting for files. */
+export function moneyWords(m: Money, word: string): string {
+  if (isUnknown(m.governing)) return "none authorized";
+  const left = isUnknown(m.remaining) ? said(m.remaining, "") : m.remaining === 0 ? `<span class="spent">none left</span>` : `<b>${m.remaining} left</b>`;
+  return `${m.used ?? 0} of ${plural(m.governing.payload.ceiling, word)} drawn · ${left}`;
+}
+export const heldWords = (m: Money, word: string): string =>
+  m.held.length === 0 ? "" : `<div class="held">${plural(m.held.length, word)} reserved, waiting for ${m.held.length === 1 ? "its file" : "their files"}</div>`;
+/** B: every authorization ever drawn under, as typed, with what was drawn and whether it still governs. */
+export const historyWords = (m: Money): string =>
+  m.history.length === 0 ? "" : `<ul class="history">${m.history.map((a) => `<li><span>${esc(a.scope.payload.estimate)}</span><span>${a.drawn} drawn · ${a.inForce ? "in force" : `replaced${a.scope.payload.ceiling > a.drawn ? ` (${a.scope.payload.ceiling - a.drawn} dropped)` : ""}`}</span></li>`).join("")}</ul>`;

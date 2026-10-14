@@ -6,6 +6,11 @@
 .recstat .link { align-self: flex-start; background: none; border: 0; padding: 0; color: #9cb4ff; font: inherit; cursor: pointer; text-decoration: underline; }
 .topstat { display: none; }
 
+/* the cell, as the target lays it out (grid areas; the app moved to two stacking columns in batch 4) */
+.cell > .takes-card { grid-area: takes; }
+.cell > .approve { grid-area: approve; }
+.cell > .budget { grid-area: budget; }
+.cell > .diag { grid-area: diag; }
 /* the cell: the clips card sits under the takes on the left */
 .cell { grid-template-areas: "takes approve" "takes budget" "clips budget" "clips diag" ". diag"; }
 .cell > .clips-card { grid-area: clips; }
@@ -44,6 +49,8 @@
   .board td:first-child::before { content: none; }
 }
 @media (max-width: 640px) {
+  .cell { display: flex; flex-direction: column; align-items: stretch; }
+  .cell > .takes-card { order: 1; }
   .cell > .clips-card { order: 2; }
   .cell > .approve { order: 3; }
   .cell > .budget { order: 4; }

@@ -4,59 +4,77 @@
  */
 import { isUnknown, type UnknownValue } from "../../src/kernel/index.js";
 import type { Currency, Unit } from "../../src/catalog/index.js";
-import { BOTTOM, type Candidate, type CandidateProposal } from "../../src/facts/index.js";
+import { BOTTOM, type Candidate, type CandidateProposal, type DrawContext } from "../../src/facts/index.js";
 import type { DrawInputs, PromptRevision } from "../../src/condition/index.js";
 import type { Engine } from "./engine.js";
 import { PROJECT } from "./project.js";
+import { moneyOf, promptOf } from "./reads.js";
 import type { MediaStore, PromptStore } from "./stores.js";
 
-/** Write a cell's prompt: its identity from the library, its text kept by the app, the revision recorded. */
+/** Write a cell's prompt for a currency: its identity from the library, its inputs kept by the service, the revision recorded. */
 export function writePrompt(e: Engine, prompts: PromptStore, unit: Unit, currency: Currency, inputs: DrawInputs): PromptRevision {
   const identity = e.identities.identityOf(inputs);
   prompts.put(identity, inputs);
   return e.revisions.revise(unit, currency, identity, "HUMAN");
 }
 
-/** The prompt in force for a cell, with its text when the app's copy digests back to the identity the engine holds. */
-export function promptOf(e: Engine, prompts: PromptStore, unit: Unit, currency: Currency) {
-  const at = e.record.top();
-  const identity = e.revisions.conditionInForce(unit, currency, at);
-  if (isUnknown(identity)) return identity;
-  const inputs = prompts.get(identity);
-  const verified = inputs !== undefined && e.identities.identityOf(inputs) === identity;
-  return { identity, inputs: verified ? inputs : undefined, version: e.revisions.revisions(unit, currency, at).length };
-}
-
-/** What a take of this cell is drawn from: the approved look of the character its prompt names, or nothing. The library rules on it. */
+/**
+ * What a take is drawn from. Above the cheapest currency: this cell's commitment one currency down
+ * (a clip, from the approved still). At the cheapest: the approved look of the character the prompt
+ * names, or nothing. The library rules on it (malformed-from otherwise).
+ */
 function fromFor(e: Engine, prompts: PromptStore, unit: Unit, currency: Currency): CandidateProposal["from"] {
-  const prompt = promptOf(e, prompts, unit, currency);
+  const at = e.record.top();
+  const below = e.order.predecessors(currency);
+  const prev = isUnknown(below) ? undefined : below[below.length - 1];
+  if (prev !== undefined) {
+    const k = e.commitments.effectiveCommitment(unit, prev, at);
+    return isUnknown(k) ? BOTTOM : k;
+  }
+  const prompt = promptOf(e, prompts, unit, currency, at);
   const tags = isUnknown(prompt) || prompt.inputs === undefined ? [] : (prompt.inputs["characters"] as readonly string[] | undefined) ?? [];
   const pkg = tags.map((t) => PROJECT.characters[t]).find((id): id is string => id !== undefined);
-  if (pkg === undefined) return BOTTOM;
-  const u = e.registry.unit(pkg);
-  if (isUnknown(u)) return BOTTOM;
-  const look = e.commitments.effectiveCommitment(u, currency, e.record.top());
+  const u = pkg === undefined ? undefined : e.registry.unit(pkg);
+  if (u === undefined || isUnknown(u)) return BOTTOM;
+  const look = e.commitments.effectiveCommitment(u, currency, at);
   return isUnknown(look) ? BOTTOM : look;
 }
 
 /**
- * Bring in one image as the next take (C5): a draw under the scope and the prompt in force for the
- * cell, then the take bound to that draw, then the image kept against the take. The draw is charged
- * when it is recorded (R-78), so a take the library then refuses still counts as drawn.
+ * B: reserve - record the draw now, under the scope and the prompt in force, before the file is made.
+ * The draw is charged when recorded (R-78), so the file can never be refused for the budget later.
  */
-export function bringIn(
-  e: Engine, prompts: PromptStore, media: MediaStore, unit: Unit, currency: Currency,
-  file: { readonly name: string; readonly sha256: string; readonly image: string }, author: "HUMAN" | "ENGINE",
-): Candidate | UnknownValue {
+export function reserve(e: Engine, unit: Unit, currency: Currency, features: Readonly<Record<string, string>>, author: "HUMAN" | "ENGINE"): DrawContext | UnknownValue {
   const at = e.record.top();
   const scope = e.scopeReader.governing(unit, currency, at);
   if (isUnknown(scope)) return scope;
   const condition = e.revisions.conditionInForce(unit, currency, at);
   if (isUnknown(condition)) return condition;
-  const context = e.draws.recordDraw(unit, { source: author === "HUMAN" ? "brought in" : "runner", file: file.name, sha256: file.sha256 }, scope.at, condition, at, author);
-  if (isUnknown(context)) return context;
-  const proposal: CandidateProposal = { context, unit, currency, condition, seed: author === "HUMAN" ? "not known - brought in" : `runner-${file.sha256.slice(0, 12)}`, from: fromFor(e, prompts, unit, currency) };
+  return e.draws.recordDraw(unit, features, scope.at, condition, at, author);
+}
+
+/** Bind a file to a draw already recorded: the take, then its file kept against it. One draw, one take (R-33). */
+export function fill(
+  e: Engine, prompts: PromptStore, media: MediaStore, draw: DrawContext, currency: Currency,
+  file: { readonly name: string; readonly sha256: string; readonly blob: Blob }, author: "HUMAN" | "ENGINE",
+): Candidate | UnknownValue {
+  const unit = draw.payload.unit;
+  const proposal: CandidateProposal = { context: draw, unit, currency, condition: draw.payload.condition, seed: `file sha256:${file.sha256}`, from: fromFor(e, prompts, unit, currency) };
   const take = e.candidates.appendCandidate(proposal, e.signatures.sign(e.signatures.materialOf(proposal)), e.record.top(), author);
-  if (!isUnknown(take)) media.put(take.at, file.image);
+  if (!isUnknown(take)) void media.put(take.at, file.blob, file.name);
   return take;
+}
+
+/**
+ * C5 + B: bring a file in as the next take - into the oldest reserved draw if there is one, or into
+ * a new draw under the scope and prompt in force. A refused take after a recorded draw leaves that
+ * draw reserved, to be filled next time.
+ */
+export function bringIn(
+  e: Engine, prompts: PromptStore, media: MediaStore, unit: Unit, currency: Currency,
+  file: { readonly name: string; readonly sha256: string; readonly blob: Blob }, author: "HUMAN" | "ENGINE",
+): Candidate | UnknownValue {
+  const held = moneyOf(e, unit, currency, e.record.top()).held[0];
+  const draw = held ?? reserve(e, unit, currency, { source: "brought in", file: file.name }, author);
+  return isUnknown(draw) ? draw : fill(e, prompts, media, draw, currency, file, author);
 }

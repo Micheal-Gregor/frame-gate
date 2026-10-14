@@ -1,0 +1,62 @@
+/* PREVIEW ONLY (Simulate 2): the styles the target adds over ui/app/layout.css. Promoted at build. */
+
+/* the cell page: approve and budget before the folded diagnostic */
+.cell { grid-template-areas: "takes approve" "takes budget" "takes diag" "takes ."; }
+.take { padding: 6px; }
+.take .img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 5px; display: block; background: #e4e2dc; }
+.cap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; }
+.cap .file { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.cap .badge { margin-top: 0; }
+/* the selected take and the reference, side by side at one size - what scoring compares */
+.compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.compare figure { margin: 0; }
+.compare .img { width: 100%; aspect-ratio: 16 / 10; border-radius: 6px; display: block; }
+.compare figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+.compare figcaption b { color: var(--ink, #1f2430); }
+/* a form's labels sit in a fixed column, so a full-width line can never widen it */
+form.score, form.authorize { grid-template-columns: 10em minmax(0, 1fr); justify-content: stretch; }
+form.score { border-top: 0; margin-top: 10px; padding-top: 0; }
+.drop { margin-top: 12px; border: 2px dashed #9db3e8; border-radius: 8px; padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: 13px; color: var(--accent); background: #f4f7fe; cursor: pointer; }
+.drop span { color: var(--muted); }
+.drop .left { color: var(--ink, #1f2430); font-weight: 600; }
+.drop.off { border-color: var(--line); background: #faf9f6; color: var(--muted); cursor: default; }
+.ok { color: var(--ok); font-weight: 700; }
+.code { font: 11px ui-monospace, Consolas, monospace; color: var(--muted); background: #f1efe9; border-radius: 4px; padding: 0 4px; white-space: nowrap; }
+.sub { margin: 10px 0 2px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.sub:first-of-type { margin-top: 0; }
+.spent { color: var(--refuse); }
+.preview { background: #f4f7fe; border: 1px solid #d6e0f7; border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+.charge { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.diag details > summary { list-style: none; cursor: pointer; }
+.diag details > summary::-webkit-details-marker { display: none; }
+.diag details > summary h2 { display: inline; margin: 0 8px 0 0; }
+.diag details > summary::after { content: " ▸ show"; font-size: 12px; color: var(--accent); }
+.diag details[open] > summary::after { content: " ▾ hide"; }
+.row > span:last-child { text-align: right; }
+
+/* the scene board */
+.board { padding: 18px 22px; }
+.board table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.board th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.board td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.board td a { color: inherit; text-decoration: none; }
+.board td a:hover b { text-decoration: underline; }
+.board .est { color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1024px) {
+  .cell { grid-template-areas: "takes takes" "approve budget" "diag diag"; }
+}
+@media (max-width: 640px) {
+  /* the pinned Approve card comes off: approve sits in the flow, after the takes */
+  .cell > .approve { position: static; box-shadow: none; }
+  .cell > .budget { order: 3; }
+  .cell > .diag { order: 4; }
+  .board { padding: 12px; }
+  .board thead { display: none; }
+  .board table, .board tbody, .board tr, .board td { display: block; }
+  .board tr { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; background: #fff; }
+  .board td { border: 0; padding: 4px 0; display: flex; justify-content: space-between; gap: 12px; }
+  .board td::before { content: attr(data-h); color: var(--muted); font-size: 12px; }
+  .board td:first-child { font-size: 15px; }
+  .board td:first-child::before { content: none; }
+}

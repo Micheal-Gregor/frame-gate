@@ -47,8 +47,9 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .act { font: inherit; padding: 8px 14px; border-radius: 7px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
 .act.secondary { background: #fff; color: var(--accent); }
 .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
-form.score { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; display: grid; grid-template-columns: max-content minmax(0, 180px); justify-content: start; gap: 6px 10px; align-items: center; }
-form.score input { font: inherit; padding: 6px 8px; min-width: 0; width: 100%; box-sizing: border-box; }
+form.score, form.authorize { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; display: grid; grid-template-columns: max-content minmax(0, 180px); justify-content: start; gap: 6px 10px; align-items: center; }
+.buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+form.score input, form.authorize input { font: inherit; padding: 6px 8px; min-width: 0; width: 100%; box-sizing: border-box; }
 .empty { padding: 40px 16px; text-align: center; color: var(--muted); }
 .notice { margin: 12px 22px 0; padding: 8px 12px; border-radius: 8px; background: #fff5e6; border: 1px solid #f0d3a0; }
 
@@ -71,7 +72,7 @@ form.score input { font: inherit; padding: 6px 8px; min-width: 0; width: 100%; b
   .cell > .budget { order: 4; }
   .takes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .frame { height: 92px; }
-  form.score { grid-template-columns: max-content minmax(0, 1fr); justify-content: stretch; }
+  form.score, form.authorize { grid-template-columns: max-content minmax(0, 1fr); justify-content: stretch; }
   .act { width: 100%; padding: 11px 14px; }
   .notice { margin: 10px 12px 0; }
 }

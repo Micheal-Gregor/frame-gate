@@ -99,28 +99,34 @@ function cellView(unit: Unit): string {
       : `<div class="refused">${esc(unknown(approved))}</div>`
     : `<div class="row"><span>approved</span><b>take ${takes.findIndex((k) => k.at === approvedAt) + 1 || "?"}</b></div>`;
   return `${header}${notice ? `<p class="notice">${esc(notice)}</p>` : ""}
-  <main>
-    <section class="card">
+  <main class="cell">
+    <section class="card takes-card">
       <h2>Takes</h2>
       <div class="spec">spec: ${esc(read?.condition ?? "")}</div>
       <div class="takes">${cards}</div>
       ${scoreForm}
     </section>
-    <div class="stack">
-      <section class="card"><h2>Diagnostic</h2>${diagnostics.map(([c, d]) => diagnosticCard(c, d)).join("")}</section>
-      <section class="card"><h2>Approve</h2>${approveBody}<div class="row"><span>I2V for this cell</span><span>${esc(videoText)}</span></div></section>
-    </div>
+    <section class="card diag"><h2>Diagnostic</h2>${diagnostics.map(([c, d]) => diagnosticCard(c, d)).join("")}</section>
+    <section class="card approve"><h2>Approve</h2>${approveBody}<div class="row"><span>I2V for this cell</span><span>${esc(videoText)}</span></div></section>
   </main>`;
 }
 
 function render(): void {
   const id = cellId();
   const unit = e.registry.unit(id);
-  const nav = Object.keys(PROJECT.units).map((c) => `<a href="#${encodeURIComponent(c)}" class="${c === id ? "active" : ""}">${esc(PROJECT.labels[c] ?? c)}</a>`).join("");
+  const ids = Object.keys(PROJECT.units);
+  const rail = ids.map((c) => `<a href="#${encodeURIComponent(c)}" class="${c === id ? "active" : ""}">${esc(PROJECT.labels[c] ?? c)}</a>`).join("");
+  const picker = ids.map((c) => `<option value="${esc(c)}"${c === id ? " selected" : ""}>${esc(PROJECT.labels[c] ?? c)}</option>`).join("");
   const body = e.record.empty()
     ? `<header><h1>${esc(PROJECT.title)}</h1></header><div class="empty"><p>This browser's record is empty.</p><button class="act" data-demo>Start with the demo scene</button><p class="note">The demo records invented acts through the library: Mara's approved identity still, then six stills for cell 3.2, five reviewed.</p></div>`
     : isUnknown(unit) ? `<div class="empty">${esc(unknown(unit))}</div>` : cellView(unit);
-  app.innerHTML = `<div class="shell"><nav><div class="brand">Review Theater</div><div class="scene">${esc(PROJECT.title)}</div>${nav}</nav><div>${body}</div></div>`;
+  app.innerHTML = `<div class="shell">
+    <nav class="rail"><div class="brand">Review Theater</div><div class="scene">${esc(PROJECT.title)}</div>${rail}</nav>
+    <div class="page">
+      <div class="topbar"><b>Review Theater</b><select data-cell aria-label="cell">${picker}</select></div>
+      ${body}
+    </div>
+  </div>`;
 }
 
 app.addEventListener("click", (ev) => {
@@ -144,6 +150,11 @@ app.addEventListener("click", (ev) => {
     notice = undefined;
     render();
   }
+});
+
+app.addEventListener("change", (ev) => {
+  const t = ev.target as HTMLElement;
+  if (t instanceof HTMLSelectElement && t.dataset["cell"] !== undefined) location.hash = encodeURIComponent(t.value);
 });
 
 app.addEventListener("submit", (ev) => {

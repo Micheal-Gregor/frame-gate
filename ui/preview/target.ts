@@ -65,38 +65,42 @@ const next = s.nextDraw === "ADMITTED" ? "admitted" : `<span class="refused">${e
 const ratio = isUnknown(s.ratio) ? unknown(s.ratio) : s.ratio.counts.map((c) => `${esc(c.currency)} ${c.count}`).join(" · ");
 
 const app = document.getElementById("app") as HTMLElement;
+const cells = [["mara-pkg", "Mara - identity package"], ["3.1", "3.1 - wide"], ["3.2", "3.2 - Mara, close-up"], ["3.3", "3.3 - reaction"]];
 app.innerHTML = `
-<header>
-  <h1>Scene 3 · Cell 3.2 - Mara, close-up</h1>
-  <span class="meta">level ${esc(isUnknown(s.level) ? unknown(s.level) : s.level)}</span>
-  <span class="tag">spec in force: ${esc(s.condition)}</span>
-  <span class="meta">sample: ${esc(s.sample ? `${s.sample.cardinality} takes, ${s.sample.closure.kind}` : "none")}</span>
-</header>
-<main>
-  <section class="card">
-    <h2>Takes - C3</h2>
-    <div class="takes">${takes}</div>
-  </section>
-  <div class="stack">
-    <section class="card">
-      <h2>Diagnostic - C3</h2>
-      ${diagnostics}
-    </section>
-    <section class="card">
-      <h2>Approve - C4</h2>
-      <div class="row"><span>selected</span><b>take 3</b></div>
-      <div class="row"><span>I2V for this cell</span><span>${esc(video)}</span></div>
-      <div style="margin-top:8px"><button>Approve take 3</button></div>
-      <div class="note">The diagnostic proposes. Approving is yours, with or without it.</div>
-    </section>
-    <section class="card">
-      <h2>Budget - C2</h2>
-      ${governing}
-      <div class="row"><span>remaining</span><b>${esc(remaining)}</b></div>
-      <div class="row"><span>next draw</span>${next}</div>
-      <div class="row"><span>draws so far (ratio)</span><span>${ratio}</span></div>
-      <div style="margin-top:8px"><button class="secondary">Authorize more stills…</button></div>
-    </section>
+<div class="shell">
+  <nav class="rail"><div class="brand">Review Theater</div><div class="scene">Story 1 · Scene 3 - the kitchen argument</div>${cells.map(([id, label]) => `<a class="${id === "3.2" ? "active" : ""}">${esc(label)}</a>`).join("")}</nav>
+  <div class="page">
+    <div class="topbar"><b>Review Theater</b><select aria-label="cell">${cells.map(([id, label]) => `<option${id === "3.2" ? " selected" : ""}>${esc(label)}</option>`).join("")}</select></div>
+    <header>
+      <h1>3.2 - Mara, close-up</h1>
+      <span class="meta">level ${esc(isUnknown(s.level) ? unknown(s.level) : s.level)}</span>
+      <span class="meta">sample: ${esc(s.sample ? `${s.sample.cardinality} takes, ${s.sample.closure.kind}` : "none")}</span>
+    </header>
+    <main class="cell">
+      <section class="card takes-card">
+        <h2>Takes</h2>
+        <div class="spec">spec: ${esc(s.condition)}</div>
+        <div class="takes">${takes}</div>
+      </section>
+      <section class="card diag">
+        <h2>Diagnostic</h2>
+        ${diagnostics}
+      </section>
+      <section class="card approve">
+        <h2>Approve</h2>
+        <div class="row"><span>selected</span><b>take 3</b></div>
+        <div class="row"><span>I2V for this cell</span><span>${esc(video)}</span></div>
+        <div style="margin-top:8px"><button class="act">Approve take 3</button></div>
+        <div class="note">The diagnostic proposes. Approving is yours, with or without it.</div>
+      </section>
+      <section class="card budget">
+        <h2>Budget</h2>
+        ${governing}
+        <div class="row"><span>remaining</span><b>${esc(remaining)}</b></div>
+        <div class="row"><span>next draw</span>${next}</div>
+        <div class="row"><span>draws so far (ratio)</span><span>${ratio}</span></div>
+        <div style="margin-top:8px"><button class="act secondary">Authorize more stills…</button></div>
+      </section>
+    </main>
   </div>
-</main>
-<footer>Target · Simulate 1 · Every value above is the sealed library's answer over an invented fixture. What comes off?</footer>`;
+</div>`;

@@ -1,0 +1,77 @@
+/* The Review Theater's layout, for a screen, a tablet and a phone. The target and the app share it
+   (preview markup promoted, Phase 5). Layout only: nothing here decides or hides an engine answer. */
+:root { --bg: #f6f5f2; --card: #fff; --ink: #1d1d1f; --muted: #6b6b70; --line: #e2e0da; --accent: #2f5bd3; --warn: #a15c00; --refuse: #b42318; --ok: #1f7a3a; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; background: var(--bg); color: var(--ink); }
+
+/* ---- the shell: a rail on a screen; a top bar with a cell picker on a tablet or a phone */
+.shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
+.rail { background: #1f2430; color: #d9dce3; padding: 16px 0; }
+.rail .brand { padding: 0 18px 14px; font-weight: 600; color: #fff; }
+.rail .scene { padding: 0 18px 8px; font-size: 12px; color: #9aa1b1; text-transform: uppercase; letter-spacing: .06em; }
+.rail a { display: block; padding: 8px 18px; color: inherit; text-decoration: none; border-left: 3px solid transparent; }
+.rail a.active { background: #2b3242; border-left-color: #7c9cff; color: #fff; }
+.topbar { display: none; align-items: center; gap: 12px; padding: 10px 16px; background: #1f2430; color: #fff; }
+.topbar b { white-space: nowrap; }
+.topbar select { flex: 1; min-width: 0; font: inherit; padding: 6px 8px; border-radius: 7px; border: 0; }
+.page { min-width: 0; }
+
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding: 14px 22px; border-bottom: 1px solid var(--line); background: var(--card); }
+header h1 { font-size: 17px; margin: 0; }
+header .meta { color: var(--muted); }
+
+/* ---- the cell: takes beside the diagnostic, approve and budget on a screen */
+.cell { display: grid; gap: 18px; padding: 18px 22px; grid-template-columns: minmax(0, 1fr) 380px; grid-template-areas: "takes diag" "takes approve" "takes budget" "takes ."; align-items: start; }
+.cell > .takes-card { grid-area: takes; }
+.cell > .diag { grid-area: diag; }
+.cell > .approve { grid-area: approve; }
+.cell > .budget { grid-area: budget; }
+section.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+.spec { color: var(--muted); font-size: 12px; margin: -4px 0 10px; overflow-wrap: anywhere; }
+.takes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.take { display: flex; flex-direction: column; justify-content: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: #fff; text-align: left; font: inherit; color: inherit; cursor: pointer; min-width: 0; }
+.take .badge { align-self: flex-start; }
+.take.selected { border-color: var(--accent); box-shadow: 0 0 0 2px #2f5bd333; }
+.take.approved { border-color: var(--ok); }
+.frame { height: 110px; border-radius: 6px; background: repeating-linear-gradient(45deg, #ecebe6, #ecebe6 8px, #e4e2dc 8px, #e4e2dc 16px); display: grid; place-items: center; color: var(--muted); font-size: 12px; }
+.scores { margin-top: 6px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; font-size: 13px; }
+.badge { display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 10px; background: #e7f4ec; color: var(--ok); font-size: 12px; }
+.absent, .withheld { color: var(--warn); }
+.none { color: var(--muted); font-style: italic; }
+.axis { border-top: 1px solid var(--line); padding: 8px 0; }
+.axis:first-of-type { border-top: 0; }
+.counts { color: var(--muted); font-size: 12px; }
+.row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; }
+.refused { color: var(--refuse); font-weight: 600; }
+.act { font: inherit; padding: 8px 14px; border-radius: 7px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+.act.secondary { background: #fff; color: var(--accent); }
+.note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+form.score { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; display: grid; grid-template-columns: max-content minmax(0, 180px); justify-content: start; gap: 6px 10px; align-items: center; }
+form.score input { font: inherit; padding: 6px 8px; min-width: 0; width: 100%; box-sizing: border-box; }
+.empty { padding: 40px 16px; text-align: center; color: var(--muted); }
+.notice { margin: 12px 22px 0; padding: 8px 12px; border-radius: 8px; background: #fff5e6; border: 1px solid #f0d3a0; }
+
+/* ---- a tablet: the rail becomes the top bar; takes across the full width, the rest in two columns below */
+@media (max-width: 1024px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail { display: none; }
+  .topbar { display: flex; }
+  .cell { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "takes takes" "approve diag" "budget diag"; }
+}
+
+/* ---- a phone: one column, the approve card stuck to the bottom of the screen while the takes scroll */
+@media (max-width: 640px) {
+  header { padding: 10px 14px; }
+  header h1 { font-size: 16px; width: 100%; }
+  .cell { display: flex; flex-direction: column; gap: 12px; padding: 12px; }
+  .cell > .takes-card { order: 1; }
+  .cell > .approve { order: 2; position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -6px 16px #00000022; }
+  .cell > .diag { order: 3; }
+  .cell > .budget { order: 4; }
+  .takes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .frame { height: 92px; }
+  form.score { grid-template-columns: max-content minmax(0, 1fr); justify-content: stretch; }
+  .act { width: 100%; padding: 11px 14px; }
+  .notice { margin: 10px 12px 0; }
+}

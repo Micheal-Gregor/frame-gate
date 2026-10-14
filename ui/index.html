@@ -4,45 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Review Theater</title>
-  <style>
-    :root { --bg: #f6f5f2; --card: #fff; --ink: #1d1d1f; --muted: #6b6b70; --line: #e2e0da; --accent: #2f5bd3; --warn: #a15c00; --refuse: #b42318; --ok: #1f7a3a; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font: 14px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; background: var(--bg); color: var(--ink); }
-    .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
-    nav { background: #1f2430; color: #d9dce3; padding: 16px 0; }
-    nav .brand { padding: 0 18px 14px; font-weight: 600; color: #fff; }
-    nav .scene { padding: 0 18px 8px; font-size: 12px; color: #9aa1b1; text-transform: uppercase; letter-spacing: .06em; }
-    nav a { display: block; padding: 8px 18px; color: inherit; text-decoration: none; border-left: 3px solid transparent; }
-    nav a.active { background: #2b3242; border-left-color: #7c9cff; color: #fff; }
-    header { display: flex; align-items: baseline; gap: 16px; padding: 14px 22px; border-bottom: 1px solid var(--line); background: var(--card); }
-    header h1 { font-size: 17px; margin: 0; }
-    header .meta { color: var(--muted); }
-    main { display: grid; grid-template-columns: 1fr 380px; gap: 18px; padding: 18px 22px; }
-    section.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
-    .spec { color: var(--muted); font-size: 12px; margin: -4px 0 10px; }
-    .takes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .take { border: 1px solid var(--line); border-radius: 8px; padding: 8px; cursor: pointer; background: #fff; text-align: left; font: inherit; color: inherit; }
-    .take.selected { border-color: var(--accent); box-shadow: 0 0 0 2px #2f5bd333; }
-    .take.approved { border-color: var(--ok); }
-    .frame { height: 110px; border-radius: 6px; background: repeating-linear-gradient(45deg, #ecebe6, #ecebe6 8px, #e4e2dc 8px, #e4e2dc 16px); display: grid; place-items: center; color: var(--muted); font-size: 12px; }
-    .scores { margin-top: 6px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 13px; }
-    .badge { display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 10px; background: #e7f4ec; color: var(--ok); font-size: 12px; }
-    .absent, .withheld { color: var(--warn); }
-    .none { color: var(--muted); font-style: italic; }
-    .axis { border-top: 1px solid var(--line); padding: 8px 0; }
-    .axis:first-of-type { border-top: 0; }
-    .counts { color: var(--muted); font-size: 12px; }
-    .row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; }
-    .refused { color: var(--refuse); font-weight: 600; }
-    button.act { font: inherit; padding: 7px 12px; border-radius: 7px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
-    .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
-    .stack { display: grid; gap: 18px; align-content: start; }
-    form.score { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; display: grid; grid-template-columns: auto 120px; gap: 6px 10px; align-items: center; }
-    form.score input { font: inherit; padding: 4px 6px; }
-    .empty { padding: 40px; text-align: center; color: var(--muted); }
-    .notice { margin: 0 22px; padding: 8px 12px; border-radius: 8px; background: #fff5e6; border: 1px solid #f0d3a0; }
-  </style>
+  <link rel="stylesheet" href="./app/layout.css" />
 </head>
 <body>
   <div id="app">Loading the sealed library...</div>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Target vs built - batch 1</title>
+  <style>
+    body { margin: 0; font: 13px system-ui, sans-serif; background: #ddd; }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; }
+    .pane { background: #fff; }
+    .pane h3 { margin: 0; padding: 6px 10px; background: #1f2430; color: #fff; font-size: 13px; }
+    .frame { width: 100%; overflow: hidden; position: relative; }
+    iframe { border: 0; width: 1280px; height: 900px; transform-origin: 0 0; position: absolute; }
+  </style>
+</head>
+<body>
+  <div class="pair">
+    <div class="pane"><h3>TARGET - Simulate 1 (preview over the invented fixture)</h3><div class="frame"><iframe src="./target.html"></iframe></div></div>
+    <div class="pane"><h3>BUILT - batch 1 (the shell, cell 3.2, take 3 selected)</h3><div class="frame"><iframe src="../index.html#3.2/3"></iframe></div></div>
+  </div>
+  <script>
+    // Each page is laid out at 1280 x 900 and scaled to its column, so both are seen whole.
+    const fit = () => document.querySelectorAll(".frame").forEach((f) => {
+      const k = f.clientWidth / 1280;
+      f.style.height = `${900 * k}px`;
+      f.querySelector("iframe").style.transform = `scale(${k})`;
+    });
+    addEventListener("resize", fit);
+    fit();
+  </script>
+</body>
+</html>

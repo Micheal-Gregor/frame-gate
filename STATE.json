@@ -10,8 +10,8 @@
   "k7_round": 20,
   "last_gate_tag": "closed-by-owner-14",
   "seal_tag": "",
-  "next_action": "MOD-13's gate closes on the owner's tag closed-by-owner-21. Every module is built and every gate is closed. Next: the seal - the owner's word that the build is done, then seal.py check (one sweep) and the owner's triage of its failures.",
+  "next_action": "Seal sweep triaged (R-87): full-review and s3-coverage known issues; contract header fixed. Awaiting the owner's approval of seal.py apply --accept-failures.",
   "blocked_on": null,
-  "updated_at": "2026-10-13T23:37:10+00:00",
+  "updated_at": "2026-10-14T00:30:16+00:00",
   "updated_by": "manual"
 }

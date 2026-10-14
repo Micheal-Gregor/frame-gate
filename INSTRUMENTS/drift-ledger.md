@@ -215,6 +215,7 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
 | IR-137 | **BC-13-2's reach, stated and pinned (K7 round 20; supersedes IR-136's "only mechanism" wording).** `tools/checks/advisory-reach.ts` carries a SCOPE (R-15). It decides, in every loadable source file outside src/advisory/, every specifier form RESOLVED for containment: declarations (type-only included), `import =`, `require`, dynamic `import()`, type queries and triple-slash references. A computed specifier is refused. Each form is pinned by a fixture judged at its mirrored src path. LIMIT: an advisory handed in through a structural type at runtime (limit-structural-handoff.ts), which is the composition root's | benign | MOD-13 (DG-F1) |
 | IR-138 | **BC-13-2's containment is on the FILE's identity, and its limits are stated (R-86; supersedes IR-136's and IR-137's unconditional wording).** The detector compares real paths in their true case (`realpathSync.native`), so a case-variant spelling such as `../Advisory/` is the same file on a case-insensitive host (K7 round 21, F3). `require` is decided by its callee's name. REGISTERED LIMITS, each with a limit- fixture: an aliased require, a `createRequire` result, `module.require`, and the structural hand-off. So DG-F1 holds against every specifier form the SCOPE names, and not against those. MOD-02's `contains` has the same case sensitivity, but there it errs toward a false alarm, so the closed gate is untouched | latent | MOD-13 (DG-F1) |
 | IR-139 | **`k7-run.py --full` is all-or-nothing, and the seal's full-review backstop keys on final content (framework report).** Round 17 could not review MOD-10 FULL beside MOD-05 by DIFF (R-76), so MOD-10 earned no full-review receipt. With IR-118 moving every upstream digest, the seal's `full-review` step will find nearly every module's final content without one, and will ask for a whole-library `--full` review or the owner's triage. Every gate itself was concluded by a round or by owner triage | latent | the seal (RD-27, RD-28) |
+| IR-140 | **seal.py's s3-coverage reads the S3's File column as files under the repo root, but this S3 names module directories relative to src/ (`kernel/`) (framework report).** The step can never pass for this S3, although every module is on disk (phase4-checks modules) and emission-check accepts the S3. It also lists only the first 8 rows. Triaged a known issue at the seal (R-87); no tool change | latent | the seal (framework) |
 
 ## Log
 
@@ -721,3 +722,11 @@ Scores are set by the DISTINCT K7 reviewer — never by the builder.
   - **Owner, R-86:** fix now, test-first; a small battery; no re-check; `closed-by-owner-21`.
 
 - **2026-10-13 — R-86's fix (MOD-13).** Test-first: the case-variant fixture was watched red, and the three require limits are pinned unflagged. Containment now compares real paths in their true case, and the SCOPE is restated to what it decides (IR-138). A small battery follows, with no re-check.
+
+- **2026-10-13 — the seal sweep (`seal.py check`, run once, on the owner's word that the build is done).**
+  - **Pass (nine steps):** worktree-clean, reviewed (covered by `closed-by-owner-21`), full-suite, rederive-all, isolation-tests, phase4-checks, structure-check, emission-check, declarations-match.
+  - **Fail (three steps):**
+    - full-review: all 13 modules (IR-118, IR-139);
+    - s3-coverage: a directory read as a file (IR-140);
+    - interface-contract: the leftover template banner.
+  - **Owner, R-87:** full-review and s3-coverage are known issues; the contract banner is fixed now (header rewritten). The seal waits on the owner's approval of `seal.py apply --accept-failures`.

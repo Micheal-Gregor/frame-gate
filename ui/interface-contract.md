@@ -2,14 +2,17 @@
 
 One page. What the sealed library offers a UI or an agent caller, in the terms a caller needs.
 Phase 5 reads this FIRST, every session — it is the cheap answer to "can the library already
-do this?", and it exists so no session ever guesses instead. Written at the seal from the
-object model and the modules' public signatures; regenerated only at a re-seal. Keep it a
-listing, not an explanation. NOT-YET-WRITTEN
+do this?", and it exists so no session ever guesses instead. Written from the object model and
+the modules' public signatures; regenerated only at a re-seal. Keep it a listing, not an
+explanation.
 
-*Build-time note (Frame Gate, 2026-10-12).* The library is not sealed. Rows are added module by
-module as each is built, because `gate.py` compares signatures against this file at every commit.
-The marker above stays until the seal writes the whole page. MOD-01 and MOD-02 export no classes
-(see the object model), so they have no rows here (MOD-01's one join, `asProjection`, R-35, is internal plumbing a UI never calls). MOD-03, MOD-04 and MOD-05 rows are below.
+*Seal note (Frame Gate, 2026-10-13).* Every module, MOD-01 through MOD-13, is built. Rows were
+added module by module as each was built, because `gate.py` compares signatures against this file
+at every commit. At the seal, every operation's inputs, refusals, side effects and determinism
+are written, and the sweep's declarations-match step agrees with the code. MOD-01 and MOD-02
+export no classes (see the object model), so they have no rows here. MOD-01's one join,
+`asProjection` (R-35), is internal plumbing a UI never calls. MOD-09 is BUILT, not COMPLETE:
+AE-5 is open (R-69), so its bar answers no-bar with the cause "AE-5 open".
 
 ## Objects
 

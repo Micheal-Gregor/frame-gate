@@ -53,3 +53,12 @@ Sealed paths: files matching src/**/*.ts, tests/** present at this tag.
 - MOD-10 diagnostic completion status **BUILT** - battery 27 10/10 (receipt ACCEPT); K7 round 17 **PASS** (drift 7; DIFF over the whole module, IR-103; k7 receipt ACCEPT); tag `k7-pass-17` on 26d8591
 - MOD-11 spend completion status **BUILT** - battery 28 15/15 (receipt ACCEPT); K7 round 18 **RETURN** (drift 5); the fix round under R-84, battery 29 4/4 (receipts ACCEPT); K7 round 19 **PASS** (drift 7; k7 receipts ACCEPT); tag `k7-pass-19` on cfaafc5
 - MOD-13 advisory completion status **BUILT** - battery 30 5/5 (receipt ACCEPT); K7 round 20 **RETURN** (drift 5): the fix round (IR-137), battery 31 6/6 (receipt ACCEPT); K7 round 21 **RETURN** (drift 6): owner triage R-86 - fixed test-first (IR-138), battery 32 2/2 (receipt ACCEPT), no re-check; closes on `closed-by-owner-21`
+
+### Correction to seal-1 (appended 2026-10-14; R-88)
+
+The line above, "Accepted as known issues (owner triage): full-review, s3-coverage, declarations-match", is true for **full-review** and **s3-coverage** only. The owner triaged those two in R-87, after the one check sweep.
+
+**declarations-match** passed in that sweep. It failed only in apply's own sweep, after the builder removed the contract's NOT-YET-WRITTEN banner (R-87's fix), which made the comparison strict. Its one cause was builder prose in `CandidateLedger.appendCandidate`'s Inputs cell, read word by word as claimed parameters. `--accept-failures` admitted it unseen; the owner never triaged it.
+
+R-88 (owner): the cell is restated as `proposal, signature, at, author`, its prose moved to the description, in `ui/interface-contract.md` (not a sealed path). `seal.py declarations` agrees afterwards. No sealed file changed, and seal-1 stands.
+

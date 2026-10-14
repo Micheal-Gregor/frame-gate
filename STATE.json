@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "concept": "The Frame Gate",
-  "phase": 4,
+  "phase": 5,
   "branch": "master",
   "head": "6f27e48737bcfb0c472b194b33f1c70cdf5c6989",
   "tree": "735e8862627ac1695dc3d376579890912e9bc8ab",
   "dirty": true,
-  "current_module": "MOD-08",
+  "current_module": null,
   "k7_round": 20,
   "last_gate_tag": "closed-by-owner-14",
   "seal_tag": "",
-  "next_action": "Seal sweep triaged (R-87): full-review and s3-coverage known issues; contract header fixed. Awaiting the owner's approval of seal.py apply --accept-failures.",
+  "next_action": "Phase 5 \u2014 Simulate: propose candidate features from ui/surface-map.md",
   "blocked_on": null,
-  "updated_at": "2026-10-14T00:30:16+00:00",
+  "updated_at": "2026-10-14T00:33:29+00:00",
   "updated_by": "manual"
 }

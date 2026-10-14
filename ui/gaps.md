@@ -13,6 +13,7 @@ run, batched with related entries.
 
 | ID | User job | Engine must decide / record / enforce | Walk it came from | Lookup evidence | State |
 |---|---|---|---|---|---|
+| G-01 | Mark ONE take FAIL while the rest of its set stays open (the Review Theater's FAIL button) | Record a per-take rejection, so the take counts as passed over without closing its sample | Simulate 1 walk, step 10: Rosa, Scene 3, cell 3.2, rejecting one still among six | Checked in the contract: `ObservationLedger.observe` (numeric components and ABSENT only - a verdict is not a score); `CommitmentLedger.commit` (accepts only); `Samples.samplesFor` closure (a commitment or a revision closes the WHOLE set); `DrawContextLog.label` (DRAW / REVISION resolves a draw, not a take's verdict); `PopulationPartition.of` (PassedOver derives from closed samples). No composition records a single take's rejection | noticed |
 
 ## Shaped detail
 

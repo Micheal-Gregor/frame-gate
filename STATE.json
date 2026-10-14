@@ -3,15 +3,15 @@
   "concept": "The Frame Gate",
   "phase": 5,
   "branch": "master",
-  "head": "6f27e48737bcfb0c472b194b33f1c70cdf5c6989",
-  "tree": "735e8862627ac1695dc3d376579890912e9bc8ab",
-  "dirty": true,
+  "head": "a148056fb9f257bfbd94d6aff18b544e0af3f264",
+  "tree": "90cfb9fa79c110d0a4e63b2b702ef22ad210162c",
+  "dirty": false,
   "current_module": null,
-  "k7_round": 20,
-  "last_gate_tag": "closed-by-owner-14",
-  "seal_tag": "",
+  "k7_round": 21,
+  "last_gate_tag": "seal-1",
+  "seal_tag": "seal-1",
   "next_action": "Phase 5 \u2014 Simulate: propose candidate features from ui/surface-map.md",
   "blocked_on": null,
-  "updated_at": "2026-10-14T00:33:29+00:00",
-  "updated_by": "manual"
+  "updated_at": "2026-10-14T00:33:30+00:00",
+  "updated_by": "refresh"
 }

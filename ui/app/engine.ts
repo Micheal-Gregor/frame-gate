@@ -11,7 +11,7 @@ import { CurrencyOrder, DeclarationLedger, IndependenceLedger, UnitRegistry } fr
 import { CandidateLedger, CommitmentLedger, DrawContextLog, LineageReader } from "../../src/facts/index.js";
 import { Reachability, ReachabilityGate } from "../../src/reachability/index.js";
 import { InvalidationLedger, InvalidationScope, SignatureGate } from "../../src/lineage/index.js";
-import { RevisionLog, Samples } from "../../src/condition/index.js";
+import { ConditionIdentities, RevisionLog, Samples } from "../../src/condition/index.js";
 import { ObservationLedger } from "../../src/observation/index.js";
 import { Dispersion, Location } from "../../src/statistics/index.js";
 import { AE5_OPEN, Bar, PopulationPartition } from "../../src/calibration/index.js";
@@ -20,7 +20,8 @@ import { AuthorizationForms, Ratio, ScopeGate, ScopeLedger, ScopeReader } from "
 import { PROJECT } from "./project.js";
 import { SHA256_HEX } from "./sha256.js";
 
-const KEY = "frame-gate:record:v1";
+/** v2 from Build batch 3: the example scene now writes prompts and brings takes in. A v1 record is left as it was. */
+const KEY = "frame-gate:record:v2";
 
 /** An append-only record in this browser's storage. Nothing is ever removed or rewritten. */
 function browserRecord(): RecordPort<unknown, RecordHeight> & { readonly top: () => RecordHeight; readonly empty: () => boolean } {
@@ -62,6 +63,7 @@ export function engine() {
   const independence = new IndependenceLedger({ record });
   const signatures = new SignatureGate({ digests: SHA256_HEX });
   const candidates = new CandidateLedger({ record, commitments, currencies: order, independence, admission: reach, signatures, ceiling: scopeGate });
+  const identities = new ConditionIdentities({ digests: SHA256_HEX });
   const revisions = new RevisionLog({ record });
   const samples = new Samples({ candidates, draws, revisions, lineage });
   const observations = new ObservationLedger({ record, components: [...PROJECT.components] });
@@ -71,7 +73,7 @@ export function engine() {
   const ratio = new Ratio({ candidates });
   const forms = new AuthorizationForms({ ratio });
   const scopes = new ScopeLedger({ record, bar, declarations });
-  return { record, order, registry, lineage, invalidations, commitments, reach, scopeReader, scopeGate, declarations, draws, independence, signatures, candidates, revisions, samples, observations, partition, bar, diagnostic, ratio, forms, scopes };
+  return { record, order, registry, lineage, invalidations, commitments, reach, scopeReader, scopeGate, declarations, draws, independence, signatures, candidates, identities, revisions, samples, observations, partition, bar, diagnostic, ratio, forms, scopes };
 }
 
 export type Engine = ReturnType<typeof engine>;

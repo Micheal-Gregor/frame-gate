@@ -20,5 +20,9 @@ export const PROJECT = {
     "3.2": "3.2 - Mara, close-up",
     "3.3": "3.3 - reaction",
   } as Readonly<Record<string, string>>,
-  classLabels: { still: "still", i2v: "I2V clip" } as Readonly<Record<string, string>>,
+  classLabels: { still: "still", i2v: "clip" } as Readonly<Record<string, string>>,
+  /** The scale this project scores on - a hint shown to the person scoring; the library takes any finite number. */
+  scale: "0 to 1",
+  /** A prompt's character tag, and the identity package that holds that character's approved look. */
+  characters: { "@mara": "mara-pkg" } as Readonly<Record<string, string>>,
 } as const;

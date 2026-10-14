@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Target vs built - batch 1</title>
+  <title>Target vs built</title>
   <style>
     body { margin: 0; font: 13px system-ui, sans-serif; background: #ddd; }
     .bar { display: flex; gap: 12px; padding: 6px 10px; background: #1f2430; color: #fff; }
@@ -16,17 +16,28 @@
   </style>
 </head>
 <body>
-  <div class="bar"><b>Format</b><a href="?f=phone">phone 375</a><a href="?f=tablet">tablet 768</a><a href="?f=screen">screen 1280</a></div>
+  <div class="bar"><b>Format</b><a data-f="phone">phone 375</a><a data-f="tablet">tablet 768</a><a data-f="screen">screen 1280</a><b>View</b><a data-v="board">scene board</a><a data-v="cell">cell 3.3</a></div>
   <div class="pair">
-    <div class="pane"><h3>TARGET - Simulate 1 (preview over the invented fixture)</h3><div class="frame"><iframe src="./target.html"></iframe></div></div>
-    <div class="pane"><h3>BUILT - batch 1 (the shell, cell 3.2, take 3 selected)</h3><div class="frame"><iframe src="../index.html#3.2/3"></iframe></div></div>
+    <div class="pane"><h3>TARGET - Simulate 2 (preview over the invented fixture)</h3><div class="frame"><iframe data-src="./target.html#"></iframe></div></div>
+    <div class="pane"><h3>BUILT - batch 3 (this browser's record)</h3><div class="frame"><iframe data-src="../index.html#"></iframe></div></div>
   </div>
   <script>
     // Each page is laid out at the format's own viewport (so its media queries fire) and scaled to its column.
     const FORMATS = { phone: [375, 812], tablet: [768, 1024], screen: [1280, 900] };
-    const f = new URLSearchParams(location.search).get("f") ?? "screen";
+    const q = new URLSearchParams(location.search);
+    const f = q.get("f") ?? "screen";
+    const v = q.get("v") ?? "cell";
     const [w, h] = FORMATS[f] ?? FORMATS.screen;
-    document.querySelectorAll(".bar a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === `?f=${f}`));
+    const ROUTES = { board: ["board", "board"], cell: ["3.3", "3.3/2"] };
+    const [targetRoute, builtRoute] = ROUTES[v] ?? ROUTES.cell;
+    const frames = document.querySelectorAll("iframe");
+    frames[0].src = frames[0].dataset.src + targetRoute;
+    frames[1].src = frames[1].dataset.src + builtRoute;
+    document.querySelectorAll(".bar a").forEach((a) => {
+      const next = new URLSearchParams({ f: a.dataset.f ?? f, v: a.dataset.v ?? v });
+      a.href = `?${next}`;
+      a.classList.toggle("on", (a.dataset.f ?? a.dataset.v) === (a.dataset.f ? f : v));
+    });
     const fit = () => document.querySelectorAll(".frame").forEach((frame) => {
       const k = Math.min(1, frame.clientWidth / w);
       const iframe = frame.querySelector("iframe");
